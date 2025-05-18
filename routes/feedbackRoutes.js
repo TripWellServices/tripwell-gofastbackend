@@ -1,9 +1,9 @@
 
-import express from 'express';
-import { fetchRaceFeedback } from '../controllers/FeedbackController.js';
-import verifyToken from '../middleware/verifyToken.js';
+const express = require('express');
+const { fetchRaceFeedback } = require('../controllers/FeedbackController');
+const verifyToken = require('../middleware/verifyToken');
 
 const router = express.Router();
 router.post('/feedback-summary', verifyToken, fetchRaceFeedback);
 
-export default router;
+module.exports = router;

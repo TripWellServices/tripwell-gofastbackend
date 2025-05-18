@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 const PulsePerformanceSchema = new mongoose.Schema({
   userId: String,
@@ -9,4 +9,4 @@ const PulsePerformanceSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.model("PulsePerformance", PulsePerformanceSchema);
+module.exports = mongoose.model("PulsePerformance", PulsePerformanceSchema);

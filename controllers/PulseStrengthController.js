@@ -1,6 +1,6 @@
-import PulseStrength from "../models/PulseStrength.js";
+const PulseStrength = require('../models/PulseStrength');
 
-export const savePulseStrength = async (req, res) => {
+const savePulseStrength = async (req, res) => {
   try {
     const entry = new PulseStrength(req.body);
     await entry.save();

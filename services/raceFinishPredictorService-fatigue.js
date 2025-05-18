@@ -1,5 +1,5 @@
 // services/raceFinishPredictorService.js
-import { getMostRecentAdaptive5k } from './adaptive5kLoggerService.js'; // 🔥 this is the fix
+const { getMostRecentAdaptive5k } = require('./adaptive5kLoggerService'; // 🔥 this is the fix');
 
 const convert5kToPaceWithFatigue = (fiveKTime, raceDistanceMiles) => {
   const [min, sec] = fiveKTime.split(':').map(Number);
@@ -24,7 +24,7 @@ const projectRaceTime = (pace, distanceMiles) => {
   return `${hrs > 0 ? hrs + ':' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
 };
 
-export const raceFinishPredictor = async (userId, raceDistanceMiles, goalTime) => {
+const raceFinishPredictor = async (userId, raceDistanceMiles, goalTime) => {
   const base5k = await getMostRecentAdaptive5k(userId); // 💯 now pulling from Adaptive5kPace
   if (!base5k) throw new Error('No adaptive 5K time found');
 

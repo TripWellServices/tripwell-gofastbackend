@@ -1,6 +1,6 @@
 
-import RaceSelfAssessment from '../models/RaceSelfAssessment.js';
-import RaceResult from '../models/RaceResult.js';
+const RaceSelfAssessment = require('../models/RaceSelfAssessment');
+const RaceResult = require('../models/RaceResult');
 
 function paceToSeconds(paceStr) {
   if (!paceStr || !paceStr.includes(":")) return null;

@@ -1,5 +1,5 @@
 
-import { getGoalStatus } from '../services/FeedbackSummaryService.js';
+const { getGoalStatus } = require('../services/FeedbackSummaryService');
 
 export async function fetchRaceFeedback(req, res) {
   try {

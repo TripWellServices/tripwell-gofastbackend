@@ -1,8 +1,8 @@
 // scripts/syncStatuses.js
 
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import { syncAllUserStatuses } from "../services/syncUserStatus.js"; // ✅ named import
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const { syncAllUserStatuses } = require('../services/syncUserStatus"; // ✅ named import');
 
 dotenv.config();
 

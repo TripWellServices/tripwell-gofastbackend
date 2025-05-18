@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 const PulseStrengthSchema = new mongoose.Schema({
   userId: String,            // who submitted this (if available)
@@ -12,4 +12,4 @@ const PulseStrengthSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now } // timestamp
 });
 
-export default mongoose.model("PulseStrength", PulseStrengthSchema);
+module.exports = mongoose.model("PulseStrength", PulseStrengthSchema);

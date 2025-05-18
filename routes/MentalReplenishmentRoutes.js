@@ -1,6 +1,6 @@
-import express from "express";
-import { saveMentalReplenishment } from "../controllers/MentalReplenishmentController.js";
+const express = require('express');
+const { saveMentalReplenishment } = require('../controllers/MentalReplenishmentController');
 
 const router = express.Router();
 router.post("/save", saveMentalReplenishment);
-export default router;
+module.exports = router;

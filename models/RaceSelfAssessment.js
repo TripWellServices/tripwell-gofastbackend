@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 const RaceSelfAssessmentSchema = new mongoose.Schema({
   userId: { type: String, required: true },
@@ -13,4 +13,4 @@ const RaceSelfAssessmentSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.model("RaceSelfAssessment", RaceSelfAssessmentSchema);
+module.exports = mongoose.model("RaceSelfAssessment", RaceSelfAssessmentSchema);

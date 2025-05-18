@@ -1,8 +1,8 @@
 
-import express from 'express';
-import { visualizeCourse } from '../controllers/CourseVisualizationController.js';
+const express = require('express');
+const { visualizeCourse } = require('../controllers/CourseVisualizationController');
 
 const router = express.Router();
 router.post('/visualize', visualizeCourse);
 
-export default router;
+module.exports = router;

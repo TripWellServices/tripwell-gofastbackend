@@ -1,6 +1,6 @@
-import MentalReplenishment from "../models/MentalReplenishment.js";
+const MentalReplenishment = require('../models/MentalReplenishment');
 
-export const saveMentalReplenishment = async (req, res) => {
+const saveMentalReplenishment = async (req, res) => {
   try {
     const entry = new MentalReplenishment(req.body);
     await entry.save();

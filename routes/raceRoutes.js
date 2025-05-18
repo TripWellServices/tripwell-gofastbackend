@@ -1,5 +1,5 @@
 // GET /api/race/locked-pace/:userId
-import RaceSelfAssessment from '../models/RaceSelfAssessment.js';
+const RaceSelfAssessment = require('../models/RaceSelfAssessment');
 
 router.get('/locked-pace/:userId', verifyToken, async (req, res) => {
   try {

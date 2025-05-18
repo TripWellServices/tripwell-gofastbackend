@@ -1,6 +1,6 @@
 
-import OpenAI from 'openai';
-import CourseProfile from '../models/CourseProfile.js';
+const OpenAI = require('openai');
+const CourseProfile = require('../models/CourseProfile');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

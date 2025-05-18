@@ -1,6 +1,6 @@
-import express from "express";
-import { savePulsePerformance } from "../controllers/PulsePerformanceController.js";
+const express = require('express');
+const { savePulsePerformance } = require('../controllers/PulsePerformanceController');
 
 const router = express.Router();
 router.post("/save", savePulsePerformance);
-export default router;
+module.exports = router;

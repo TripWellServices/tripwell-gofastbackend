@@ -1,8 +1,8 @@
 // services/syncUserStatus.js
 
-import User from "../models/User.js";
-import TrainingPlan from "../models/TrainingPlan.js";
-import { determineTrainingStatus } from "../utils/statusUtils.js";
+const User = require('../models/User');
+const TrainingPlan = require('../models/TrainingPlan');
+const { determineTrainingStatus } = require('../utils/statusUtils');
 
 export async function syncAllUserStatuses() {
   const users = await User.find({});

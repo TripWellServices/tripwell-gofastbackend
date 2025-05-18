@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 const MentalReplenishmentSchema = new mongoose.Schema({
   userId: String,
@@ -8,4 +8,4 @@ const MentalReplenishmentSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.model("MentalReplenishment", MentalReplenishmentSchema);
+module.exports = mongoose.model("MentalReplenishment", MentalReplenishmentSchema);

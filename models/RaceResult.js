@@ -1,5 +1,5 @@
 
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const RaceResultSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -12,4 +12,4 @@ const RaceResultSchema = new mongoose.Schema({
   notes: String
 });
 
-export default mongoose.model('RaceResult', RaceResultSchema);
+module.exports = mongoose.model('RaceResult', RaceResultSchema);

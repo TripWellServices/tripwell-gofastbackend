@@ -1,8 +1,8 @@
 // services/performanceAdaptiveService.js
-import PulsePerformance from '../models/PulsePerformance.js';
-import TrainingPlan from '../models/TrainingPlan.js';
+const PulsePerformance = require('../models/PulsePerformance');
+const TrainingPlan = require('../models/TrainingPlan');
 
-export const performanceAdaptiveService = async (userId) => {
+const performanceAdaptiveService = async (userId) => {
   const entries = await PulsePerformance.find({ userId }).sort({ createdAt: -1 }).limit(10);
   if (!entries || entries.length < 3) {
     return { deltaSeconds: 0, revised5kTime: null, reason: 'Not enough data' };

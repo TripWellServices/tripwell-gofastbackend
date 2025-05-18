@@ -1,5 +1,5 @@
 
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const CourseProfileSchema = new mongoose.Schema({
   raceName: { type: String, required: true },
@@ -11,4 +11,4 @@ const CourseProfileSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.model('CourseProfile', CourseProfileSchema);
+module.exports = mongoose.model('CourseProfile', CourseProfileSchema);

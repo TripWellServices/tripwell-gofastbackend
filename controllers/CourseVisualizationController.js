@@ -1,5 +1,5 @@
 
-import { generateCourseVisualization } from '../services/CourseVisualizationService.js';
+const { generateCourseVisualization } = require('../services/CourseVisualizationService');
 
 export async function visualizeCourse(req, res) {
   try {
