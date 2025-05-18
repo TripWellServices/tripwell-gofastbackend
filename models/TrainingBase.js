@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const TrainingPlanSchema = new mongoose.Schema({
+const TrainingBaseSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -34,4 +34,4 @@ const TrainingPlanSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('TrainingPlan', TrainingPlanSchema);
+module.exports = mongoose.model('TrainingBase', TrainingBaseSchema);
