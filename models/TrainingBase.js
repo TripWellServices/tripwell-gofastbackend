@@ -1,19 +1,13 @@
-const mongoose = require('mongoose');
-
 const TrainingBaseSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User',
-  },
+  userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
   raceGoal: {
     name: String,
     type: String,
     date: String,
-    goalTime: String,
+    goalTime: String, // "00:45:00"
   },
   currentFitness: {
-    current5kTime: String,
+    current5kTime: String, // "00:24:30"
     weeklyMileage: Number,
     lastRace: {
       name: String,
@@ -22,16 +16,8 @@ const TrainingBaseSchema = new mongoose.Schema({
       time: String,
     }
   },
-  startDate: String,
-  raceDate: String,
-  totalWeeks: Number,
-  phaseOverview: Object,
-  weeklyMileagePlan: Array,
-  weeks: Array,
-  generatedAt: {
-    type: Date,
-    default: Date.now,
-  }
+  goalDeltaSeconds: Number, // derived: goalTime - current5kTime
+  initialRacePrediction: Object, // optional field, populated by race predictor
+  // Other stuff
+  generatedAt: { type: Date, default: Date.now },
 });
-
-module.exports = mongoose.model('TrainingBase', TrainingBaseSchema);

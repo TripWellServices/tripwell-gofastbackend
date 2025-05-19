@@ -29,6 +29,8 @@ const workoutRoutes = require('./routes/workoutRoutes');
 app.use('/api/trainingplan', trainingPlanRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/workout', workoutRoutes);
+const predictorRoutes = require("./routes/predictor");
+app.use("/api", predictorRoutes);
 
 // === ROOT TEST ROUTE ===
 app.get("/", (req, res) => {
@@ -39,3 +41,4 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`GoFast server running on port ${PORT}`);
 });
+
