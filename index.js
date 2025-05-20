@@ -22,15 +22,15 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/gofast', {
 .catch((err) => console.error('MongoDB connection error:', err));
 
 // === ROUTES ===
-const trainingPlanRoutes = require('./routes/trainingplan');
+const trainingBaseRoutes = require('./routes/trainingbase');
 const userRoutes = require('./routes/userRoutes');
 const workoutRoutes = require('./routes/workoutRoutes');
+const predictorRoutes = require('./routes/predictor');
 
-app.use('/api/trainingplan', trainingPlanRoutes);
+app.use('/api/trainingbase', trainingBaseRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/workout', workoutRoutes);
-const predictorRoutes = require("./routes/predictor");
-app.use("/api", predictorRoutes);
+app.use('/api', predictorRoutes); // assumes this handles something like /api/predict
 
 // === ROOT TEST ROUTE ===
 app.get("/", (req, res) => {
@@ -41,4 +41,3 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`GoFast server running on port ${PORT}`);
 });
-
