@@ -1,17 +1,36 @@
-const express = require("express");
+// routes/trainingbase.js
+const express = require('express');
 const router = express.Router();
-const TrainingBase = require("../models/TrainingBase");
+const TrainingBase = require('../models/TrainingBase');
 
-router.get("/by-user/:userId", async (req, res) => {
+router.post('/current-capability', async (req, res) => {
   try {
-    const trainingBase = await TrainingBase.findOne({ userId: req.params.userId });
-    if (!trainingBase) {
-      return res.status(404).json({ message: "Training base not found" });
+    const { userId, current5kTime, weeklyMileage, lastRace } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'Missing userId' });
     }
-    res.json(trainingBase);
+
+    // Find existing or create a new TrainingBase for this user
+    const base = await TrainingBase.findOneAndUpdate(
+      { userId },
+      {
+        $set: {
+          currentFitness: {
+            current5kTime,
+            weeklyMileage,
+            lastRace,
+          },
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log("✅ Current fitness saved:", base.currentFitness);
+    res.status(200).json({ message: 'Current capability saved', base });
   } catch (err) {
-    console.error("❌ Error fetching training base:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Error saving current capability:", err);
+    res.status(500).json({ error: 'Server error saving current capability' });
   }
 });
 
