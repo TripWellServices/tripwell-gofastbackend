@@ -1,30 +1,20 @@
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema(
-  {
-    name: { type: String },
-    email: { type: String, required: true, unique: true },
-    userStatus: {
-      type: String,
-      enum: [
-        "registered",
-        "onboarding",
-        "ready_to_train",
-        "training",
-        "inactive",
-        "race_mode",
-        "race_day",
-        "reviewing",
-        "completed"
-      ],
-      default: "registered",
-    },
-    lastGarminLog: { type: Date },
-    createdAt: { type: Date, default: Date.now }
-  },
-  { timestamps: true }
-);
+const userSchema = new mongoose.Schema({
+  firebaseId: { type: String, required: true, unique: true },
+  userId: { type: String, required: true, unique: true },
+  email: String,
+  name: String,
+  preferredName: String,
+  location: String, // City, State
 
-const User = mongoose.model("User", userSchema);
-module.exports = User;
+  // TripWell extensions
+  familySituation: [String], // e.g., ["I'm a parent", "Married/partnered"]
+  travelStyle: [String],     // e.g., ["Planner", "Chill trips"]
+  tripVibe: [String],        // e.g., ["Culture", "Fitness / Staying active"]
+
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model("User", userSchema);
