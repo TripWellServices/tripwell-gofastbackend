@@ -43,5 +43,3 @@ app.use("/api/usertrip", userTripUpdateRoutes);
 
 const tripRoutes = require('./routes/TripWell/tripRoutes');
 app.use('/api', tripRoutes);
-const tripwellProfileRoutes = require("./routes/TripWell/profileSetup");
-app.use("/tripwell", tripwellProfileRoutes);
