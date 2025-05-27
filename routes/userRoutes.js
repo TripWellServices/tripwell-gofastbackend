@@ -1,25 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const verifyFirebaseToken = require("../middleware/verifyFirebaseToken");
 
-// POST /api/users/create
-router.post("/create", async (req, res) => {
-  const { name, email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ message: "Email is required" });
-  }
-
+// GET /api/users/me
+router.get("/me", verifyFirebaseToken, async (req, res) => {
   try {
-    let user = await User.findOne({ email });
+    const firebaseId = req.user.uid;
+    const user = await User.findOne({ firebaseId });
+
     if (!user) {
-      user = await User.create({ name, email });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    return res.status(200).json({ user });
+    res.status(200).json({ user });
   } catch (err) {
-    console.error("Signup error:", err);
-    return res.status(500).json({ message: "Server error" });
+    console.error("Error fetching user profile:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

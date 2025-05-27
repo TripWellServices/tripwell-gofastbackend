@@ -28,9 +28,20 @@ require('./routes/auth/googleAuth'); // sets up Google OAuth strategy
 
 // === ROUTES ===
 const trainingBaseRoutes = require('./routes/trainingbase');
-const userRoutes = require('./routes/userRoutes');
 const workoutRoutes = require('./routes/workoutRoutes');
 const firebaseAuthRoutes = require("./routes/auth/firebaseAuthRoutes");
-app.use("/api/auth", firebaseAuthRoutes);
+const tripwellProfileRoutes = require("./routes/TripWell/profileSetup");
+const userRoutes = require("./routes/userRoutes");
+
+app.use("/api/auth", firebaseAuthRoutes);               // 🔐 Firebase login
+app.use("/tripwell", tripwellProfileRoutes);            // 🌴 TripWell profile setup
+app.use("/api/users", userRoutes);                      // 🔐 User profile routes
+app.use("/api/training", trainingBaseRoutes);           // 🏃 GoFast core
+app.use("/api/workouts", workoutRoutes);                // 🏋️ Workout logs
+const userTripUpdateRoutes = require("./routes/TripWell/userTripUpdate");
+app.use("/api/usertrip", userTripUpdateRoutes);
+
+const tripRoutes = require('./routes/TripWell/tripRoutes');
+app.use('/api', tripRoutes);
 const tripwellProfileRoutes = require("./routes/TripWell/profileSetup");
 app.use("/tripwell", tripwellProfileRoutes);

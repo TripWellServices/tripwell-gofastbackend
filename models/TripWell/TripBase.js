@@ -1,26 +1,63 @@
 // models/TripWell/TripBase.js
 const mongoose = require('mongoose');
 
-const TripBaseSchema = new mongoose.Schema({
-  userId: {
+const DestinationSchema = new mongoose.Schema({
+  locationId: {
     type: String,
     required: true,
+    unique: true,
+  },
+  city: {
+    type: String,
+    required: true,
+  },
+  startDate: Date,
+  endDate: Date,
+  notes: String
+}, { _id: false });
+
+const TripBaseSchema = new mongoose.Schema({
+  tripId: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  joinCode: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  userId: {
+    type: String,
+    required: true
+  },
+  tripName: {                            // ✅ ADDED FIELD
+    type: String,
+    required: true
   },
   purpose: {
     type: String,
-    required: true,
+    required: true
   },
   startDate: {
     type: Date,
-    required: true,
+    required: true
   },
   endDate: {
     type: Date,
-    required: true,
+    required: true
+  },
+  isMultiCity: {
+    type: Boolean,
+    default: false
+  },
+  destinations: {                       // ✅ MULTI-CITY READY
+    type: [DestinationSchema],
+    default: []
   },
   createdAt: {
     type: Date,
-    default: Date.now,
+    default: Date.now
   }
 });
 

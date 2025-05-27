@@ -1,42 +1,46 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../../models/User");
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
+const User = require("../../models/User");
 
+// POST /tripwell/profile/setup
 router.post("/profile/setup", verifyFirebaseToken, async (req, res) => {
+  const firebaseId = req.user.uid;
+
+  const {
+    name,
+    email,
+    location,
+    familySituation,
+    travelStyle,
+    tripVibe
+  } = req.body;
+
   try {
-    const { uid } = req.user;
-    const {
-      name,
-      email,
-      location,
-      familySituation,
-      travelStyle,
-      tripVibePreference
-    } = req.body;
-
     const updatedUser = await User.findOneAndUpdate(
-      { firebaseId: uid },
+      { firebaseId },
       {
-        name,
+        firebaseId,
+        userId: firebaseId,
         email,
+        name,
         location,
-        familySituation,
-        travelStyle,
-        tripVibePreference
+        profile: {
+          familySituation,
+          travelStyle,
+          tripVibe
+        }
       },
-      { new: true }
+      { upsert: true, new: true }
     );
-
-    if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
 
     res.status(200).json({ user: updatedUser });
   } catch (err) {
-    console.error("TripWell profile setup error:", err);
+    console.error("Profile setup error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
 module.exports = router;
+
+
