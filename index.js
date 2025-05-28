@@ -43,3 +43,6 @@ app.use("/api/usertrip", userTripUpdateRoutes);
 
 const tripRoutes = require('./routes/TripWell/tripRoutes');
 app.use('/api', tripRoutes);
+app.get("/", (req, res) => {
+  res.send("✅ GoFast + TripWell backend is alive.");
+});
