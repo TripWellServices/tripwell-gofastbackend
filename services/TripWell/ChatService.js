@@ -1,13 +1,27 @@
-const { openai } = require("../../config/openai"); // adjust path as needed
+const openai = require("../../config/openai"); // no destructuring since it might export null
 const TripPlannerChat = require("../../models/TripWell/TripPlannerChat");
 
 function getDateString(date = new Date()) {
-  return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
+  return date.toISOString().split("T")[0];
 }
 
 async function handleTripChat({ tripId, userId, userInput, tripData, userData }) {
   const dateString = getDateString();
   const timestamp = new Date();
+
+  if (!openai) {
+    console.warn("⚠️ OpenAI not configured. Skipping AI reply.");
+    await TripPlannerChat.create({
+      tripId,
+      userId,
+      userInput,
+      gptReply: "AI features are currently unavailable. Please try again later.",
+      parserOutput: null,
+      timestamp,
+      dateString,
+    });
+    return { reply: "AI features are currently unavailable. Please try again later." };
+  }
 
   const context = `
 The user is planning a trip to ${tripData.destination} from ${tripData.dates?.join(" to ") || "unknown dates"}.
@@ -55,7 +69,7 @@ Respond in this exact format:
       parserOutput = JSON.parse(parserBlock);
     }
   } catch (err) {
-    console.warn("Parser output was not valid JSON");
+    console.warn("⚠️ Parser output was not valid JSON");
   }
 
   await TripPlannerChat.create({
