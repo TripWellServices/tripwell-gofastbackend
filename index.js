@@ -46,3 +46,6 @@ app.use("/trip", tripChatRoutes);                       // 💬 Trip notes + cha
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
+app.get("/", (req, res) => {
+  res.send("🔥 GoFast backend is live. Use the defined API routes.");
+});
