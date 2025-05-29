@@ -9,9 +9,10 @@ const PORT = process.env.PORT || 5000;
 
 // === CORS CONFIG ===
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://tripwell-frontend.vercel.app",
-  "https://gofast-frontend.vercel.app" // Add your second frontend domain here
+  "http://localhost:5173",                             // Dev (Vite)
+  "https://tripwell-frontend.vercel.app",              // TripWell
+  "https://gofast-frontend.vercel.app",                // GoFast official
+  "https://gofast-frontend-ochre.vercel.app"           // GoFast alt Vercel instance
 ];
 
 app.use(cors({
