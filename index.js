@@ -9,10 +9,10 @@ const PORT = process.env.PORT || 5000;
 
 // === CORS CONFIG ===
 const allowedOrigins = [
-  "http://localhost:5173",                             // Dev (Vite)
-  "https://tripwell-frontend.vercel.app",              // TripWell
-  "https://gofast-frontend.vercel.app",                // GoFast official
-  "https://gofast-frontend-ochre.vercel.app"           // GoFast alt Vercel instance
+  "http://localhost:5173",                             // Local Dev (Vite)
+  "https://tripwell-frontend.vercel.app",              // TripWell prod
+  "https://gofast-frontend.vercel.app",                // GoFast prod
+  "https://gofast-frontend-ochre.vercel.app"           // GoFast alt
 ];
 
 app.use(cors({
@@ -30,20 +30,20 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// === 🔐 TEMP GARMIN TOKEN STORE ===
-app.locals.oauthTokenSecrets = {}; // ✅ Shared secrets between initiate.js & callback.js
+// === 🔐 GARMIN TOKEN PLACEHOLDER ===
+app.locals.oauthTokenSecrets = {};
 
 // === DB CONNECTION ===
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/gofast', {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
 })
 .then(() => console.log('✅ MongoDB connected'))
 .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// === ROUTES ===
+// === ROUTE FILES ===
 const firebaseAuthRoutes = require("./routes/auth/firebaseAuthRoutes");
-const tripwellProfileRoutes = require("./routes/TripWell/profileSetup");
+const tripwellProfileRoutes = require("./routes/TripWell/profileSetup"); // <== Adjusted for new endpoint
 const trainingBaseRoutes = require('./routes/trainingbase');
 const workoutRoutes = require('./routes/workoutRoutes');
 const userRoutes = require("./routes/userRoutes");
@@ -51,21 +51,22 @@ const userTripUpdateRoutes = require("./routes/TripWell/userTripUpdate");
 const tripRoutes = require('./routes/TripWell/tripRoutes');
 const tripChatRoutes = require("./routes/TripWell/tripChat");
 
-app.use("/api/auth", firebaseAuthRoutes);               // 🔐 Firebase login
-app.use("/tripwell", tripwellProfileRoutes);            // 🌴 TripWell profile setup
-app.use("/api/users", userRoutes);                      // 👤 User profile
-app.use("/api/training", trainingBaseRoutes);           // 🏃 GoFast plan base
-app.use("/api/workouts", workoutRoutes);                // 🏋️ Workout logging
-app.use("/api/usertrip", userTripUpdateRoutes);         // 🧳 TripWell progress
-app.use("/api", tripRoutes);                            // ✈️ Trip planning
-app.use("/trip", tripChatRoutes);                       // 💬 Trip notes + chat
+// === ROUTE MOUNT POINTS ===
+app.use("/api/auth", firebaseAuthRoutes);                  // 🔐 Auth
+app.use("/api/users/tripwell/profilesetup", tripwellProfileRoutes); // 🌴 Profile Setup Specific Route
+app.use("/api/users", userRoutes);                         // 👤 Other User Info
+app.use("/api/training", trainingBaseRoutes);              // 🏃 Training Plans
+app.use("/api/workouts", workoutRoutes);                   // 🏋️ Workouts
+app.use("/api/usertrip", userTripUpdateRoutes);            // 🧳 Trip Updates
+app.use("/api", tripRoutes);                               // ✈️ General Trip Planning
+app.use("/trip", tripChatRoutes);                          // 💬 Chat Routes
 
-// === DEFAULT ROUTE ===
+// === DEFAULT ROOT ===
 app.get("/", (req, res) => {
-  res.send("🔥 GoFast backend is live. Use the defined API routes.");
+  res.send("🔥 GoFast/TripWell backend is live.");
 });
 
-// === SERVER START ===
+// === BOOT UP ===
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
