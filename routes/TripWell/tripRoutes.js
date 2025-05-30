@@ -15,44 +15,30 @@ router.post('/create', async (req, res) => {
       purpose,
       startDate,
       endDate,
-      isMultiCity,
-      destinations, // multi-city
-      destination    // single-city
+      destination  // single city string
     } = req.body;
+
+    if (!joinCode) return res.status(400).json({ error: "Join code is required" });
 
     const existing = await TripBase.findOne({ joinCode });
     if (existing) return res.status(409).json({ error: 'Join code already in use' });
 
-    const tripId = generateTripId();
-    let formattedDestinations = [];
-
-    if (isMultiCity && Array.isArray(destinations)) {
-      formattedDestinations = destinations.map((cityObj) => ({
-        locationId: generateLocationId(),
-        city: cityObj.city,
-        startDate: cityObj.startDate,
-        endDate: cityObj.endDate,
-        notes: cityObj.notes || ""
-      }));
-    } else if (destination) {
-      formattedDestinations = [{
-        locationId: generateLocationId(),
-        city: destination,
-        startDate,
-        endDate,
-        notes: ""
-      }];
-    }
+    const formattedDestinations = [{
+      locationId: generateLocationId(),
+      city: destination,
+      startDate,
+      endDate,
+      notes: ""
+    }];
 
     const newTrip = new TripBase({
-      tripId,
+      tripId: generateTripId(),
       joinCode,
       tripName,
-      users: [userId], // associate creating user
+      users: [userId],
       purpose,
       startDate,
       endDate,
-      isMultiCity,
       destinations: formattedDestinations
     });
 
@@ -63,7 +49,5 @@ router.post('/create', async (req, res) => {
     res.status(500).json({ error: 'Failed to create trip' });
   }
 });
-
-// Keep your other routes as they are...
 
 module.exports = router;
