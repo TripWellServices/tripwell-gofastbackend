@@ -5,8 +5,8 @@ const TripBase = require('../../models/TripWell/TripBase');
 const generateTripId = () => 'trip-' + Math.random().toString(36).substring(2, 10);
 const generateLocationId = () => 'loc-' + Math.random().toString(36).substring(2, 10);
 
-// POST /api/trips
-router.post('/trips', async (req, res) => {
+// === POST /api/trips ===
+router.post('/', async (req, res) => {
   try {
     const {
       joinCode,
@@ -64,8 +64,8 @@ router.post('/trips', async (req, res) => {
   }
 });
 
-// GET /api/trips/by-user/:userId
-router.get('/trips/by-user/:userId', async (req, res) => {
+// === GET /api/trips/by-user/:userId ===
+router.get('/by-user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const trips = await TripBase.find({ users: userId });
@@ -76,8 +76,8 @@ router.get('/trips/by-user/:userId', async (req, res) => {
   }
 });
 
-// POST /api/trips/join
-router.post('/trips/join', async (req, res) => {
+// === POST /api/trips/join ===
+router.post('/join', async (req, res) => {
   const { joinCode, userId } = req.body;
 
   try {
@@ -96,4 +96,4 @@ router.post('/trips/join', async (req, res) => {
   }
 });
 
-module.exports = router; // ✅ Final export
+module.exports = router;
