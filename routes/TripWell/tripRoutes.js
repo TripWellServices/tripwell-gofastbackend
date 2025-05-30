@@ -5,8 +5,8 @@ const TripBase = require('../../models/TripWell/TripBase');
 const generateTripId = () => 'trip-' + Math.random().toString(36).substring(2, 10);
 const generateLocationId = () => 'loc-' + Math.random().toString(36).substring(2, 10);
 
-// === POST /api/trips ===
-router.post('/', async (req, res) => {
+// === POST /api/trips/create ===
+router.post('/create', async (req, res) => {
   try {
     const {
       joinCode,
@@ -48,7 +48,7 @@ router.post('/', async (req, res) => {
       tripId,
       joinCode,
       tripName,
-      users: [userId], // ✅ Shared trip model
+      users: [userId], // associate creating user
       purpose,
       startDate,
       endDate,
@@ -64,36 +64,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// === GET /api/trips/by-user/:userId ===
-router.get('/by-user/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const trips = await TripBase.find({ users: userId });
-    res.json(trips);
-  } catch (err) {
-    console.error("Fetching trips failed:", err);
-    res.status(500).json({ error: 'Failed to fetch trips' });
-  }
-});
-
-// === POST /api/trips/join ===
-router.post('/join', async (req, res) => {
-  const { joinCode, userId } = req.body;
-
-  try {
-    const trip = await TripBase.findOne({ joinCode });
-    if (!trip) return res.status(404).json({ error: 'Trip not found' });
-
-    if (!trip.users.includes(userId)) {
-      trip.users.push(userId);
-      await trip.save();
-    }
-
-    res.status(200).json({ tripId: trip.tripId });
-  } catch (err) {
-    console.error("Join trip failed:", err);
-    res.status(500).json({ error: 'Server error while joining trip' });
-  }
-});
+// Keep your other routes as they are...
 
 module.exports = router;
