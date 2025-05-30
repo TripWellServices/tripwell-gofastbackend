@@ -59,7 +59,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/training", trainingBaseRoutes);              
 app.use("/api/workouts", workoutRoutes);                   
 app.use("/api/usertrip", userTripUpdateRoutes);            
-app.use("/api", tripRoutes);                               
+app.use("/api/trips", require("./routes/TripWell/tripRoutes"));                            
 app.use("/trip", tripChatRoutes);                          
 
 // === DEFAULT ROOT ===
