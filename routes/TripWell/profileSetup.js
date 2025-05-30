@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
+const mongoose = require("mongoose");
 const User = require("../../models/User");
 
 // POST /api/users/profile/setup
@@ -15,6 +16,9 @@ router.post("/profile/setup", verifyFirebaseToken, async (req, res) => {
     travelStyle,
     tripVibe
   } = req.body;
+
+  // ✅ Confirm DB connection name before saving
+  console.log("📦 Profile setup hitting DB:", mongoose.connection.name);
 
   try {
     const updatedUser = await User.findOneAndUpdate(
