@@ -53,8 +53,8 @@ const tripRoutes = require('./routes/TripWell/tripRoutes');
 const tripChatRoutes = require("./routes/TripWell/tripChat");
 
 // === ROUTE MOUNT POINTS ===
-app.use("/api/auth", firebaseAuthRoutes);                  
-app.use("/api/users/tripwell/profilesetup", tripwellProfileRoutes); 
+app.use("/api/auth", firebaseAuthRoutes);               
+aapp.use("/api/users", require("./routes/TripWell/profileSetup"));
 app.use("/api/users", userRoutes);                         
 app.use("/api/training", trainingBaseRoutes);              
 app.use("/api/workouts", workoutRoutes);                   
