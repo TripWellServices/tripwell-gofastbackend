@@ -9,10 +9,10 @@ const PORT = process.env.PORT || 5000;
 
 // === CORS CONFIG ===
 const allowedOrigins = [
-  "http://localhost:5173",                             // Local Dev (Vite)
-  "https://tripwell-frontend.vercel.app",              // TripWell prod
-  "https://gofast-frontend.vercel.app",                // GoFast prod
-  "https://gofast-frontend-ochre.vercel.app"           // GoFast alt
+  "http://localhost:5173",
+  "https://tripwell-frontend.vercel.app",
+  "https://gofast-frontend.vercel.app",
+  "https://gofast-frontend-ochre.vercel.app"
 ];
 
 app.use(cors({
@@ -29,8 +29,6 @@ app.use(cors({
 // === MIDDLEWARE ===
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-
-// === 🔐 GARMIN TOKEN PLACEHOLDER ===
 app.locals.oauthTokenSecrets = {};
 
 // === DB CONNECTION ===
@@ -52,18 +50,23 @@ const tripRoutes = require('./routes/TripWell/tripRoutes');
 const tripChatRoutes = require("./routes/TripWell/tripChat");
 
 // === ROUTE MOUNT POINTS ===
-app.use("/api/auth", firebaseAuthRoutes);                    // 🔐 Auth
-app.use("/api/users", tripwellProfileSetup);                 // ✅ Fixed: Profile Setup (was mis-mounted)
-app.use("/api/users", userRoutes);                           // 👤 Other User Info
-app.use("/api/training", trainingBaseRoutes);                // 🏃 Training Plans
-app.use("/api/workouts", workoutRoutes);                     // 🏋️ Workouts
-app.use("/api/usertrip", userTripUpdateRoutes);              // 🧳 Trip Updates
-app.use("/api", tripRoutes);                                 // ✈️ General Trip Planning
-app.use("/trip", tripChatRoutes);                            // 💬 Chat Routes
+app.use("/api/auth", firebaseAuthRoutes);
+app.use("/api/users", tripwellProfileSetup); // ✅ Properly mounted
+app.use("/api/users", userRoutes);
+app.use("/api/training", trainingBaseRoutes);
+app.use("/api/workouts", workoutRoutes);
+app.use("/api/usertrip", userTripUpdateRoutes);
+app.use("/api", tripRoutes);
+app.use("/trip", tripChatRoutes);
 
 // === DEFAULT ROOT ===
 app.get("/", (req, res) => {
   res.send("🔥 GoFast/TripWell backend is live.");
+});
+
+// === TEST ENDPOINT ===
+app.post('/api/users/testhit', (req, res) => {
+  res.send('✅ Route hit');
 });
 
 // === BOOT UP ===

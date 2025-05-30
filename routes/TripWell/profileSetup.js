@@ -3,7 +3,7 @@ const router = express.Router();
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const User = require("../../models/User");
 
-// POST /tripwell/profile/setup
+// POST /api/users/profile/setup
 router.post("/profile/setup", verifyFirebaseToken, async (req, res) => {
   const firebaseId = req.user.uid;
 
@@ -36,11 +36,9 @@ router.post("/profile/setup", verifyFirebaseToken, async (req, res) => {
 
     res.status(200).json({ user: updatedUser });
   } catch (err) {
-    console.error("Profile setup error:", err);
+    console.error("🔥 Profile setup error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
 module.exports = router;
-
-
