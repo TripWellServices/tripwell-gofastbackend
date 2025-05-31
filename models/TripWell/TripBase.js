@@ -1,4 +1,3 @@
-// models/TripWell/TripBase.js
 const mongoose = require('mongoose');
 
 const DestinationSchema = new mongoose.Schema({
@@ -27,11 +26,8 @@ const TripBaseSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  userId: {
-    type: String,
-    required: true
-  },
-  tripName: {                            // ✅ ADDED FIELD
+  // userId: { type: String, required: true }, // ❌ Removed for now
+  tripName: {
     type: String,
     required: true
   },
@@ -51,7 +47,7 @@ const TripBaseSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  destinations: {                       // ✅ MULTI-CITY READY
+  destinations: {
     type: [DestinationSchema],
     default: []
   },
