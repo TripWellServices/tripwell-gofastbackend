@@ -15,13 +15,11 @@ router.post('/create', verifyFirebaseToken, async (req, res) => {
       purpose,
       startDate,
       endDate,
-      destination  // single city string
+      destination
     } = req.body;
 
-    const userId = req.user.uid; // ✅ Comes from decoded Firebase token
-
-    if (!joinCode) {
-      return res.status(400).json({ error: "Join code is required" });
+    if (!joinCode || !tripName || !purpose || !startDate || !endDate || !destination) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
     const existing = await TripBase.findOne({ joinCode });
@@ -41,7 +39,6 @@ router.post('/create', verifyFirebaseToken, async (req, res) => {
       tripId: generateTripId(),
       joinCode,
       tripName,
-      users: [userId], // ✅ Now safely tied to authenticated user
       purpose,
       startDate,
       endDate,
@@ -50,10 +47,13 @@ router.post('/create', verifyFirebaseToken, async (req, res) => {
 
     const savedTrip = await newTrip.save();
     res.status(201).json(savedTrip);
-
   } catch (err) {
     console.error("Trip creation failed:", err);
-    res.status(500).json({ error: 'Failed to create trip', details: err.message });
+    res.status(500).json({
+      error: 'Trip creation failed',
+      reason: err.message,
+      details: err.stack
+    });
   }
 });
 
