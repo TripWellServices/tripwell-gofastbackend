@@ -57,4 +57,22 @@ router.post('/create', verifyFirebaseToken, async (req, res) => {
   }
 });
 
+// === GET /api/trips/check-code?joinCode=XYZ ===
+router.get('/check-code', async (req, res) => {
+  const { joinCode } = req.query;
+
+  if (!joinCode) {
+    return res.status(400).json({ error: "Join code is required." });
+  }
+
+  try {
+    const existing = await TripBase.findOne({ joinCode });
+    const available = !existing;
+    res.json({ available });
+  } catch (err) {
+    console.error("❌ Error checking join code:", err);
+    res.status(500).json({ error: "Server error checking join code." });
+  }
+});
+
 module.exports = router;
