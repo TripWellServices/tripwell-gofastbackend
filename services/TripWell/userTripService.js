@@ -1,23 +1,24 @@
-// services/TripWell/userTripService.js
-
 const User = require("../../models/User");
 
-// ✅ Called after trip is created or joined
+// 🔗 Link tripId to user (used after create or join)
 async function setUserTrip(firebaseId, tripId) {
-  return await User.findOneAndUpdate(
+  const user = await User.findOneAndUpdate(
     { firebaseId },
-    { tripId }, // sets the active trip
+    { tripId },
     { new: true }
   );
+
+  if (!user) throw new Error(`User not found for firebaseId: ${firebaseId}`);
+  return user;
 }
 
-// 💤 Optional: called when a trip is completed
+// 💤 Archive trip when finished
 async function archiveTrip(firebaseId, tripId) {
   return await User.findOneAndUpdate(
     { firebaseId },
     {
       tripId: null,
-      pastTripId: tripId // store the most recently completed trip
+      pastTripId: tripId
     },
     { new: true }
   );
