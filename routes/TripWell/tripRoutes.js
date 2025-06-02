@@ -1,77 +1,61 @@
 const express = require('express');
 const router = express.Router();
-const TripBase = require('../../models/TripWell/TripBase');
-const verifyFirebaseToken = require('../../middleware/verifyFirebaseToken');
+const TripBase = require('../models/TripBase');
+const User = require('../models/User');
 
-const generateTripId = () => 'trip-' + Math.random().toString(36).substring(2, 10);
-const generateLocationId = () => 'loc-' + Math.random().toString(36).substring(2, 10);
+const { isJoinCodeTaken } = require('../services/TripWell/TripRegistryService');
 
-// === POST /api/trips/create ===
-router.post('/create', verifyFirebaseToken, async (req, res) => {
+// CREATE TRIP
+router.post('/create', async (req, res) => {
+  const { tripName, purpose, city, startDate, endDate, joinCode, userId } = req.body;
+
+  if (!tripName || !purpose || !city || !startDate || !endDate || !joinCode || !userId) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
   try {
-    const {
-      joinCode,
-      tripName,
-      purpose,
-      startDate,
-      endDate,
-      destination
-    } = req.body;
-
-    if (!joinCode || !tripName || !purpose || !startDate || !endDate || !destination) {
-      return res.status(400).json({ error: "Missing required fields" });
+    const taken = await isJoinCodeTaken(joinCode);
+    if (taken) {
+      return res.status(409).json({ message: 'Join code already in use' });
     }
 
-    const existing = await TripBase.findOne({ joinCode });
-    if (existing) {
-      return res.status(409).json({ error: 'Join code already in use' });
-    }
-
-    const formattedDestinations = [{
-      locationId: generateLocationId(),
-      city: destination,
-      startDate,
-      endDate,
-      notes: ""
-    }];
-
-    const newTrip = new TripBase({
-      tripId: generateTripId(),
-      joinCode,
+    const newTrip = await TripBase.create({
       tripName,
       purpose,
+      city,
       startDate,
       endDate,
-      destinations: formattedDestinations
+      joinCode,
+      creatorId: userId,
     });
 
-    const savedTrip = await newTrip.save();
-    res.status(201).json(savedTrip);
+    await User.findByIdAndUpdate(userId, { tripId: newTrip._id });
+
+    return res.status(201).json({ trip: newTrip });
   } catch (err) {
-    console.error("Trip creation failed:", err);
-    res.status(500).json({
-      error: 'Trip creation failed',
-      reason: err.message,
-      details: err.stack
-    });
+    console.error('Error creating trip:', err);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
-// === GET /api/trips/check-code?joinCode=XYZ ===
-router.get('/check-code', async (req, res) => {
-  const { joinCode } = req.query;
+// CHECK JOIN CODE
+router.post('/check-code', async (req, res) => {
+  const { joinCode } = req.body;
 
   if (!joinCode) {
-    return res.status(400).json({ error: "Join code is required." });
+    return res.status(400).json({ message: 'Join code is required' });
   }
 
   try {
-    const existing = await TripBase.findOne({ joinCode });
-    const available = !existing;
-    res.json({ available });
+    const taken = await isJoinCodeTaken(joinCode);
+    if (taken) {
+      return res.status(409).json({ message: 'Join code already in use' });
+    }
+
+    return res.status(200).json({ message: 'Join code is available' });
   } catch (err) {
-    console.error("❌ Error checking join code:", err);
-    res.status(500).json({ error: "Server error checking join code." });
+    console.error('Join code check error:', err);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
