@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const TripBase = require('../models/TripBase');
-const User = require('../models/User');
 
-const { isJoinCodeTaken } = require('../services/TripWell/TripRegistryService');
+const TripBase = require('../../models/TripWell/TripBase');
+const User = require('../../models/User');
+const { isJoinCodeTaken } = require('../../services/TripWell/TripRegistryService');
 
 // CREATE TRIP
 router.post('/create', async (req, res) => {

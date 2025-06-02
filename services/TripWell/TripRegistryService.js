@@ -1,4 +1,4 @@
-const TripBase = require('../../models/TripBase');
+const TripBase = require('../../models/TripWell/TripBase');
 
 /**
  * Checks if the given join code already exists in the TripBase collection.
