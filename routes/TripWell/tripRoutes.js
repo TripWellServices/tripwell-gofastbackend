@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const TripBase = require("../../models/TripWell/TripBase");
 const { setUserTrip, archiveTrip } = require("../../services/TripWell/userTripService");
+const { parseTrip } = require("../../services/TripWell/tripParser"); // 🧠 Trip metadata helper
 
 // === CHECK FOR DUPLICATE JOIN CODE ===
 router.post("/check-code", async (req, res) => {
@@ -33,7 +34,7 @@ router.post("/create", async (req, res) => {
       endDate,
       isMultiCity,
       destinations,
-      userId // ✅ Mongo _id, not firebaseId
+      userId // ✅ Mongo _id, not Firebase ID
     } = req.body;
 
     if (!joinCode || !tripName || !purpose || !startDate || !endDate || !userId) {
@@ -57,7 +58,7 @@ router.post("/create", async (req, res) => {
 
     await newTrip.save();
 
-    // ✅ Link trip to user by Mongo _id
+    // 🔗 Link to user
     await setUserTrip(userId, newTrip._id.toString());
 
     return res.status(200).json(newTrip);
@@ -81,6 +82,24 @@ router.post("/archive", async (req, res) => {
   } catch (err) {
     console.error("🔥 Trip archive failed:", err);
     return res.status(500).json({ message: "Failed to archive trip", error: err.message });
+  }
+});
+
+// === GET FLATTENED TRIP DATA ===
+router.get("/tripbase/:tripId", async (req, res) => {
+  try {
+    const { tripId } = req.params;
+
+    const trip = await TripBase.findById(tripId);
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    const parsed = parseTrip(trip); // 🎯 Adds city, dateRange, daysTotal, season
+    return res.status(200).json(parsed);
+  } catch (err) {
+    console.error("🔥 Trip fetch failed:", err);
+    return res.status(500).json({ message: "Failed to fetch trip", error: err.message });
   }
 });
 
