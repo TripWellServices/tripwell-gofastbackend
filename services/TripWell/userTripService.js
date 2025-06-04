@@ -1,10 +1,10 @@
 const User = require("../../models/User");
 
-// 🔗 Link tripId to user (used after create or join)
+// 🔗 Link trip _id to user model
 async function setUserTrip(firebaseId, tripId) {
   const user = await User.findOneAndUpdate(
     { firebaseId },
-    { tripId },
+    { tripId }, // stored in user schema as tripId
     { new: true }
   );
 
@@ -12,7 +12,7 @@ async function setUserTrip(firebaseId, tripId) {
   return user;
 }
 
-// 💤 Archive trip when finished
+// 💤 Archive trip when finished or user leaves trip
 async function archiveTrip(firebaseId, tripId) {
   return await User.findOneAndUpdate(
     { firebaseId },

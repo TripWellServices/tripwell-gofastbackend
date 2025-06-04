@@ -16,17 +16,11 @@ const DestinationSchema = new mongoose.Schema({
 }, { _id: false });
 
 const TripBaseSchema = new mongoose.Schema({
-  tripId: {
-    type: String,
-    required: true,
-    unique: true
-  },
   joinCode: {
     type: String,
     required: true,
     unique: true
   },
-  // userId: { type: String, required: true }, // ❌ Removed for now
   tripName: {
     type: String,
     required: true
