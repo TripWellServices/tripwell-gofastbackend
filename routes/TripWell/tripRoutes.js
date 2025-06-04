@@ -1,9 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const TripBase = require("../../models/TripWell/TripBase");
-const { setUserTrip, archiveTrip } = require("../../services/userTripService");
 
-// POST /api/trips/create — create new trip and link to user
+// ✅ FIXED: Correct path to service file in TripWell subfolder
+const { setUserTrip, archiveTrip } = require("../../services/TripWell/userTripService");
+
+// === CREATE NEW TRIP ===
 router.post("/create", async (req, res) => {
   try {
     const {
@@ -17,18 +19,15 @@ router.post("/create", async (req, res) => {
       firebaseId
     } = req.body;
 
-    // Validation
     if (!joinCode || !tripName || !purpose || !startDate || !endDate || !firebaseId) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Prevent duplicate joinCode
     const existing = await TripBase.findOne({ joinCode });
     if (existing) {
       return res.status(409).json({ message: "Trip with this join code already exists" });
     }
 
-    // Create trip
     const newTrip = new TripBase({
       joinCode,
       tripName,
@@ -41,7 +40,6 @@ router.post("/create", async (req, res) => {
 
     await newTrip.save();
 
-    // Link trip to user by Mongo _id
     await setUserTrip(firebaseId, newTrip._id.toString());
 
     return res.status(200).json(newTrip);
@@ -51,7 +49,7 @@ router.post("/create", async (req, res) => {
   }
 });
 
-// POST /api/trips/archive — archive active trip
+// === ARCHIVE TRIP ===
 router.post("/archive", async (req, res) => {
   try {
     const { firebaseId, tripId } = req.body;
