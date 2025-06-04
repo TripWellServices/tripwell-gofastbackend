@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const TripBase = require("../../models/TripWell/TripBase");
-const { setUserTrip } = require("../../services/userTripService");
+const { setUserTrip, archiveTrip } = require("../../services/userTripService");
 
-// POST /api/trips/create
+// POST /api/trips/create — create new trip and link to user
 router.post("/create", async (req, res) => {
   try {
     const {
@@ -17,7 +17,7 @@ router.post("/create", async (req, res) => {
       firebaseId
     } = req.body;
 
-    // Basic validation
+    // Validation
     if (!joinCode || !tripName || !purpose || !startDate || !endDate || !firebaseId) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -28,7 +28,7 @@ router.post("/create", async (req, res) => {
       return res.status(409).json({ message: "Trip with this join code already exists" });
     }
 
-    // Create new trip
+    // Create trip
     const newTrip = new TripBase({
       joinCode,
       tripName,
@@ -41,13 +41,30 @@ router.post("/create", async (req, res) => {
 
     await newTrip.save();
 
-    // Link trip to user using the _id as tripId
+    // Link trip to user by Mongo _id
     await setUserTrip(firebaseId, newTrip._id.toString());
 
     return res.status(200).json(newTrip);
   } catch (err) {
     console.error("🔥 Trip creation failed:", err);
     return res.status(500).json({ message: "Failed to create trip", error: err.message });
+  }
+});
+
+// POST /api/trips/archive — archive active trip
+router.post("/archive", async (req, res) => {
+  try {
+    const { firebaseId, tripId } = req.body;
+
+    if (!firebaseId || !tripId) {
+      return res.status(400).json({ message: "Missing firebaseId or tripId" });
+    }
+
+    const updatedUser = await archiveTrip(firebaseId, tripId);
+    return res.status(200).json(updatedUser);
+  } catch (err) {
+    console.error("🔥 Trip archive failed:", err);
+    return res.status(500).json({ message: "Failed to archive trip", error: err.message });
   }
 });
 
