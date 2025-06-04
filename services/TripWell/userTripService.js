@@ -1,12 +1,13 @@
 const User = require("../../models/User");
 
-// 🔗 Link trip _id to user by userId (ObjectId)
+// 🔗 Link trip _id to user by Mongo _id (aka userId)
 async function setUserTrip(userId, tripId) {
   if (!tripId) throw new Error("Missing tripId");
+  if (!userId) throw new Error("Missing userId");
 
   const user = await User.findByIdAndUpdate(
     userId,
-    { tripId: tripId.toString() }, // just to ensure cleanliness
+    { tripId: tripId.toString() },
     { new: true }
   );
 

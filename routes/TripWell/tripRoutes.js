@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const TripBase = require("../../models/TripWell/TripBase");
 
-// ✅ FIXED: Correct path to service file in TripWell subfolder
+// ✅ Correct service import
 const { setUserTrip, archiveTrip } = require("../../services/TripWell/userTripService");
 
 // === CREATE NEW TRIP ===
@@ -16,10 +16,10 @@ router.post("/create", async (req, res) => {
       endDate,
       isMultiCity,
       destinations,
-      firebaseId
+      userId // ✅ updated to use Mongo _id
     } = req.body;
 
-    if (!joinCode || !tripName || !purpose || !startDate || !endDate || !firebaseId) {
+    if (!joinCode || !tripName || !purpose || !startDate || !endDate || !userId) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -40,7 +40,8 @@ router.post("/create", async (req, res) => {
 
     await newTrip.save();
 
-    await setUserTrip(firebaseId, newTrip._id.toString());
+    // ✅ Pass MongoDB _id instead of firebaseId
+    await setUserTrip(userId, newTrip._id.toString());
 
     return res.status(200).json(newTrip);
   } catch (err) {
@@ -52,13 +53,13 @@ router.post("/create", async (req, res) => {
 // === ARCHIVE TRIP ===
 router.post("/archive", async (req, res) => {
   try {
-    const { firebaseId, tripId } = req.body;
+    const { userId, tripId } = req.body; // ✅ use userId consistently here too
 
-    if (!firebaseId || !tripId) {
-      return res.status(400).json({ message: "Missing firebaseId or tripId" });
+    if (!userId || !tripId) {
+      return res.status(400).json({ message: "Missing userId or tripId" });
     }
 
-    const updatedUser = await archiveTrip(firebaseId, tripId);
+    const updatedUser = await archiveTrip(userId, tripId);
     return res.status(200).json(updatedUser);
   } catch (err) {
     console.error("🔥 Trip archive failed:", err);
