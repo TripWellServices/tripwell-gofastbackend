@@ -27,6 +27,8 @@ function parseTrip(tripDoc) {
   const start = dest.startDate || tripDoc.startDate;
   const end = dest.endDate || tripDoc.endDate;
 
+  const city = dest.city || tripDoc.tripName || "Unknown";
+
   return {
     _id: tripDoc._id,
     tripName: tripDoc.tripName,
@@ -34,12 +36,13 @@ function parseTrip(tripDoc) {
     joinCode: tripDoc.joinCode,
     isMultiCity: tripDoc.isMultiCity,
     createdAt: tripDoc.createdAt,
-    city: dest.city || tripDoc.tripName || "Unknown",
+    city,
+    destination: city, // 👈 canonical mirror
     startDate: start,
     endDate: end,
     dateRange: formatDateRange(start, end),
     daysTotal: getTripLength(start, end),
-    season: getSeason(start)
+    season: getSeason(start),
   };
 }
 
