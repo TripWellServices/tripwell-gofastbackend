@@ -45,10 +45,20 @@ const TripBaseSchema = new mongoose.Schema({
     type: [DestinationSchema],
     default: []
   },
+  destination: {             // <--- add this field
+    type: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
+});
+
+// Add hook to mirror city to destination before save
+TripBaseSchema.pre("save", function(next) {
+  const firstDest = this.destinations?.[0];
+  this.destination = firstDest?.city || this.tripName || "Unknown";
+  next();
 });
 
 module.exports = mongoose.model('TripBase', TripBaseSchema);

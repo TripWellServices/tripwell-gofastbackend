@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const ChatService = require("../../services/TripWell/ChatService");
+const ChatService = require("../../services/TripWell/TripAskService"); // ✅ REWIRED
 
 router.post("/:tripId/chat", async (req, res) => {
   const { tripId } = req.params;

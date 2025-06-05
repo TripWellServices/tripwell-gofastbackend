@@ -50,17 +50,17 @@ const workoutRoutes = require('./routes/workoutRoutes');
 const userRoutes = require("./routes/userRoutes");
 const userTripUpdateRoutes = require("./routes/TripWell/userTripUpdate");
 const tripRoutes = require('./routes/TripWell/tripRoutes');
-const tripChatRoutes = require("./routes/TripWell/tripChat");
+const tripChatRoutes = require("./routes/TripWell/tripChat"); // ✅ still valid and wired to TripAskService
 
 // === ROUTE MOUNT POINTS ===
 app.use("/api/auth", firebaseAuthRoutes);               
-app.use("/api/users", require("./routes/TripWell/profileSetup"));
+app.use("/api/users", tripwellProfileRoutes);
 app.use("/api/users", userRoutes);                         
 app.use("/api/training", trainingBaseRoutes);              
 app.use("/api/workouts", workoutRoutes);                   
 app.use("/api/usertrip", userTripUpdateRoutes);            
-app.use("/api/trips", require("./routes/TripWell/tripRoutes"));                            
-app.use("/trip", tripChatRoutes);                          
+app.use("/api/trips", tripRoutes);                            
+app.use("/trip", tripChatRoutes); // ✅ TripWell AI chat flow
 
 // === DEFAULT ROOT ===
 app.get("/", (req, res) => {
@@ -71,4 +71,3 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
-

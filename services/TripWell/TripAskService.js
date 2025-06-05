@@ -1,5 +1,6 @@
-const openai = require("../../config/openai"); // no destructuring since it might export null
-const TripPlannerChat = require("../../models/TripWell/TripPlannerChat");
+const openai = require("../../config/openai");
+const TripAsk = require("../../models/TripWell/TripAsk");
+const TripGPT = require("../../models/TripWell/TripGPT");
 
 function getDateString(date = new Date()) {
   return date.toISOString().split("T")[0];
@@ -9,20 +10,32 @@ async function handleTripChat({ tripId, userId, userInput, tripData, userData })
   const dateString = getDateString();
   const timestamp = new Date();
 
+  // Save raw ask for tracking
+  await TripAsk.create({
+    tripId,
+    userId,
+    userInput,
+    timestamp,
+    dateString,
+  });
+
+  // If OpenAI not available, return fallback
   if (!openai) {
-    console.warn("⚠️ OpenAI not configured. Skipping AI reply.");
-    await TripPlannerChat.create({
+    console.warn("⚠️ OpenAI not configured. Skipping GPT reply.");
+    const fallback = "AI is temporarily offline. Please try again later.";
+    await TripGPT.create({
       tripId,
       userId,
       userInput,
-      gptReply: "AI features are currently unavailable. Please try again later.",
+      gptReply: fallback,
       parserOutput: null,
       timestamp,
       dateString,
     });
-    return { reply: "AI features are currently unavailable. Please try again later." };
+    return { reply: fallback };
   }
 
+  // Compose GPT context
   const context = `
 The user is planning a trip to ${tripData.destination} from ${tripData.dates?.join(" to ") || "unknown dates"}.
 Their travel style includes: ${userData.travelStyle?.join(", ") || "not specified"}.
@@ -53,6 +66,7 @@ Respond in this exact format:
 ===
 `;
 
+  // Send to OpenAI
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
     messages: [{ role: "user", content: context }],
@@ -69,10 +83,11 @@ Respond in this exact format:
       parserOutput = JSON.parse(parserBlock);
     }
   } catch (err) {
-    console.warn("⚠️ Parser output was not valid JSON");
+    console.warn("⚠️ GPT parser output was not valid JSON");
   }
 
-  await TripPlannerChat.create({
+  // Save GPT reply
+  await TripGPT.create({
     tripId,
     userId,
     userInput,
