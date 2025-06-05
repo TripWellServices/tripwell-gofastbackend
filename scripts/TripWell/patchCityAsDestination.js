@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { parseTrip } = require("../../services/TripWell/tripParser"); // ✅ correct path
+const { parseTrip } = require("../../services/TripWell/tripParser"); // your existing parser
 require("dotenv").config();
 
 const TripBase = require("../../models/TripWell/TripBase");
@@ -20,10 +20,11 @@ mongoose.connect(process.env.MONGO_URI, {
     for (const trip of trips) {
       const parsed = parseTrip(trip);
 
-      if (parsed.city && parsed.city !== trip.destination) {
-        trip.destination = parsed.city;
+      if (parsed.city && (parsed.city !== trip.city || parsed.city !== trip.destination)) {
+        trip.city = parsed.city;
+        trip.destination = parsed.city; // optional mirror
         await trip.save();
-        console.log(`✅ Patched trip ${trip._id}: destination → ${parsed.city}`);
+        console.log(`✅ Patched trip ${trip._id}: city & destination → ${parsed.city}`);
         patched++;
       }
     }
