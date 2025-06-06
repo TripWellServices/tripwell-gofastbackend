@@ -12,7 +12,7 @@ app.use(express.json());
 
 // === Firebase Admin Init ===
 if (!admin.apps.length) {
-  const serviceAccount = require("./firebaseServiceKey.json"); // 🔐 make sure this exists!
+  const serviceAccount = require("./firebaseServiceKey.json"); // 🔐 Make sure this exists!
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
@@ -29,9 +29,10 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // === Routes ===
-app.use("/trip", require("./routes/TripWell/tripRoutes"));
-app.use("/auth", require("./routes/auth/userRoutes")); // ✅ lowercase fix
-app.use("/trip", require("./routes/TripWell/tripChat")); // 🧠 GPT chat
+app.use("/trip", require("./routes/TripWell/tripRoutes"));      // Trip creation, join, etc.
+app.use("/trip", require("./routes/TripWell/tripChat"));        // GPT chat
+app.use("/auth", require("./routes/auth/userRoutes"));          // General auth
+app.use("/tripwell", require("./routes/TripWell/whoami"));      // ✅ Scoped TripWell whoami route
 
 // === Root Route ===
 app.get("/", (req, res) => {
