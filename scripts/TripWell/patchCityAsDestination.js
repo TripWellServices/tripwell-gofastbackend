@@ -1,38 +1,56 @@
 const mongoose = require("mongoose");
-const { parseTrip } = require("../../services/TripWell/tripParser"); // your existing parser
 require("dotenv").config();
 
-const TripBase = require("../../models/TripWell/TripBase");
+// ✅ Adjust this path to your actual Trip model
+const Trip = require("../../models/TripWell/Trip");
 
-mongoose.connect(process.env.MONGO_URI, {
-  dbName: "GoFastFamily",
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-(async () => {
+async function patchDestinations() {
   try {
-    const trips = await TripBase.find({});
-    console.log(`🔍 Found ${trips.length} trips...`);
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("🔌 Connected to MongoDB");
 
-    let patched = 0;
+    const trips = await Trip.find({
+      $or: [
+        { destinations: { $exists: false } },
+        { destinations: { $size: 0 } },
+      ],
+      isMultiCity: false,
+    });
 
-    for (const trip of trips) {
-      const parsed = parseTrip(trip);
-
-      if (parsed.city && (parsed.city !== trip.city || parsed.city !== trip.destination)) {
-        trip.city = parsed.city;
-        trip.destination = parsed.city; // optional mirror
-        await trip.save();
-        console.log(`✅ Patched trip ${trip._id}: city & destination → ${parsed.city}`);
-        patched++;
-      }
+    if (!trips.length) {
+      console.log("✅ No patch needed. All trips already have destinations.");
+      return mongoose.disconnect();
     }
 
-    console.log(`🎯 Completed. ${patched} trips patched out of ${trips.length} total.`);
-    process.exit(0);
+    for (const trip of trips) {
+      const fallbackCity = trip.city || trip.destination;
+      if (!fallbackCity) {
+        console.warn("⚠️ Skipping trip with no city:", trip._id.toString());
+        continue;
+      }
+
+      trip.destinations = [
+        {
+          city: fallbackCity,
+          startDate: trip.startDate,
+          endDate: trip.endDate,
+        },
+      ];
+
+      await trip.save();
+      console.log("✅ Patched trip:", trip._id.toString());
+    }
+
+    console.log("🎉 All eligible trips patched.");
   } catch (err) {
-    console.error("❌ Error during patch:", err);
-    process.exit(1);
+    console.error("❌ Patch error:", err);
+  } finally {
+    await mongoose.disconnect();
+    console.log("🔌 MongoDB disconnected");
   }
-})();
+}
+
+patchDestinations();

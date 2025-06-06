@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const TripBase = require("../../models/TripWell/TripBase");
 
-const TRIP_ID = "683facd5a84346dd938bf345"; // <---- your specific ObjectId here
+const TRIP_ID = "683facd5a84346dd938bf345"; // 🔍 Specific trip you're patching
 
 mongoose.connect(process.env.MONGO_URI, {
   dbName: "GoFastFamily",
@@ -19,12 +19,25 @@ mongoose.connect(process.env.MONGO_URI, {
       process.exit(1);
     }
 
+    // 🩺 Patch core fields
     trip.destination = "Paris";
-    trip.city = "Paris"; // if you want to keep city synced too
+    trip.city = "Paris";
+
+    // 💾 Patch destinations if empty or undefined
+    if (!trip.destinations || !trip.destinations.length) {
+      trip.destinations = [
+        {
+          city: "Paris",
+          startDate: trip.startDate,
+          endDate: trip.endDate,
+        },
+      ];
+      console.log(`🛠️ Destinations array created with Paris`);
+    }
 
     await trip.save();
 
-    console.log(`✅ Trip ${TRIP_ID} patched: destination & city → Paris`);
+    console.log(`✅ Trip ${TRIP_ID} patched: destination, city, and destinations[] now set`);
     process.exit(0);
   } catch (err) {
     console.error("❌ Error patching trip:", err);
