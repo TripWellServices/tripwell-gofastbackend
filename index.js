@@ -30,8 +30,8 @@ mongoose
 
 // === Routes ===
 app.use("/trip", require("./routes/TripWell/tripRoutes"));
-app.use("/auth", require("./routes/Auth/userRoutes")); // 🔥 now powers /auth/me
-app.use("/trip", require("./routes/TripWell/tripChat")); // 🧠 GPT route
+app.use("/auth", require("./routes/auth/userRoutes")); // ✅ lowercase fix
+app.use("/trip", require("./routes/TripWell/tripChat")); // 🧠 GPT chat
 
 // === Root Route ===
 app.get("/", (req, res) => {
