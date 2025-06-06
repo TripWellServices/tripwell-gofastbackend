@@ -1,18 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require("mongoose");
-
 const TripBase = require("../../models/TripWell/TripBase");
 const { parseTrip } = require("../../services/TripWell/tripParser");
 
-// === LOCAL TRIPBASE ROUTES ===
-
-// ✅ Create New Trip
+// === CREATE NEW TRIP ===
 router.post("/tripbase", async (req, res) => {
   try {
     const trip = await TripBase.create(req.body);
 
-    // 🔥 Parse immediately
+    // 🔥 Normalize fields
     const parsed = parseTrip(trip);
     trip.destination = parsed.destination;
     trip.dateRange = parsed.dateRange;
@@ -28,13 +24,11 @@ router.post("/tripbase", async (req, res) => {
   }
 });
 
-// ✅ Get Trip by ID
+// === GET TRIP BY ID ===
 router.get("/tripbase/:id", async (req, res) => {
   try {
     const trip = await TripBase.findById(req.params.id);
-    if (!trip) {
-      return res.status(404).json({ error: "Trip not found" });
-    }
+    if (!trip) return res.status(404).json({ error: "Trip not found" });
     res.json(trip);
   } catch (err) {
     console.error("❌ Trip fetch failed:", err);
@@ -42,13 +36,19 @@ router.get("/tripbase/:id", async (req, res) => {
   }
 });
 
-// === SUB-ROUTES ===
-const tripChat = require("./tripChat");
-const userTripUpdate = require("./userTripUpdate");
-const profileSetup = require("./profileSetup");
+// === GET LATEST TRIP BY USER ID ===
+router.get("/user/:userId/latest", async (req, res) => {
+  try {
+    const trip = await TripBase.findOne({ userId: req.params.userId })
+      .sort({ createdAt: -1 });
 
-router.use("/trip", tripChat);          // /trip/:tripId/chat
-router.use("/trip", userTripUpdate);    // /trip/:tripId/update
-router.use("/trip", profileSetup);      // /trip/setup
+    if (!trip) return res.status(404).json({ error: "No trip found" });
+
+    res.json(trip);
+  } catch (err) {
+    console.error("❌ Trip lookup failed:", err);
+    res.status(500).json({ error: "Trip lookup failed" });
+  }
+});
 
 module.exports = router;

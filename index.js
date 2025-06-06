@@ -1,73 +1,43 @@
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const path = require('path');
-require('dotenv').config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const admin = require("firebase-admin");
+require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// === CORS CONFIG ===
-const allowedOrigins = [
-  "http://localhost:5173",                             // Local Dev (Vite)
-  "https://tripwell-frontend.vercel.app",              // TripWell prod
-  "https://gofast-frontend.vercel.app",                // GoFast prod
-  "https://gofast-frontend-ochre.vercel.app"           // GoFast alt
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
-
-// === MIDDLEWARE ===
+// === Middleware ===
+app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// === 🔐 GARMIN TOKEN PLACEHOLDER ===
-app.locals.oauthTokenSecrets = {};
+// === Firebase Admin Init ===
+if (!admin.apps.length) {
+  const serviceAccount = require("./firebaseServiceKey.json"); // 🔐 make sure this exists!
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
 
-// === DB CONNECTION ===
-mongoose.connect(process.env.MONGO_URI, {
-  dbName: "GoFastFamily",  // ✅ ← THIS IS THE KEY LINE
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("✅ MongoDB connected to GoFastFamily"))
-.catch((err) => console.error("❌ MongoDB connection error:", err));
+// === Mongo Connection ===
+mongoose
+  .connect(process.env.MONGO_URI, {
+    dbName: "GoFastFamily",
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// === ROUTE FILES ===
-const firebaseAuthRoutes = require("./routes/auth/firebaseAuthRoutes");
-const tripwellProfileRoutes = require("./routes/TripWell/profileSetup");
-const trainingBaseRoutes = require('./routes/trainingbase');
-const workoutRoutes = require('./routes/workoutRoutes');
-const userRoutes = require("./routes/userRoutes");
-const userTripUpdateRoutes = require("./routes/TripWell/userTripUpdate");
-const tripRoutes = require('./routes/TripWell/tripRoutes');
-const tripChatRoutes = require("./routes/TripWell/tripChat"); // ✅ still valid and wired to TripAskService
+// === Routes ===
+app.use("/trip", require("./routes/TripWell/tripRoutes"));
+app.use("/auth", require("./routes/Auth/userRoutes")); // 🔥 now powers /auth/me
+app.use("/trip", require("./routes/TripWell/tripChat")); // 🧠 GPT route
 
-// === ROUTE MOUNT POINTS ===
-app.use("/api/auth", firebaseAuthRoutes);               
-app.use("/api/users", tripwellProfileRoutes);
-app.use("/api/users", userRoutes);                         
-app.use("/api/training", trainingBaseRoutes);              
-app.use("/api/workouts", workoutRoutes);                   
-app.use("/api/usertrip", userTripUpdateRoutes);            
-app.use("/api/trips", tripRoutes);                            
-app.use("/trip", tripChatRoutes); // ✅ TripWell AI chat flow
-
-// === DEFAULT ROOT ===
+// === Root Route ===
 app.get("/", (req, res) => {
-  res.send("🔥 GoFast/TripWell backend is live.");
+  res.send("🌍 TripWell / GoFast backend is up and running.");
 });
 
-// === BOOT UP ===
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-});
+// === Server Boot ===
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));
