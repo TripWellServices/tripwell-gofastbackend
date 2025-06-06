@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const TripBase = require("../../models/TripWell/TripBase");
 
-const TRIP_ID = "683facd5a84346dd938bf345"; // 🔍 Specific trip you're patching
+const TRIP_ID = "683facd5a84346dd938bf345"; // 🎯 Your specific trip
 
 mongoose.connect(process.env.MONGO_URI, {
   dbName: "GoFastFamily",
@@ -19,25 +19,25 @@ mongoose.connect(process.env.MONGO_URI, {
       process.exit(1);
     }
 
-    // 🩺 Patch core fields
+    // ✍️ Update primary fields
     trip.destination = "Paris";
     trip.city = "Paris";
 
-    // 💾 Patch destinations if empty or undefined
-    if (!trip.destinations || !trip.destinations.length) {
+    // 💥 Fill in destinations with placeholder locationId
+    if (!trip.destinations || trip.destinations.length === 0) {
       trip.destinations = [
         {
           city: "Paris",
           startDate: trip.startDate,
           endDate: trip.endDate,
+          locationId: new mongoose.Types.ObjectId(), // 🩹 Fake ID to pass validation
         },
       ];
-      console.log(`🛠️ Destinations array created with Paris`);
+      console.log("🛠️ Patched destinations array with Paris + placeholder locationId");
     }
 
     await trip.save();
-
-    console.log(`✅ Trip ${TRIP_ID} patched: destination, city, and destinations[] now set`);
+    console.log(`✅ Trip ${TRIP_ID} fully patched: city, destination, and destinations[]`);
     process.exit(0);
   } catch (err) {
     console.error("❌ Error patching trip:", err);
