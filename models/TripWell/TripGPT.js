@@ -1,14 +1,27 @@
 const mongoose = require("mongoose");
 
 const TripGPTSchema = new mongoose.Schema({
-  tripId: { type: mongoose.Schema.Types.ObjectId, ref: "Trip" },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  askId: { type: mongoose.Schema.Types.ObjectId, ref: "TripAsk" },
-  timestamp: { type: Date, default: Date.now },
-  gpt: {
-    reply: String,
-    fullOutput: String,
-    parsed: mongoose.Schema.Types.Mixed,
+  tripId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "TripBase",
+    required: true,
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: false, // Optional: allows guest/anon chat
+  },
+  gptReply: {
+    type: String,
+    required: true,
+  },
+  parsed: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}, // Optional: can store vibes, days, suggestions, etc.
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 
