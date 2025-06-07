@@ -12,7 +12,7 @@ app.use(express.json());
 
 // === Firebase Admin Init ===
 if (!admin.apps.length) {
-  const serviceAccount = require("./firebaseServiceKey.json"); // 🔐 secure service key
+  const serviceAccount = require("./firebaseServiceKey.json");
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
@@ -29,12 +29,16 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // === ROUTES ===
-app.use("/trip", require("./routes/TripWell/tripRoutes"));     // trip creation, join, etc
-app.use("/trip", require("./routes/TripWell/tripChat"));       // GPT chat flow
-app.use("/trip", require("./routes/TripWell/userTripUpdate")); // trip patching
-app.use("/tripwell", require("./routes/TripWell/whoami"));     // ✅ hydration route
-app.use("/auth", require("./routes/Auth/authRoutes"));         // Firebase login
-app.use("/profile", require("./routes/TripWell/profileSetup")); // Profile updates
+app.use("/trip", require("./routes/TripWell/tripRoutes"));        // trip creation, join, etc
+app.use("/trip", require("./routes/TripWell/tripChat"));          // GPT chat
+app.use("/trip", require("./routes/TripWell/userTripUpdate"));    // trip patching
+app.use("/trip", require("./routes/TripWell/profileSetup"));      // profile setup
+app.use("/tripwell", require("./routes/TripWell/whoami"));        // ✅ trip hydration (new!)
+
+/*
+ 🔥 Removed ghost:
+ // app.use("/auth", require("./routes/Auth/authRoutes"));
+*/
 
 // === Server Start ===
 const PORT = process.env.PORT || 5000;
