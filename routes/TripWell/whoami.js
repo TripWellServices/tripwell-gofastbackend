@@ -3,9 +3,9 @@ const router = express.Router();
 const admin = require("firebase-admin");
 
 const User = require("../../models/User");
-const Trip = require("../../models/Trip");
+const Trip = require("../../models/TripWell/TripBase"); // ✅ CORRECT TRIP MODEL
 
-// 🔐 Middleware-style check — basic and scoped
+// 🔐 Verify Firebase token middleware
 async function verifyFirebaseToken(req, res, next) {
   const token = req.headers.authorization?.split("Bearer ")[1];
   if (!token) return res.status(401).json({ error: "Missing token" });
@@ -20,7 +20,7 @@ async function verifyFirebaseToken(req, res, next) {
   }
 }
 
-// ✅ GET /tripwell/whoami → TripContext hydration
+// ✅ GET /tripwell/whoami → full TripContext hydration
 router.get("/whoami", verifyFirebaseToken, async (req, res) => {
   try {
     const firebaseUID = req.firebaseUser.uid;
@@ -37,7 +37,7 @@ router.get("/whoami", verifyFirebaseToken, async (req, res) => {
   }
 });
 
-// ✅ POST /tripwell/whoami → Set displayName (optional)
+// ✅ POST /tripwell/whoami → push display name
 router.post("/whoami", verifyFirebaseToken, async (req, res) => {
   try {
     const firebaseUID = req.firebaseUser.uid;
