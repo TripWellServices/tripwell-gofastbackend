@@ -12,13 +12,13 @@ app.use(express.json());
 
 // === Firebase Admin Init ===
 if (!admin.apps.length) {
-  const serviceAccount = require("./firebaseServiceKey.json"); // 🔐 Make sure this exists!
+  const serviceAccount = require("./firebaseServiceKey.json"); // 🔐 secure service key
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
 }
 
-// === Mongo Connection ===
+// === MongoDB Connection ===
 mongoose
   .connect(process.env.MONGO_URI, {
     dbName: "GoFastFamily",
@@ -28,17 +28,16 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// === Routes ===
-app.use("/trip", require("./routes/TripWell/tripRoutes"));      // Trip creation, join, etc.
-app.use("/trip", require("./routes/TripWell/tripChat"));        // GPT chat
-app.use("/auth", require("./routes/auth/userRoutes"));          // General auth
-app.use("/tripwell", require("./routes/TripWell/whoami"));      // ✅ Scoped TripWell whoami route
+// === ROUTES ===
+app.use("/trip", require("./routes/TripWell/tripRoutes"));     // trip creation, join, etc
+app.use("/trip", require("./routes/TripWell/tripChat"));       // GPT chat flow
+app.use("/trip", require("./routes/TripWell/userTripUpdate")); // trip patching
+app.use("/tripwell", require("./routes/TripWell/whoami"));     // ✅ hydration route
+app.use("/auth", require("./routes/Auth/authRoutes"));         // Firebase login
+app.use("/profile", require("./routes/TripWell/profileSetup")); // Profile updates
 
-// === Root Route ===
-app.get("/", (req, res) => {
-  res.send("🌍 TripWell / GoFast backend is up and running.");
-});
-
-// === Server Boot ===
+// === Server Start ===
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server live on port ${PORT}`);
+});
