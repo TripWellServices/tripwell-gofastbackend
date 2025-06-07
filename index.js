@@ -33,12 +33,17 @@ app.use("/trip", require("./routes/TripWell/tripRoutes"));        // trip creati
 app.use("/trip", require("./routes/TripWell/tripChat"));          // GPT chat
 app.use("/trip", require("./routes/TripWell/userTripUpdate"));    // trip patching
 app.use("/trip", require("./routes/TripWell/profileSetup"));      // profile setup
-app.use("/tripwell", require("./routes/TripWell/whoami"));        // ✅ trip hydration (new!)
+app.use("/tripwell", require("./routes/TripWell/whoami"));        // trip hydration
 
-/*
- 🔥 Removed ghost:
- // app.use("/auth", require("./routes/Auth/authRoutes"));
-*/
+// === ROOT ROUTE ===
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "TripWell Backend API",
+    message: "🔥 Welcome to the TripWell backend. Routes are mounted under /trip and /tripwell.",
+    version: "1.0.0",
+  });
+});
 
 // === Server Start ===
 const PORT = process.env.PORT || 5000;
