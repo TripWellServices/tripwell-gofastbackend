@@ -7,12 +7,26 @@ require("dotenv").config();
 const app = express();
 
 // === CORS CONFIG ===
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://tripwell-frontend.vercel.app", // ✅ Corrected Vercel domain
+];
+
 app.use(cors({
-  origin: ["http://localhost:5173", "https://tripwell.vercel.app"], // 👈 allowed frontends
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("❌ Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, // Optional: only if sending cookies
+  credentials: true,
 }));
+
+// Optional: Handle preflight (OPTIONS) manually
+app.options("*", cors());
 
 // === JSON PARSER ===
 app.use(express.json());
@@ -37,11 +51,11 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // === ROUTES ===
-app.use("/trip", require("./routes/TripWell/tripRoutes"));        // trip creation, join, etc
-app.use("/trip", require("./routes/TripWell/tripChat"));          // GPT chat
-app.use("/trip", require("./routes/TripWell/userTripUpdate"));    // trip patching
-app.use("/trip", require("./routes/TripWell/profileSetup"));      // profile setup
-app.use("/tripwell", require("./routes/TripWell/whoami"));        // identity + trip hydration
+app.use("/trip", require("./routes/TripWell/tripRoutes"));
+app.use("/trip", require("./routes/TripWell/tripChat"));
+app.use("/trip", require("./routes/TripWell/userTripUpdate"));
+app.use("/trip", require("./routes/TripWell/profileSetup"));
+app.use("/tripwell", require("./routes/TripWell/whoami"));
 
 // === ROOT ROUTE ===
 app.get("/", (req, res) => {
