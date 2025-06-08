@@ -6,19 +6,27 @@ require("dotenv").config();
 
 const app = express();
 
-// === Middleware ===
-app.use(cors());
+// === CORS CONFIG ===
+app.use(cors({
+  origin: ["http://localhost:5173", "https://tripwell.vercel.app"], // 👈 allowed frontends
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true, // Optional: only if sending cookies
+}));
+
+// === JSON PARSER ===
 app.use(express.json());
 
-// === Firebase Admin Init ===
+// === FIREBASE ADMIN INIT ===
 if (!admin.apps.length) {
   const serviceAccount = require("./firebaseServiceKey.json");
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
+  console.log("✅ Firebase Admin initialized");
 }
 
-// === MongoDB Connection ===
+// === MONGO CONNECT ===
 mongoose
   .connect(process.env.MONGO_URI, {
     dbName: "GoFastFamily",
@@ -33,7 +41,7 @@ app.use("/trip", require("./routes/TripWell/tripRoutes"));        // trip creati
 app.use("/trip", require("./routes/TripWell/tripChat"));          // GPT chat
 app.use("/trip", require("./routes/TripWell/userTripUpdate"));    // trip patching
 app.use("/trip", require("./routes/TripWell/profileSetup"));      // profile setup
-app.use("/tripwell", require("./routes/TripWell/whoami"));        // trip hydration
+app.use("/tripwell", require("./routes/TripWell/whoami"));        // identity + trip hydration
 
 // === ROOT ROUTE ===
 app.get("/", (req, res) => {
@@ -45,8 +53,8 @@ app.get("/", (req, res) => {
   });
 });
 
-// === Server Start ===
+// === SERVER START ===
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server live on port ${PORT}`);
+  console.log(`🚀 TripWell backend live on port ${PORT}`);
 });
