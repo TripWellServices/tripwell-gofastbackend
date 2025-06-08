@@ -6,27 +6,28 @@ require("dotenv").config();
 
 const app = express();
 
-// === CORS CONFIG ===
+// === CORS CONFIG (FINAL FULL SEND) ===
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://tripwell-frontend.vercel.app", // ✅ Corrected Vercel domain
+  "https://tripwell-frontend.vercel.app" // ✅ Deployed frontend
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("❌ Not allowed by CORS"));
+      console.warn("❌ Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
     }
   },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
-}));
+};
 
-// Optional: Handle preflight (OPTIONS) manually
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // === JSON PARSER ===
 app.use(express.json());
