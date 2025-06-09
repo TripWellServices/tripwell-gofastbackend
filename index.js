@@ -53,10 +53,10 @@ mongoose
 
 // === ROUTES ===
 app.use("/trip", require("./routes/TripWell/tripRoutes"));
-app.use("/trip", require("./routes/TripWell/tripChat"));
 app.use("/trip", require("./routes/TripWell/userTripUpdate"));
 app.use("/trip", require("./routes/TripWell/profileSetup"));
-app.use("/tripwell", require("./routes/TripWell/whoami"));
+app.use("/tripwell", require("./routes/TripWell/whoami"));        // ✅ whoami stays under /tripwell
+app.use("/tripwell", require("./routes/TripWell/tripChat"));      // ✅ GPT chat route now mounted under /tripwell
 
 // === ROOT ROUTE ===
 app.get("/", (req, res) => {
