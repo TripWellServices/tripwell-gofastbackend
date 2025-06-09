@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 
-const ChatService = require("../../services/TripWell/TripAskService"); // ✅ GPT handler
+const { handleTripAsk } = require("../../services/TripWell/TripAskService"); // ✅ Clean named import
 
 router.post("/:tripId/chat", async (req, res) => {
   const { tripId } = req.params;
@@ -15,29 +15,27 @@ router.post("/:tripId/chat", async (req, res) => {
     body: req.body,
   });
 
-  // 🛡️ Required field check
   if (!userInput || !tripData || !tripId) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  // 🚧 tripId format check (critical for Mongo stability)
   if (!mongoose.Types.ObjectId.isValid(tripId)) {
     return res.status(400).json({ error: "Invalid tripId format" });
   }
 
   try {
-    const result = await ChatService.handleTripChat({
+    const userId = userData?.firebaseId || userData?.userId || null;
+
+    const result = await handleTripAsk({
       tripId,
-      userId: userData?._id || null,
+      userId,
       userInput,
-      tripData,
-      userData,
     });
 
-    res.json(result);
+    res.json({ success: true, result });
   } catch (error) {
     console.error("❌ TripWell chat error:", error);
-    res.status(500).json({ error: "GPT chat failed" });
+    res.status(500).json({ error: "TripAsk logging failed" });
   }
 });
 
