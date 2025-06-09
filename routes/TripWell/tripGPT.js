@@ -14,6 +14,7 @@ router.post("/:tripId/gpt", async (req, res) => {
     userId: userData?.firebaseId,
   });
 
+  // 🛡️ Field validation
   if (!userInput || !tripId || !userData) {
     return res.status(400).json({ error: "Missing required fields" });
   }
@@ -24,7 +25,12 @@ router.post("/:tripId/gpt", async (req, res) => {
 
   try {
     const userId = userData.firebaseId;
-    const gptResult = await handleTripGPTReply({ tripId, userId, userInput });
+
+    const gptResult = await handleTripGPTReply({
+      tripId,
+      userId,
+      userInput,
+    });
 
     res.json({
       success: true,
