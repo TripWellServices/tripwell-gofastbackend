@@ -7,9 +7,8 @@ const TripGPTSchema = new mongoose.Schema({
     required: true,
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: false, // Optional: allows guest/anon chat
+    type: String, // 🔄 Firebase UID, not Mongo ObjectId
+    required: true,
   },
   gptReply: {
     type: String,
@@ -17,7 +16,7 @@ const TripGPTSchema = new mongoose.Schema({
   },
   parsed: {
     type: mongoose.Schema.Types.Mixed,
-    default: {}, // Optional: can store vibes, days, suggestions, etc.
+    default: {},
   },
   createdAt: {
     type: Date,
