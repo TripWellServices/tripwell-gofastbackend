@@ -1,44 +1,58 @@
-const express = require("express");
-const router = express.Router();
-const mongoose = require("mongoose");
+const OpenAI = require("openai");
+const TripGPT = require("../../models/TripWell/TripGPT");
+const TripAsk = require("../../models/TripWell/TripAsk");
 
-const { handleTripGPTReply } = require("../../services/TripWell/TripGPTReplyService");
-
-router.post("/:tripId/gpt", async (req, res) => {
-  const { tripId } = req.params;
-  const { userData } = req.body;
-
-  console.log("🧠 TripGPT route hit:", {
-    tripId,
-    userId: userData?.firebaseId,
-  });
-
-  // 🛡️ Field validation
-  if (!tripId || !userData || !userData.firebaseId) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
-  if (!mongoose.Types.ObjectId.isValid(tripId)) {
-    return res.status(400).json({ error: "Invalid tripId format" });
-  }
-
-  try {
-    const userId = userData.firebaseId;
-
-    const gptResult = await handleTripGPTReply({
-      tripId,
-      userId,
-    });
-
-    res.json({
-      success: true,
-      gptReply: gptResult.gptReply,
-      replyId: gptResult.replyId,
-    });
-  } catch (error) {
-    console.error("❌ GPT reply failed:", error);
-    res.status(500).json({ error: error.message || "GPT failure" });
-  }
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-module.exports = router;
+function buildPrompt({ userInput, tripId, userId }) {
+  return `
+You are TripWell AI, a smart assistant helping plan amazing trips.
+User ${userId || "anonymous"} is asking about Trip ${tripId}.
+
+Here’s what they said:
+"""
+${userInput}
+"""
+
+Reply with creative, specific ideas that match their vibe.
+`.trim();
+}
+
+async function handReply({ tripId, userId }) {
+  if (!tripId || !userId) throw new Error("Missing tripId or userId");
+
+  const latestAsk = await TripAsk.findOne({ tripId, userId }).sort({ timestamp: -1 });
+  if (!latestAsk || !latestAsk.userInput) throw new Error("No userInput found in TripAsk");
+
+  const userInput = latestAsk.userInput;
+  const prompt = buildPrompt({ userInput, tripId, userId });
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+      { role: "system", content: "You are TripWell AI." },
+      { role: "user", content: prompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 300,
+  });
+
+  const gptReply = response.choices[0].message.content.trim();
+
+  const savedReply = await TripGPT.create({
+    tripId,
+    userId,
+    gptReply,
+    parsed: {},
+    timestamp: new Date(),
+  });
+
+  return {
+    gptReply,
+    replyId: savedReply._id,
+  };
+}
+
+module.exports = { handReply };
