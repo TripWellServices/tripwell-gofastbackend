@@ -1,22 +1,27 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const router = express.Router();
-
+const mongoose = require("mongoose");
 const { handAsk } = require("../../services/TripWell/TripAskService");
 
 router.post("/:tripId/chat", async (req, res) => {
   const { tripId } = req.params;
-  const { userInput, tripData, userData } = req.body;
+  const { userInput } = req.body;
+  const userId = req.user?.uid;
 
   console.log("🛰️ tripChat route hit with:", {
     method: req.method,
     path: req.originalUrl,
     params: req.params,
     body: req.body,
+    userId,
   });
 
-  if (!userInput || !tripData || !tripId) {
-    return res.status(400).json({ error: "Missing required fields" });
+  if (!userInput || !tripId) {
+    return res.status(400).json({ error: "Missing userInput or tripId" });
+  }
+
+  if (!userId) {
+    return res.status(401).json({ error: "Missing user identity" });
   }
 
   if (!mongoose.Types.ObjectId.isValid(tripId)) {
@@ -24,17 +29,15 @@ router.post("/:tripId/chat", async (req, res) => {
   }
 
   try {
-    const userId = userData?.firebaseId || userData?.userId || null;
+    const result = await handAsk({ tripId, userId, userInput });
 
-    const result = await handAsk({
-      tripId,
-      userId,
-      userInput,
+    res.status(200).json({
+      success: true,
+      message: "Ask saved to TripAsk successfully.",
+      askId: result.askId,
     });
-
-    res.json({ success: true, result });
   } catch (error) {
-    console.error("❌ TripWell chat error:", error);
+    console.error("❌ TripAsk failed:", error);
     res.status(500).json({ error: "TripAsk logging failed" });
   }
 });
