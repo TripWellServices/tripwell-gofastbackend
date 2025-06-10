@@ -1,58 +1,43 @@
-const OpenAI = require("openai");
-const TripGPT = require("../../models/TripWell/TripGPT");
-const TripAsk = require("../../models/TripWell/TripAsk");
+const express = require("express");
+const router = express.Router();
+const mongoose = require("mongoose");
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const { handReply } = require("../../services/TripWell/TripGPTReplyService");
 
-function buildPrompt({ userInput, tripId, userId }) {
-  return `
-You are TripWell AI, a smart assistant helping plan amazing trips.
-User ${userId || "anonymous"} is asking about Trip ${tripId}.
+// 🔥 POST /tripwell/:tripId/gpt — Trigger GPT response for latest ask
+router.post("/:tripId/gpt", async (req, res) => {
+  const { tripId } = req.params;
+  const userId = req.user?.uid; // ✅ From Firebase token
 
-Here’s what they said:
-"""
-${userInput}
-"""
-
-Reply with creative, specific ideas that match their vibe.
-`.trim();
-}
-
-async function handReply({ tripId, userId }) {
-  if (!tripId || !userId) throw new Error("Missing tripId or userId");
-
-  const latestAsk = await TripAsk.findOne({ tripId, userId }).sort({ timestamp: -1 });
-  if (!latestAsk || !latestAsk.userInput) throw new Error("No userInput found in TripAsk");
-
-  const userInput = latestAsk.userInput;
-  const prompt = buildPrompt({ userInput, tripId, userId });
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    messages: [
-      { role: "system", content: "You are TripWell AI." },
-      { role: "user", content: prompt },
-    ],
-    temperature: 0.7,
-    max_tokens: 300,
-  });
-
-  const gptReply = response.choices[0].message.content.trim();
-
-  const savedReply = await TripGPT.create({
+  console.log("🧠 TripGPT route hit:", {
     tripId,
     userId,
-    gptReply,
-    parsed: {},
-    timestamp: new Date(),
   });
 
-  return {
-    gptReply,
-    replyId: savedReply._id,
-  };
-}
+  if (!tripId) {
+    return res.status(400).json({ error: "Missing tripId" });
+  }
 
-module.exports = { handReply };
+  if (!userId) {
+    return res.status(401).json({ error: "Missing user identity" });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(tripId)) {
+    return res.status(400).json({ error: "Invalid tripId format" });
+  }
+
+  try {
+    const gptResult = await handReply({ tripId, userId });
+
+    res.status(200).json({
+      success: true,
+      gptReply: gptResult.gptReply,
+      replyId: gptResult.replyId,
+    });
+  } catch (error) {
+    console.error("❌ GPT reply failed:", error);
+    res.status(500).json({ error: error.message || "GPT failure" });
+  }
+});
+
+module.exports = router; // ✅ DO NOT WRAP THIS IN { router }
