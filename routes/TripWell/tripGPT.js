@@ -6,16 +6,15 @@ const { handleTripGPTReply } = require("../../services/TripWell/TripGPTReplyServ
 
 router.post("/:tripId/gpt", async (req, res) => {
   const { tripId } = req.params;
-  const { userInput, userData } = req.body;
+  const { userData } = req.body;
 
   console.log("🧠 TripGPT route hit:", {
     tripId,
-    userInput,
     userId: userData?.firebaseId,
   });
 
   // 🛡️ Field validation
-  if (!userInput || !tripId || !userData) {
+  if (!tripId || !userData || !userData.firebaseId) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -29,7 +28,6 @@ router.post("/:tripId/gpt", async (req, res) => {
     const gptResult = await handleTripGPTReply({
       tripId,
       userId,
-      userInput,
     });
 
     res.json({
