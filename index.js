@@ -51,14 +51,18 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// === ROUTES ===
+// === FIREBASE TOKEN MIDDLEWARE ===
+const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
+
+// === ROUTES: TRIPWELL CORE ===
 app.use("/trip", require("./routes/TripWell/tripRoutes"));
 app.use("/trip", require("./routes/TripWell/userTripUpdate"));
 app.use("/trip", require("./routes/TripWell/profileSetup"));
 
-app.use("/tripwell", require("./routes/TripWell/whoami"));     // ✅ Auth+state check
-app.use("/tripwell", require("./routes/TripWell/tripChat"));   // ✅ TripAsk logging
-app.use("/tripwell", require("./routes/TripWell/tripGPT"));    // ✅ GPT reply route
+// === ROUTES: TRIPWELL SECURE GPT FLOW ===
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));     // ✅ Auth + user/trip hydration
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripChat"));   // ✅ Save user ask
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripGPT"));    // ✅ GPT reply based on ask
 
 // === ROOT ROUTE ===
 app.get("/", (req, res) => {

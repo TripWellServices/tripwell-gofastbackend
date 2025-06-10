@@ -1,4 +1,3 @@
-// /middleware/verifyFirebaseToken.js
 const admin = require("firebase-admin");
 
 async function verifyFirebaseToken(req, res, next) {
@@ -12,7 +11,7 @@ async function verifyFirebaseToken(req, res, next) {
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    req.user = decodedToken; // ✅ THIS LINE IS CRITICAL
+    req.user = decodedToken; // ✅ Firebase identity injected into request
     next();
   } catch (error) {
     console.error("Token verification failed:", error);

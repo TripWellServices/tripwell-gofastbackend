@@ -1,11 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const User = require("../../models/User");
 const Trip = require("../../models/TripWell/TripBase");
 
 // 🔥 GET /tripwell/whoami — canonical hydration route
-router.get("/whoami", verifyFirebaseToken, async (req, res) => {
+router.get("/whoami", async (req, res) => {
   try {
     const firebaseUID = req.user.uid;
 

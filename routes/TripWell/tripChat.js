@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 
-const { handleTripAsk } = require("../../services/TripWell/TripAskService"); // ✅ Clean named import
+const { handAsk } = require("../../services/TripWell/TripAskService");
 
 router.post("/:tripId/chat", async (req, res) => {
   const { tripId } = req.params;
@@ -26,7 +26,7 @@ router.post("/:tripId/chat", async (req, res) => {
   try {
     const userId = userData?.firebaseId || userData?.userId || null;
 
-    const result = await handleTripAsk({
+    const result = await handAsk({
       tripId,
       userId,
       userInput,

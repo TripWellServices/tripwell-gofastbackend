@@ -1,6 +1,6 @@
 const OpenAI = require("openai");
 const TripGPT = require("../../models/TripWell/TripGPT");
-const TripAsk = require("../../models/TripWell/TripAsk"); // ✅ Add this to pull latest ask
+const TripAsk = require("../../models/TripWell/TripAsk");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -20,10 +20,9 @@ Reply with creative, specific ideas that match their vibe.
 `.trim();
 }
 
-async function handleTripGPTReply({ tripId, userId }) {
+async function handReply({ tripId, userId }) {
   if (!tripId || !userId) throw new Error("Missing tripId or userId");
 
-  // 🔍 Fetch latest TripAsk entry for this user/trip combo
   const latestAsk = await TripAsk.findOne({ tripId, userId }).sort({ timestamp: -1 });
   if (!latestAsk || !latestAsk.userInput) throw new Error("No userInput found in TripAsk");
 
@@ -47,6 +46,7 @@ async function handleTripGPTReply({ tripId, userId }) {
     userId,
     gptReply,
     parsed: {},
+    timestamp: new Date(),
   });
 
   return {
@@ -55,4 +55,4 @@ async function handleTripGPTReply({ tripId, userId }) {
   };
 }
 
-module.exports = { handleTripGPTReply };
+module.exports = { handReply };
