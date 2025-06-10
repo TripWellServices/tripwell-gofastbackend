@@ -1,7 +1,9 @@
 const UserTripAsk = require("../../models/TripWell/TripAsk");
 
 async function handAsk({ tripId, userId, userInput }) {
-  if (!userInput || !tripId) throw new Error("Missing input or tripId");
+  if (!userInput || !tripId || !userId) {
+    throw new Error("Missing input or identifiers");
+  }
 
   const savedAsk = await UserTripAsk.create({
     tripId,
@@ -10,7 +12,7 @@ async function handAsk({ tripId, userId, userInput }) {
     dateString: new Date().toISOString().split("T")[0],
   });
 
-  return { askId: savedAsk._id, message: "User ask recorded." };
+  return { askId: savedAsk._id };
 }
 
 module.exports = { handAsk };
