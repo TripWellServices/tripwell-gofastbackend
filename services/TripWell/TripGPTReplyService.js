@@ -1,5 +1,6 @@
 const OpenAI = require("openai");
 const TripGPT = require("../../models/TripWell/TripGPT");
+const TripAsk = require("../../models/TripWell/TripAsk"); // ✅ Add this to pull latest ask
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -19,16 +20,21 @@ Reply with creative, specific ideas that match their vibe.
 `.trim();
 }
 
-async function handleTripGPTReply({ tripId, userId, userInput }) {
-  if (!userInput || !tripId) throw new Error("Missing input or tripId");
+async function handleTripGPTReply({ tripId, userId }) {
+  if (!tripId || !userId) throw new Error("Missing tripId or userId");
 
+  // 🔍 Fetch latest TripAsk entry for this user/trip combo
+  const latestAsk = await TripAsk.findOne({ tripId, userId }).sort({ timestamp: -1 });
+  if (!latestAsk || !latestAsk.userInput) throw new Error("No userInput found in TripAsk");
+
+  const userInput = latestAsk.userInput;
   const prompt = buildPrompt({ userInput, tripId, userId });
 
   const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo", // or "gpt-4"
+    model: "gpt-3.5-turbo",
     messages: [
       { role: "system", content: "You are TripWell AI." },
-      { role: "user", content: prompt }
+      { role: "user", content: prompt },
     ],
     temperature: 0.7,
     max_tokens: 300,
