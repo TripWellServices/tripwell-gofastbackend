@@ -1,16 +1,19 @@
+// routes/TripWell/tripGPT.js
 const express = require("express");
 const router = express.Router({ mergeParams: true });
 
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const TripGPTRaw = require("../../models/TripWell/TripGPTRaw");
 const { GPTRawMover } = require("../../services/TripWell/GPTRawMover");
-const { openai } = require("../../config/openai"); // clean config load
+const openai = require("../../config/openai"); // ✅ no destructuring
 const TripAsk = require("../../models/TripWell/TripAsk");
 
 router.post("/:tripId/gpt", verifyFirebaseToken, async (req, res) => {
   try {
     const userId = req.user.uid;
     const { tripId } = req.params;
+
+    if (!openai) throw new Error("OpenAI not initialized");
 
     console.log("🧠 TripGPT route hit:", { tripId, userId });
 
