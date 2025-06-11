@@ -1,16 +1,36 @@
-// services/TripWell/GPTRawMoverService.js
+// services/TripWell/GPTRawMover.js
+
 const TripGPTRaw = require("../../models/TripWell/TripGPTRaw");
 const TripGPT = require("../../models/TripWell/TripGPT");
 
-async function moveLatestRawToTripGPT({ tripId, userId }) {
-  const raw = await TripGPTRaw.findOne({ tripId, userId }).sort({ timestamp: -1 });
-  if (!raw) throw new Error("No raw GPT entry found");
+async function GPTRawMover({ tripId, userId, rawId }) {
+  if (!tripId || !userId || !rawId) {
+    throw new Error("Missing required parameters to move GPT raw");
+  }
 
-  const content = raw.response?.choices?.[0]?.message?.content?.trim();
-  if (!content) throw new Error("No content in raw GPT response");
+  // 🔍 Fetch the raw GPT freeze frame
+  const raw = await TripGPTRaw.findById(rawId);
+  if (!raw || !raw.response) {
+    throw new Error("Raw GPT response not found");
+  }
 
-  const saved = await TripGPT.create({ tripId, userId, gptReply: content });
-  return { gptReply: saved.gptReply, replyId: saved._id };
+  const gptReply = raw.response.choices?.[0]?.message?.content?.trim();
+  if (!gptReply) {
+    throw new Error("No reply content found in GPT response");
+  }
+
+  // 💾 Save reply into TripGPT model
+  const savedReply = await TripGPT.create({
+    tripId,
+    userId,
+    gptReply,
+    timestamp: new Date(),
+  });
+
+  return {
+    gptReply,
+    replyId: savedReply._id,
+  };
 }
 
-module.exports = { moveLatestRawToTripGPT };
+module.exports = GPTRawMover;
