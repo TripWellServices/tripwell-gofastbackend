@@ -1,37 +1,65 @@
-// services/TripWell/GPTRawMover.js
-
+const OpenAI = require("openai");
+const mongoose = require("mongoose");
+const TripAsk = require("../../models/TripWell/TripAsk");
 const TripGPTRaw = require("../../models/TripWell/TripGPTRaw");
-const TripGPT = require("../../models/TripWell/TripGPT");
 
-async function GPTRawMover({ tripId, userId, rawId }) {
-  if (!tripId || !userId || !rawId) {
-    throw new Error("Missing required parameters to move GPT raw");
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// 🧠 Build the GPT prompt
+function buildPrompt({ userInput, tripId, userId }) {
+  return `
+You are TripWell AI, a smart assistant helping plan amazing trips.
+User ${userId || "anonymous"} is asking about Trip ${tripId}.
+
+Here’s what they said:
+"""
+${userInput}
+"""
+
+Reply with creative, specific ideas that match their vibe.
+`.trim();
+}
+
+// 🤖 Run GPT and save raw response
+async function handReply({ tripId, userId }) {
+  if (!tripId || !userId) throw new Error("Missing tripId or userId");
+
+  const tripObjectId = new mongoose.Types.ObjectId(tripId);
+
+  const latestAsk = await TripAsk.findOne({ tripId: tripObjectId, userId }).sort({ timestamp: -1 });
+  if (!latestAsk || !latestAsk.userInput) {
+    throw new Error("No userInput found in TripAsk");
   }
 
-  // 🔍 Fetch the raw GPT freeze frame
-  const raw = await TripGPTRaw.findById(rawId);
-  if (!raw || !raw.response) {
-    throw new Error("Raw GPT response not found");
-  }
+  const prompt = buildPrompt({ userInput: latestAsk.userInput, tripId, userId });
 
-  const gptReply = raw.response.choices?.[0]?.message?.content?.trim();
-  if (!gptReply) {
-    throw new Error("No reply content found in GPT response");
-  }
+  const response = await openai.chat.completions.create({
+    model: "gpt-4", // or "gpt-3.5-turbo"
+    messages: [
+      { role: "system", content: "You are TripWell AI." },
+      { role: "user", content: prompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 300,
+  });
 
-  // 💾 Save parsed reply into TripGPT model
-  const savedReply = await TripGPT.create({
-    tripId,
+  // 🔒 Convert to plain JSON to avoid Mongoose issues
+  const plainResponse = JSON.parse(JSON.stringify(response));
+
+  const freeze = await TripGPTRaw.create({
+    tripId: tripObjectId,
     userId,
-    gptReply,
-    parsed: {}, // placeholder — future structure parser
+    request: { prompt },
+    response: plainResponse,
     timestamp: new Date(),
   });
 
   return {
-    gptReply,
-    replyId: savedReply._id,
+    gptReply: plainResponse.choices?.[0]?.message?.content?.trim(),
+    rawId: freeze._id,
   };
 }
 
-module.exports = GPTRawMover;
+module.exports = { handReply };
