@@ -1,13 +1,14 @@
+// routes/TripWell/tripGPT.js
+
 const express = require("express");
 const router = express.Router({ mergeParams: true });
 
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const TripAsk = require("../../models/TripWell/TripAsk");
 const TripGPTRaw = require("../../models/TripWell/TripGPTRaw");
-const TripGPT = require("../../models/TripWell/TripGPT");
-
-const openai = require("../../config/openai");
+const { openai } = require("../../config/openai");
 const { deconstructGPTResponse } = require("../../services/TripWell/GPTResponseDeconstructor");
+const TripGPT = require("../../models/TripWell/TripGPT");
 
 router.post("/:tripId/gpt", verifyFirebaseToken, async (req, res) => {
   try {
@@ -16,13 +17,11 @@ router.post("/:tripId/gpt", verifyFirebaseToken, async (req, res) => {
 
     console.log("🧠 TripGPT route hit:", { tripId, userId });
 
-    // 1. Get the latest user ask
     const latestAsk = await TripAsk.findOne({ tripId, userId }).sort({ timestamp: -1 });
     if (!latestAsk || !latestAsk.userInput) {
-      return res.status(400).json({ error: "No saved ask found." });
+      return res.status(400).json({ error: "No saved ask found" });
     }
 
-    // 2. Build the GPT prompt
     const prompt = `
 You are TripWell AI, a smart assistant helping plan amazing trips.
 User ${userId} is asking about Trip ${tripId}.
@@ -33,8 +32,7 @@ ${latestAsk.userInput}
 """
 `.trim();
 
-    // 3. Fire GPT
-    const gptResponse = await openai.chat.completions.create({
+    const gptRawResponse = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         { role: "system", content: "You are TripWell AI." },
@@ -44,28 +42,27 @@ ${latestAsk.userInput}
       max_tokens: 300,
     });
 
-    // 4. Save full response in TripGPTRaw
+    // 💾 Save clean raw freeze frame (now as plain JSON)
     const raw = await TripGPTRaw.create({
       tripId,
       userId,
-      response: gptResponse,
+      prompt,
+      response: gptRawResponse.toJSON(),
       timestamp: new Date(),
     });
 
-    // 5. Parse reply content
-    const { gptReply } = deconstructGPTResponse(gptResponse);
+    // 🧠 Pull out the actual GPT reply string
+    const { gptReply } = deconstructGPTResponse(gptRawResponse);
 
-    // 6. Save to TripGPT
+    // 💾 Optionally persist the GPT reply (you can remove this if front-end only)
     await TripGPT.create({
       tripId,
       userId,
       gptReply,
-      parsed: {}, // placeholder
       timestamp: new Date(),
     });
 
-    // 7. Return to frontend
-    res.json({ gptReply });
+    return res.json({ gptReply });
   } catch (err) {
     console.error("❌ GPT reply failed:", err);
     res.status(500).json({ error: "GPT error", details: err.message });
