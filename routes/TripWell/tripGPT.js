@@ -51,7 +51,7 @@ async function handReply({ tripId, userId }) {
     tripId,
     userId,
     gptReply,
-    parsed: {}, // placeholder for structured parsing later
+    parsed: {},
     timestamp: new Date(),
   });
 
@@ -64,7 +64,7 @@ async function handReply({ tripId, userId }) {
 // === POST /tripwell/:tripId/gpt ===
 router.post("/:tripId/gpt", async (req, res) => {
   const { tripId } = req.params;
-  const { userId } = req.body;
+  const userId = req.user?.uid; // ✅ pull from verified Firebase user
 
   try {
     const result = await handReply({ tripId, userId });
