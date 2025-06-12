@@ -4,60 +4,38 @@ const router = express.Router({ mergeParams: true });
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const TripAsk = require("../../models/TripWell/TripAsk");
 const TripGPTRaw = require("../../models/TripWell/TripGPTRaw");
-const Trip = require("../../models/TripWell/TripBase");
-const OpenAI = require("openai");
-const mongoose = require("mongoose");
+const TripGPT = require("../../models/TripWell/TripGPT");
+
+const openai = require("../../config/openai");
 const { deconstructGPTResponse } = require("../../services/TripWell/GPTResponseDeconstructor");
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// 🧠 Build full trip-aware prompt
-function buildPrompt({ userInput, userId, tripData }) {
-  const destination = tripData?.destination || "an unspecified location";
-  const dates = tripData?.startDate && tripData?.endDate
-    ? `from ${new Date(tripData.startDate).toDateString()} to ${new Date(tripData.endDate).toDateString()}`
-    : "";
-
-  return `
-You are TripWell AI, a smart assistant helping plan amazing trips.
-
-User ${userId} is asking about a trip to ${destination} ${dates}.
-Here’s what they said:
-"""
-${userInput}
-"""
-
-Reply with creative, location-aware suggestions tailored to that trip.
-`.trim();
-}
 
 router.post("/:tripId/gpt", verifyFirebaseToken, async (req, res) => {
   try {
     const userId = req.user.uid;
     const { tripId } = req.params;
-    const tripObjectId = new mongoose.Types.ObjectId(tripId);
 
     console.log("🧠 TripGPT route hit:", { tripId, userId });
 
-    const latestAsk = await TripAsk.findOne({ tripId: tripObjectId, userId }).sort({ timestamp: -1 });
+    // 1. Get the latest user ask
+    const latestAsk = await TripAsk.findOne({ tripId, userId }).sort({ timestamp: -1 });
     if (!latestAsk || !latestAsk.userInput) {
-      return res.status(400).json({ error: "No saved ask found" });
+      return res.status(400).json({ error: "No saved ask found." });
     }
 
-    // 🧠 Hydrate trip details for destination context
-    const trip = await Trip.findById(tripObjectId);
+    // 2. Build the GPT prompt
+    const prompt = `
+You are TripWell AI, a smart assistant helping plan amazing trips.
+User ${userId} is asking about Trip ${tripId}.
 
-    const prompt = buildPrompt({
-      userInput: latestAsk.userInput,
-      userId,
-      tripData: trip,
-    });
+Here’s what they said:
+"""
+${latestAsk.userInput}
+"""
+`.trim();
 
-    // 🤖 Call GPT
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
+    // 3. Fire GPT
+    const gptResponse = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
       messages: [
         { role: "system", content: "You are TripWell AI." },
         { role: "user", content: prompt },
@@ -66,24 +44,28 @@ router.post("/:tripId/gpt", verifyFirebaseToken, async (req, res) => {
       max_tokens: 300,
     });
 
-    // 🧼 Deconstruct response into clean object
-    const freeze = deconstructGPTResponse(response);
-
-    // 💾 Save freeze-frame to TripGPTRaw
-    const saved = await TripGPTRaw.create({
-      tripId: tripObjectId,
+    // 4. Save full response in TripGPTRaw
+    const raw = await TripGPTRaw.create({
+      tripId,
       userId,
-      request: { prompt },
-      response: freeze,
+      response: gptResponse,
       timestamp: new Date(),
     });
 
-    const gptReply = freeze.choices?.[0]?.message?.content?.trim();
+    // 5. Parse reply content
+    const { gptReply } = deconstructGPTResponse(gptResponse);
 
-    res.json({
+    // 6. Save to TripGPT
+    await TripGPT.create({
+      tripId,
+      userId,
       gptReply,
-      rawId: saved._id,
+      parsed: {}, // placeholder
+      timestamp: new Date(),
     });
+
+    // 7. Return to frontend
+    res.json({ gptReply });
   } catch (err) {
     console.error("❌ GPT reply failed:", err);
     res.status(500).json({ error: "GPT error", details: err.message });
