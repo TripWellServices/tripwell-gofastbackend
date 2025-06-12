@@ -4,6 +4,7 @@ const router = express.Router({ mergeParams: true });
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const TripAsk = require("../../models/TripWell/TripAsk");
 const TripGPTRaw = require("../../models/TripWell/TripGPTRaw");
+const Trip = require("../../models/TripWell/TripBase");
 const OpenAI = require("openai");
 const mongoose = require("mongoose");
 const { deconstructGPTResponse } = require("../../services/TripWell/GPTResponseDeconstructor");
@@ -11,6 +12,26 @@ const { deconstructGPTResponse } = require("../../services/TripWell/GPTResponseD
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// 🧠 Build full trip-aware prompt
+function buildPrompt({ userInput, userId, tripData }) {
+  const destination = tripData?.destination || "an unspecified location";
+  const dates = tripData?.startDate && tripData?.endDate
+    ? `from ${new Date(tripData.startDate).toDateString()} to ${new Date(tripData.endDate).toDateString()}`
+    : "";
+
+  return `
+You are TripWell AI, a smart assistant helping plan amazing trips.
+
+User ${userId} is asking about a trip to ${destination} ${dates}.
+Here’s what they said:
+"""
+${userInput}
+"""
+
+Reply with creative, location-aware suggestions tailored to that trip.
+`.trim();
+}
 
 router.post("/:tripId/gpt", verifyFirebaseToken, async (req, res) => {
   try {
@@ -20,21 +41,19 @@ router.post("/:tripId/gpt", verifyFirebaseToken, async (req, res) => {
 
     console.log("🧠 TripGPT route hit:", { tripId, userId });
 
-    // 🔍 Get the latest ask
     const latestAsk = await TripAsk.findOne({ tripId: tripObjectId, userId }).sort({ timestamp: -1 });
     if (!latestAsk || !latestAsk.userInput) {
       return res.status(400).json({ error: "No saved ask found" });
     }
 
-    const prompt = `
-You are TripWell AI, a smart assistant helping plan amazing trips.
-User ${userId} is asking about Trip ${tripId}.
+    // 🧠 Hydrate trip details for destination context
+    const trip = await Trip.findById(tripObjectId);
 
-Here’s what they said:
-"""
-${latestAsk.userInput}
-"""
-`.trim();
+    const prompt = buildPrompt({
+      userInput: latestAsk.userInput,
+      userId,
+      tripData: trip,
+    });
 
     // 🤖 Call GPT
     const response = await openai.chat.completions.create({
@@ -47,15 +66,10 @@ ${latestAsk.userInput}
       max_tokens: 300,
     });
 
-    // 🧪 Debug the GPT response structure
-    console.log("🔍 GPT response type:", typeof response);
-    console.log("🔍 Response object keys:", Object.keys(response || {}));
-    console.log("🔍 GPT reply content:", response?.choices?.[0]?.message?.content);
-
-    // 🧼 Deconstruct it safely
+    // 🧼 Deconstruct response into clean object
     const freeze = deconstructGPTResponse(response);
 
-    // 💾 Save to TripGPTRaw
+    // 💾 Save freeze-frame to TripGPTRaw
     const saved = await TripGPTRaw.create({
       tripId: tripObjectId,
       userId,
