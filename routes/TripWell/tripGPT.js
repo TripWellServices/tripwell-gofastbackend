@@ -12,17 +12,16 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-function buildPrompt({ userInput, tripId, userId }) {
+function buildPrompt({ userInput }) {
   return `
-You are TripWell AI, a smart assistant helping plan amazing trips.
-User ${userId || "anonymous"} is asking about Trip ${tripId}.
+You are TripWell AI, a smart assistant helping people plan unforgettable travel experiences.
 
-Here’s what they said:
+Here’s the traveler's question:
 """
 ${userInput}
 """
 
-Reply with creative, specific ideas that match their vibe.
+Respond with specific, thoughtful suggestions. Do **not** include system metadata like trip IDs or user IDs in your answer. Keep your tone friendly, knowledgeable, and focused on improving the traveler’s real-world experience.
 `.trim();
 }
 
@@ -32,12 +31,16 @@ async function handReply({ tripId, userId }) {
   const latestAsk = await TripAsk.findOne({ tripId, userId }).sort({ timestamp: -1 });
   if (!latestAsk || !latestAsk.userInput) throw new Error("No userInput found in TripAsk");
 
-  const prompt = buildPrompt({ userInput: latestAsk.userInput, tripId, userId });
+  const prompt = buildPrompt({ userInput: latestAsk.userInput });
 
   const rawResponse = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
     messages: [
-      { role: "system", content: "You are TripWell AI." },
+      {
+        role: "system",
+        content:
+          "You are TripWell AI. You speak directly to travelers. Never mention system IDs like tripId or userId. Offer specific suggestions like restaurants, activities, or hidden gems.",
+      },
       { role: "user", content: prompt },
     ],
     temperature: 0.7,
@@ -64,7 +67,7 @@ async function handReply({ tripId, userId }) {
 // === POST /tripwell/:tripId/gpt ===
 router.post("/:tripId/gpt", async (req, res) => {
   const { tripId } = req.params;
-  const userId = req.user?.uid; // ✅ pull from verified Firebase user
+  const userId = req.user?.uid;
 
   try {
     const result = await handReply({ tripId, userId });
