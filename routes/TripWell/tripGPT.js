@@ -1,71 +1,77 @@
 // routes/TripWell/tripGPT.js
 
 const express = require("express");
-const router = express.Router({ mergeParams: true });
+const router = express.Router();
+const OpenAI = require("openai");
 
-const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
-const TripAsk = require("../../models/TripWell/TripAsk");
-const TripGPTRaw = require("../../models/TripWell/TripGPTRaw");
-const { openai } = require("../../config/openai");
-const { deconstructGPTResponse } = require("../../services/TripWell/GPTResponseDeconstructor");
 const TripGPT = require("../../models/TripWell/TripGPT");
+const TripAsk = require("../../models/TripWell/TripAsk");
+const { deconstructGPTResponse } = require("../../services/TripWell/deconstructGPTResponse");
 
-router.post("/:tripId/gpt", verifyFirebaseToken, async (req, res) => {
-  try {
-    const userId = req.user.uid;
-    const { tripId } = req.params;
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-    console.log("🧠 TripGPT route hit:", { tripId, userId });
-
-    const latestAsk = await TripAsk.findOne({ tripId, userId }).sort({ timestamp: -1 });
-    if (!latestAsk || !latestAsk.userInput) {
-      return res.status(400).json({ error: "No saved ask found" });
-    }
-
-    const prompt = `
+function buildPrompt({ userInput, tripId, userId }) {
+  return `
 You are TripWell AI, a smart assistant helping plan amazing trips.
-User ${userId} is asking about Trip ${tripId}.
+User ${userId || "anonymous"} is asking about Trip ${tripId}.
 
 Here’s what they said:
 """
-${latestAsk.userInput}
+${userInput}
 """
+
+Reply with creative, specific ideas that match their vibe.
 `.trim();
+}
 
-    const gptRawResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: "You are TripWell AI." },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 300,
-    });
+async function handReply({ tripId, userId }) {
+  if (!tripId || !userId) throw new Error("Missing tripId or userId");
 
-    // 💾 Save clean raw freeze frame (now as plain JSON)
-    const raw = await TripGPTRaw.create({
-      tripId,
-      userId,
-      prompt,
-      response: gptRawResponse.toJSON(),
-      timestamp: new Date(),
-    });
+  const latestAsk = await TripAsk.findOne({ tripId, userId }).sort({ timestamp: -1 });
+  if (!latestAsk || !latestAsk.userInput) throw new Error("No userInput found in TripAsk");
 
-    // 🧠 Pull out the actual GPT reply string
-    const { gptReply } = deconstructGPTResponse(gptRawResponse);
+  const prompt = buildPrompt({ userInput: latestAsk.userInput, tripId, userId });
 
-    // 💾 Optionally persist the GPT reply (you can remove this if front-end only)
-    await TripGPT.create({
-      tripId,
-      userId,
-      gptReply,
-      timestamp: new Date(),
-    });
+  const rawResponse = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+      { role: "system", content: "You are TripWell AI." },
+      { role: "user", content: prompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 300,
+  });
 
-    return res.json({ gptReply });
+  const safeResponse = deconstructGPTResponse(rawResponse);
+  const gptReply = safeResponse.choices[0].message.content.trim();
+
+  const savedReply = await TripGPT.create({
+    tripId,
+    userId,
+    gptReply,
+    parsed: {}, // placeholder for structured parsing later
+    timestamp: new Date(),
+  });
+
+  return {
+    gptReply,
+    replyId: savedReply._id,
+  };
+}
+
+// === POST /tripwell/:tripId/gpt ===
+router.post("/:tripId/gpt", async (req, res) => {
+  const { tripId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    const result = await handReply({ tripId, userId });
+    res.json(result);
   } catch (err) {
     console.error("❌ GPT reply failed:", err);
-    res.status(500).json({ error: "GPT error", details: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
