@@ -36,9 +36,9 @@ ${latestAsk.userInput}
 """
 `.trim();
 
-    // 🤖 Call OpenAI
+    // 🤖 Call GPT
     const response = await openai.chat.completions.create({
-      model: "gpt-4", // or "gpt-3.5-turbo"
+      model: "gpt-4",
       messages: [
         { role: "system", content: "You are TripWell AI." },
         { role: "user", content: prompt },
@@ -47,10 +47,15 @@ ${latestAsk.userInput}
       max_tokens: 300,
     });
 
-    // 🧼 Deconstruct GPT class response
+    // 🧪 Debug the GPT response structure
+    console.log("🔍 GPT response type:", typeof response);
+    console.log("🔍 Response object keys:", Object.keys(response || {}));
+    console.log("🔍 GPT reply content:", response?.choices?.[0]?.message?.content);
+
+    // 🧼 Deconstruct it safely
     const freeze = deconstructGPTResponse(response);
 
-    // 💾 Save freeze frame to TripGPTRaw
+    // 💾 Save to TripGPTRaw
     const saved = await TripGPTRaw.create({
       tripId: tripObjectId,
       userId,
@@ -61,7 +66,6 @@ ${latestAsk.userInput}
 
     const gptReply = freeze.choices?.[0]?.message?.content?.trim();
 
-    // 🧠 Respond with clean reply + rawId
     res.json({
       gptReply,
       rawId: saved._id,
