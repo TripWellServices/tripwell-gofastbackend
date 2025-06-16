@@ -6,10 +6,10 @@ require("dotenv").config();
 
 const app = express();
 
-// === CORS CONFIG (FINAL FULL SEND) ===
+// === CORS CONFIG ===
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://tripwell-frontend.vercel.app" // ✅ Deployed frontend
+  "https://tripwell-frontend.vercel.app"
 ];
 
 const corsOptions = {
@@ -29,7 +29,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
-// === JSON PARSER ===
+// === PARSER ===
 app.use(express.json());
 
 // === FIREBASE ADMIN INIT ===
@@ -51,20 +51,22 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// === FIREBASE TOKEN MIDDLEWARE ===
+// === MIDDLEWARE ===
 const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
 
-// === ROUTES: TRIPWELL CORE ===
-app.use("/trip", require("./routes/TripWell/tripRoutes"));
-app.use("/trip", require("./routes/TripWell/userTripUpdate"));
-app.use("/trip", require("./routes/TripWell/profileSetup"));
+// === TRIPWELL CORE ROUTES (No token) ===
+app.use("/trip", require("./routes/TripWell/tripRoutes"));          // Trip create/join
+app.use("/trip", require("./routes/TripWell/userTripUpdate"));      // Patch trip fields
+app.use("/trip", require("./routes/TripWell/profileSetup"));        // Profile/Onboarding
 
-// === ROUTES: TRIPWELL SECURE GPT FLOW ===
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));     // ✅ Auth + user/trip hydration
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripChat"));   // ✅ Save user ask
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripGPT"));    // ✅ GPT reply based on ask
+// === TRIPWELL GPT SECURE FLOW (Requires Firebase token) ===
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));        // Auth + user/trip hydration
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripChat"));      // Save user question
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripGPT"));       // GPT reply
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/sceneSetter"));   // GPT scene intro
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripPlanner"));   // GPT anchor suggestions
 
-// === ROOT ROUTE ===
+// === ROOT CHECK ===
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "ok",
