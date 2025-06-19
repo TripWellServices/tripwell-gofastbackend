@@ -1,8 +1,3 @@
-// models/TripWell/TripIntent.js
-
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
-
 const TripIntentSchema = new Schema({
   tripId: {
     type: Schema.Types.ObjectId,
@@ -14,22 +9,21 @@ const TripIntentSchema = new Schema({
     ref: 'User',
     required: true,
   },
-  priorities: [String],    // e.g., ["memories", "sightseeing", "relaxation"]
-  vibes: [String],         // e.g., ["chill", "explore", "adventure"]
-  mobility: [String],      // e.g., ["walk", "bike", "day trip"]
+  priorities: [String],
+  vibes: [String],
+  mobility: [String],
   budget: {
-    type: String,          // e.g., "budget", "moderate", "splurge"
+    type: String, // Keep string if you're using descriptive values ("moderate", etc)
     default: "moderate",
   },
-  anchorPrefs: [String],   // e.g., ["Eiffel Tower", "Notre Dame"]
+  travelPace: [String], // ✅ NEW
+  anchorPrefs: [String],
   logicScore: {
     type: Number,
-    default: 0,            // Optional weighting value
+    default: 0,
   },
   createdAt: {
     type: Date,
     default: Date.now,
   }
 });
-
-module.exports = mongoose.model('TripIntent', TripIntentSchema);
