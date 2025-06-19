@@ -1,3 +1,6 @@
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
+
 const TripIntentSchema = new Schema({
   tripId: {
     type: Schema.Types.ObjectId,
@@ -13,7 +16,7 @@ const TripIntentSchema = new Schema({
   vibes: [String],
   mobility: [String],
   budget: {
-    type: String, // Keep string if you're using descriptive values ("moderate", etc)
+    type: String,
     default: "moderate",
   },
   travelPace: [String], // ✅ NEW
@@ -27,3 +30,5 @@ const TripIntentSchema = new Schema({
     default: Date.now,
   }
 });
+
+module.exports = mongoose.model('TripIntent', TripIntentSchema);
