@@ -12,15 +12,15 @@ const TripIntentSchema = new Schema({
     ref: 'User',
     required: true,
   },
-  priorities: [String],
-  vibes: [String],
-  mobility: [String],
+  priorities: [String],      // e.g., ["memories", "sightseeing", "relaxation"]
+  vibes: [String],           // e.g., ["chill", "explore", "adventure"]
+  mobility: [String],        // e.g., ["walk", "bike", "day trip"]
   budget: {
-    type: String,
+    type: String,            // e.g., "budget", "moderate", "splurge"
     default: "moderate",
   },
-  travelPace: [String], // ✅ NEW
-  anchorPrefs: [String],
+  travelPace: [String],      // e.g., ["Stay in one place", "Jump around"]
+  anchorPrefs: [String],     // optional favorites (can be used later)
   logicScore: {
     type: Number,
     default: 0,

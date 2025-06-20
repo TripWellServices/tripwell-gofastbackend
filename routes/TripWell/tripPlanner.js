@@ -1,9 +1,3 @@
-const express = require("express");
-const router = express.Router();
-
-const TripIntent = require("../../models/TripWell/TripIntent");
-const GPTSceneSetterService = require("../../services/TripWell/GPTSceneSetterService");
-
 router.post("/tripwell/tripplanner/:tripId", async (req, res) => {
   try {
     const { tripId } = req.params;
@@ -13,7 +7,7 @@ router.post("/tripwell/tripplanner/:tripId", async (req, res) => {
       return res.status(400).json({ error: "Missing tripId or userId" });
     }
 
-    const existing = await TripIntent.findOne({ tripId });
+    const existing = await TripIntent.findOne({ tripId, userId });  // ✅ FIXED
 
     if (existing) {
       existing.priorities = priorities;
@@ -34,7 +28,6 @@ router.post("/tripwell/tripplanner/:tripId", async (req, res) => {
       });
     }
 
-    // Generate scene text (trip intro)
     const scene = await GPTSceneSetterService.generateSceneSetter(tripId, userId);
 
     return res.json({ success: true, scene });
@@ -43,5 +36,3 @@ router.post("/tripwell/tripplanner/:tripId", async (req, res) => {
     return res.status(500).json({ error: "Server error" });
   }
 });
-
-module.exports = router;
