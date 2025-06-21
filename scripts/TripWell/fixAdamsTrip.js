@@ -11,10 +11,8 @@ async function fixAdamsTrip() {
     useUnifiedTopology: true,
   });
 
-  // 🔒 Hardcoded known trip ID from Adam's tripBase
-  const tripId = "683facd5a84346dd938bf345";
-
-  const trip = await TripBase.findById(tripId);
+  const tripId = "683facd5a84346dd938bf345"; // 🧠 ObjectId for Adam's trip
+  const trip = await TripBase.findById(new mongoose.Types.ObjectId(tripId));
 
   if (!trip) {
     console.error("❌ Trip not found.");
