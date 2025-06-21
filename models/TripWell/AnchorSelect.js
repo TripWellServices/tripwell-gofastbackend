@@ -17,6 +17,11 @@ const AnchorSelectSchema = new mongoose.Schema({
       whyItFits: String,
       type: String,
       modifiers: [String], // optional: "dayTrip", "jumpingOffPoint"
+      sentiment: {
+        type: String,
+        enum: ["like", "dislike"],
+        required: true,
+      }
     }
   ],
   timestamp: {

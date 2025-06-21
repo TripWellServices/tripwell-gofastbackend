@@ -1,21 +1,15 @@
 const express = require("express");
 const router = express.Router();
+const { createTripBaseWithMetadata } = require("../../services/TripWell/tripSetupService");
 const TripBase = require("../../models/TripWell/TripBase");
-const { parseTrip } = require("../../services/TripWell/tripParser");
 
 // === CREATE NEW TRIP ===
 router.post("/tripbase", async (req, res) => {
   try {
-    const trip = await TripBase.create(req.body);
+    const userId = req.body.userId;
+    const tripData = req.body;
 
-    // 🔥 Normalize fields
-    const parsed = parseTrip(trip);
-    trip.destination = parsed.destination;
-    trip.dateRange = parsed.dateRange;
-    trip.daysTotal = parsed.daysTotal;
-    trip.season = parsed.season;
-
-    await trip.save();
+    const trip = await createTripBaseWithMetadata({ userId, tripData });
 
     res.status(201).json(trip);
   } catch (err) {
