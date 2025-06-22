@@ -6,55 +6,94 @@ const openai = new OpenAI();
 
 async function generateItineraryFromAnchorLogic(tripId) {
   try {
-    // Fetch core trip data
     const tripIntent = await TripIntent.findOne({ tripId });
     const tripBase = await TripBase.findOne({ tripId });
     const anchorLogicList = await AnchorLogic.find({ tripId });
 
     if (!tripIntent || !tripBase || anchorLogicList.length === 0) {
-      throw new Error("Missing required trip data.");
+      throw new Error("Missing trip data or anchors.");
     }
 
-    // Calculate totalDays from tripStart and tripEnd
-    const start = new Date(tripBase.tripStart);
-    const end = new Date(tripBase.tripEnd);
-    const totalDays = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1);
+    const { destination, season, startDate, daysTotal, purpose, whoWith } = tripBase;
 
-    // GPT Prompt Build
-    const systemPrompt = `You are Angela, an intuitive travel planner. 
-Your job is to build a ${totalDays}-day itinerary for a trip to ${tripIntent.destination}.
-Use the anchor experiences provided. Distribute them across ${totalDays} days, balancing pace (${tripIntent.pace}) and trip vibe (${tripIntent.vibe}).
-Make sure each day includes morning, lunch, afternoon, and evening blocks if possible.`;
+    // Generate day map with travel day (Day 0)
+    const start = new Date(startDate);
+    const dayMap = Array.from({ length: daysTotal + 1 }).map((_, i) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + (i - 1)); // Day 0 = travel day
 
-    const userPrompt = {
-      tripIntent,
-      tripBase,
-      totalDays,
-      anchorLogicList,
-    };
+      return {
+        dayIndex: i - 1,
+        dayNumber: i,
+        isoDate: date.toISOString().split("T")[0],
+        weekday: date.toLocaleDateString("en-US", { weekday: "long" }),
+        formatted: date.toLocaleDateString("en-US", { month: "long", day: "numeric" }),
+        label: `Day ${i} – ${date.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric"
+        })}`
+      };
+    });
+
+    const systemPrompt = `
+You are Angela, a highly intuitive AI travel planner.
+
+You are building a ${daysTotal}-day itinerary for a trip to ${destination} during the ${season}.
+This trip is ${whoWith?.join(", ") || "unspecified"} and the purpose is "${purpose || "to enjoy and explore"}".
+
+The traveler has already selected experiences (anchors) — use them to guide your day structure.
+Use smart pacing:
+- Group anchors by neighborhood
+- Include food in afternoon or evening
+- Spread out major attractions
+
+Follow this format:
+
+Day X – {Weekday}, {Month Day}  
+Summary of the day: ...
+
+Morning:
+• ...
+
+Afternoon:
+• ...
+
+Evening:
+• ...
+
+Day 0 should be a travel day with light optional content only.
+
+Only include days 0 through ${daysTotal}. Each day must use its real date and weekday from the calendar below.
+`;
+
+    const userPrompt = `
+Here is the trip calendar:
+${JSON.stringify(dayMap, null, 2)}
+
+Here are the selected anchor experiences:
+${JSON.stringify(anchorLogicList, null, 2)}
+
+Here is the intent:
+${JSON.stringify(tripIntent, null, 2)}
+`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       temperature: 0.8,
       messages: [
         { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content: `Build the full itinerary based on this data:\n\n${JSON.stringify(userPrompt)}`,
-        },
-      ],
+        { role: "user", content: userPrompt }
+      ]
     });
 
-    const content = completion.choices[0]?.message?.content;
+    const content = completion.choices?.[0]?.message?.content;
 
-    // Try to parse response as JSON
-    try {
-      return JSON.parse(content);
-    } catch (err) {
-      throw new Error("Failed to parse GPT response as JSON.");
-    }
+    if (!content) throw new Error("No GPT output received.");
+
+    return content.trim(); // Plain string for MVP 2 display
   } catch (error) {
-    console.error("Itinerary GPT Error:", error);
+    console.error("Angela itinerary generation error:", error);
     throw error;
   }
 }
