@@ -1,45 +1,43 @@
-// scripts/TripWell/fixAdamsTrip.js
-
 const mongoose = require("mongoose");
 const TripBase = require("../../models/TripWell/TripBase");
+const { parseTrip } = require("../../services/TripWell/tripSetupService");
 
 require("dotenv").config();
 
-async function fixAdamsTrip() {
-  await mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+const MONGO_URI = process.env.MONGO_URI;
 
-  const tripId = "683facd5a84346dd938bf345"; // 🧠 ObjectId for Adam's trip
-  const trip = await TripBase.findById(new mongoose.Types.ObjectId(tripId));
+async function run() {
+  console.log("🌐 Connecting to Mongo:", MONGO_URI);
+  await mongoose.connect(MONGO_URI);
+  console.log("✅ Mongo connected:", mongoose.connection.name);
 
+  const tripId = "683facd5a84346dd938bf345"; // 👈 Real ObjectId
+  const userId = "5m5XpT4J6Qf8B2tMUawHBKbvKbA2"; // 👈 Real Firebase UID
+
+  const trip = await TripBase.findById(tripId);
   if (!trip) {
     console.error("❌ Trip not found.");
-    await mongoose.disconnect();
     return;
   }
 
-  trip.daysTotal = 5;
-  trip.season = "summer";
-  trip.whoWith = ["Daughter"];
+  // Inject userId if missing
+  if (!trip.userId) trip.userId = userId;
+
+  const parsed = parseTrip(trip);
+
+  // Now assign safe values back
+  trip.city = parsed.city;
+  trip.destination = parsed.destination;
+  trip.daysTotal = parsed.daysTotal;
+  trip.dateRange = parsed.dateRange;
+  trip.season = parsed.season;
   trip.partyCount = 1;
+  trip.whoWith = ["Daughter"];
 
   await trip.save();
-
-  console.log(`✅ Trip patched: ${trip._id}`);
-  console.log({
-    daysTotal: trip.daysTotal,
-    season: trip.season,
-    whoWith: trip.whoWith,
-    partyCount: trip.partyCount,
-  });
-
-  await mongoose.disconnect();
-  console.log("🔥 Done.");
+  console.log("✅ Trip patched and saved.");
 }
 
-fixAdamsTrip().catch((err) => {
-  console.error("💥 Script failed:", err);
-  process.exit(1);
+run().catch((err) => {
+  console.error("💥 Script error:", err);
 });

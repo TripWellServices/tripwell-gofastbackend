@@ -1,3 +1,4 @@
+// services/TripWell/anchorgptService.js
 const OpenAI = require("openai");
 const mongoose = require("mongoose");
 
@@ -9,20 +10,22 @@ const openai = new OpenAI({
 });
 
 // 🧠 GPT prompt builder
-function buildAnchorPrompt({ vibes, priorities, mobility, travelPace, budget, city, season }) {
+function buildAnchorPrompt({ vibes, priorities, mobility, travelPace, budget, city, season, purpose, whoWith }) {
   return `
 You are Angela, TripWell’s smart travel planner.
 
 Suggest 5 immersive travel *anchor experiences* based on the traveler’s input. Anchor experiences are major parts of a trip — like a full-day excursion, iconic site visit, or themed cultural activity — that shape the rest of the day.
 
 Traveler is going to **${city}** during **${season}**.
+Purpose of trip: ${purpose || "not specified"}
+Who they’re traveling with: ${Array.isArray(whoWith) ? whoWith.join(", ") : whoWith || "unspecified"}
 
 Traveler Preferences:
-- Vibes: ${vibes.join(", ") || "any"}
-- Priorities: ${priorities.join(", ") || "any"}
-- Mobility: ${mobility.join(", ") || "any"}
+- Vibes: ${vibes?.join(", ") || "any"}
+- Priorities: ${priorities?.join(", ") || "any"}
+- Mobility: ${mobility?.join(", ") || "any"}
 - Budget: ${budget || "flexible"}
-- Travel pace: ${travelPace.join(", ") || "any"}
+- Travel pace: ${travelPace?.join(", ") || "any"}
 
 Respond as an array of 5 JSON objects. Each object should have:
 - title (string)
@@ -33,15 +36,6 @@ Respond as an array of 5 JSON objects. Each object should have:
 
 Do **not** include markdown or explanations outside the array.
 `.trim();
-}
-
-// 🌦️ Season detector utility
-function getSeason(date) {
-  const month = new Date(date).getMonth() + 1;
-  if ([12, 1, 2].includes(month)) return "winter";
-  if ([3, 4, 5].includes(month)) return "spring";
-  if ([6, 7, 8].includes(month)) return "summer";
-  return "fall";
 }
 
 // 🤖 Main GPT anchor suggestion service
@@ -57,8 +51,10 @@ async function generateAnchorSuggestions({ tripId, userId }) {
 
   const prompt = buildAnchorPrompt({
     ...tripIntent.toObject(),
-    city: tripBase.city || "the destination",
-    season: getSeason(tripBase.startDate)
+    city: tripBase.city,
+    season: tripBase.season, // ✅ source of truth now
+    purpose: tripBase.purpose,
+    whoWith: tripBase.whoWith,
   });
 
   try {

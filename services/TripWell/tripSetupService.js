@@ -1,42 +1,45 @@
-const mongoose = require("mongoose");
-const TripBase = require("../../models/TripWell/TripBase");
+// services/TripWell/tripSetupService.js
 
-// 🔢 Canon: total day count (inclusive)
-function getTripLength(start, end) {
-  if (!start || !end) return null;
-  const oneDay = 1000 * 60 * 60 * 24;
-  return Math.round((new Date(end) - new Date(start)) / oneDay) + 1;
+const { differenceInCalendarDays, format } = require("date-fns");
+
+function getSeason(date) {
+  const month = new Date(date).getMonth() + 1;
+  if ([12, 1, 2].includes(month)) return "winter";
+  if ([3, 4, 5].includes(month)) return "spring";
+  if ([6, 7, 8].includes(month)) return "summer";
+  return "fall";
 }
 
-// 🍂 Canon: get season by start date
-function getSeason(dateStr) {
-  const date = new Date(dateStr);
-  const month = date.getMonth() + 1;
-  if ([12, 1, 2].includes(month)) return "Winter";
-  if ([3, 4, 5].includes(month)) return "Spring";
-  if ([6, 7, 8].includes(month)) return "Summer";
-  return "Fall";
-}
+function parseTrip(trip) {
+  if (!trip) throw new Error("Trip object is required");
 
-// 🧠 Canonical TripBase creation
-async function createTripBaseWithMetadata({ userId, tripData }) {
-  if (!userId || !tripData) throw new Error("Missing userId or trip data");
+  const parsed = { ...trip.toObject?.() || trip };
 
-  const { startDate, endDate } = tripData;
-  const season = getSeason(startDate);
-  const daysTotal = getTripLength(startDate, endDate);
+  const start = new Date(parsed.startDate);
+  const end = new Date(parsed.endDate);
 
-  const trip = new TripBase({
-    ...tripData,
-    userId,
-    season,
-    daysTotal,
-  });
+  // Normalize city + destination
+  const fallbackCity =
+    parsed.destination?.trim() ||
+    parsed.city?.trim() ||
+    parsed.destinations?.[0]?.city?.trim() ||
+    "Unknown";
 
-  await trip.save(); // ✅ Model hook patches city/destination
-  return trip;
+  parsed.city = fallbackCity;
+  parsed.destination = fallbackCity;
+
+  // Add day count
+  parsed.daysTotal = differenceInCalendarDays(end, start) + 1;
+
+  // Format range string
+  parsed.dateRange = `${format(start, "MMM d")} – ${format(end, "MMM d")}`;
+
+  // Season
+  parsed.season = getSeason(start);
+
+  return parsed;
 }
 
 module.exports = {
-  createTripBaseWithMetadata,
+  parseTrip,
 };
