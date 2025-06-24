@@ -1,3 +1,9 @@
+// routes/TripWell/tripAnchorRoutes.js
+
+const express = require("express");
+const router = express.Router();
+const TripIntent = require("../../models/TripWell/TripIntent");
+
 // 🔁 Save selected anchors (distinct from GPT gen)
 router.post("/tripwell/anchorselects/:tripId", async (req, res) => {
   try {
@@ -22,3 +28,5 @@ router.post("/tripwell/anchorselects/:tripId", async (req, res) => {
     res.status(500).json({ error: "Failed to save anchor selection" });
   }
 });
+
+module.exports = router;

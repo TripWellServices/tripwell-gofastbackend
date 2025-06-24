@@ -54,10 +54,19 @@ mongoose
 // === MIDDLEWARE ===
 const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
 
-// === TRIPWELL CORE ROUTES (No token) ===
-app.use("/trip", require("./routes/TripWell/tripRoutes"));          // Trip create/join
-app.use("/trip", require("./routes/TripWell/userTripUpdate"));      // Patch trip fields
-app.use("/trip", require("./routes/TripWell/profileSetup"));        // Profile/Onboarding
+// === TRIPWELL CORE ROUTES // 🧭 TripWell Route Mounts (modularized)
+app.use("/tripwell/anchors", require("./routes/TripWell/tripAnchorRoutes"));
+app.use("/tripwell/anchorselects", require("./routes/TripWell/anchorSelectRoutes"));
+app.use("/tripwell/itinerary", require("./routes/TripWell/itineraryRoutes"));
+app.use("/tripwell/profile", require("./routes/TripWell/profileSetup"));
+app.use("/tripwell/scene", require("./routes/TripWell/sceneSetter"));
+app.use("/tripwell/chat", require("./routes/TripWell/tripChat"));
+app.use("/tripwell/gpt", require("./routes/TripWell/tripGPT"));
+app.use("/tripwell/tripplanner", require("./routes/TripWell/tripPlanner"));
+app.use("/tripwell/tripbase", require("./routes/TripWell/tripbaseRoutes"));
+app.use("/tripwell/userupdate", require("./routes/TripWell/userTripUpdate"));
+app.use("/tripwell/whoami", require("./routes/TripWell/whoami"));
+
 
 // === TRIPWELL GPT SECURE FLOW (Requires Firebase token) ===
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));        // Auth + user/trip hydration
