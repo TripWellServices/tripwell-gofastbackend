@@ -6,8 +6,8 @@ const openai = new OpenAI();
 
 async function generateItineraryFromAnchorLogic(tripId) {
   try {
-    const tripIntent = await TripIntent.findOne({ tripId });
-    const tripBase = await TripBase.findOne({ tripId });
+    const tripIntent = await TripIntent.findById(tripId);
+    const tripBase = await TripBase.findById(tripId);
     const anchorLogicList = await AnchorLogic.find({ tripId });
 
     if (!tripIntent || !tripBase || anchorLogicList.length === 0) {
@@ -65,18 +65,18 @@ Evening:
 Day 0 should be a travel day with light optional content only.
 
 Only include days 0 through ${daysTotal}. Each day must use its real date and weekday from the calendar below.
-`;
+    `.trim();
 
     const userPrompt = `
 Here is the trip calendar:
 ${JSON.stringify(dayMap, null, 2)}
 
 Here are the selected anchor experiences:
-${JSON.stringify(anchorLogicList, null, 2)}
+${JSON.stringify(anchorLogicList[0]?.enrichedAnchors || [], null, 2)}
 
-Here is the intent:
+Here is the trip intent:
 ${JSON.stringify(tripIntent, null, 2)}
-`;
+    `.trim();
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
@@ -88,10 +88,9 @@ ${JSON.stringify(tripIntent, null, 2)}
     });
 
     const content = completion.choices?.[0]?.message?.content;
-
     if (!content) throw new Error("No GPT output received.");
 
-    return content.trim(); // Plain string for MVP 2 display
+    return content.trim(); // Plain string for MVP2 display
   } catch (error) {
     console.error("Angela itinerary generation error:", error);
     throw error;

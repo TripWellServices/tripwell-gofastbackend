@@ -1,41 +1,47 @@
-const { openai } = require("../../utils/openai");
+const { OpenAI } = require("openai");
+const openai = new OpenAI();
 
-module.exports = async ({ feedback, dayIndex, previousBlocks, summary }) => {
-  const prompt = `
-You are a helpful travel assistant named Angela. The user previously had the following itinerary for Day ${dayIndex}:
+async function tripDayGPTModifier({ feedback, dayIndex, previousBlocks, summary }) {
+  const systemPrompt = `
+You are Angela, TripWell’s smart itinerary planner.
 
-Summary: ${summary || "None"}
+You’re improving a specific day of a trip itinerary based on user feedback. Use the feedback below to revise the existing blocks and summary. Keep smart pacing, stay within the daypart structure (morning, afternoon, evening), and preserve trip realism.
 
-Morning: ${previousBlocks?.morning?.title || "N/A"} - ${previousBlocks?.morning?.desc || ""}
-Afternoon: ${previousBlocks?.afternoon?.title || "N/A"} - ${previousBlocks?.afternoon?.desc || ""}
-Evening: ${previousBlocks?.evening?.title || "N/A"} - ${previousBlocks?.evening?.desc || ""}
-
-The user gave this feedback to revise the day:
-"${feedback}"
-
-Please generate a new itinerary for this day. Reply in JSON:
+Return in this format:
 {
-  "summary": "string",
-  "blocks": {
-    "morning": { "title": "string", "desc": "string" },
-    "afternoon": { "title": "string", "desc": "string" },
-    "evening": { "title": "string", "desc": "string" }
+  summary: "...",
+  blocks: {
+    morning: { title: "...", desc: "..." },
+    afternoon: { title: "...", desc: "..." },
+    evening: { title: "...", desc: "..." }
   }
 }
-`;
+  `.trim();
+
+  const userPrompt = `
+Day index: ${dayIndex}
+Original summary: ${summary}
+
+Original blocks:
+${JSON.stringify(previousBlocks, null, 2)}
+
+User feedback:
+"${feedback}"
+  `.trim();
 
   const response = await openai.chat.completions.create({
     model: "gpt-4",
     temperature: 0.8,
-    messages: [{ role: "user", content: prompt }]
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ]
   });
 
-  try {
-    const content = response.choices[0].message.content;
-    const parsed = JSON.parse(content);
-    return parsed;
-  } catch (err) {
-    console.error("GPT parsing failed:", err);
-    throw new Error("GPT response invalid");
-  }
-};
+  const content = response.choices?.[0]?.message?.content;
+  const parsed = JSON.parse(content || "{}");
+
+  return parsed;
+}
+
+module.exports = tripDayGPTModifier;
