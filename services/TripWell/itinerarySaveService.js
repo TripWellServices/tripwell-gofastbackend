@@ -1,57 +1,23 @@
 const TripDay = require("../../models/TripWell/TripDay");
+const { parseAngelaItinerary } = require("./gptitineraryparserService");
 
+/**
+ * Save parsed itinerary data into TripDay collection.
+ * @param {string} tripId - Firebase UID or ObjectId (if refactored)
+ * @param {string} itineraryString - Raw GPT output from Angela
+ * @returns {Promise<number>} Number of days saved
+ */
 async function saveTripDaysFromAngela(tripId, itineraryString) {
-  const daySections = itineraryString.split(/(?=^Day \d+ – )/gm);
+  // Parse GPT output into modal-ready format
+  const parsedDays = parseAngelaItinerary(itineraryString);
 
-  const tripDays = daySections.map((block) => {
-    const lines = block.trim().split("\n").filter(Boolean);
+  // Inject tripId into each parsed day block
+  const tripDays = parsedDays.map(day => ({
+    ...day,
+    tripId
+  }));
 
-    const header = lines.shift();
-    const summary = lines.shift()?.replace(/^Summary of the day:\s*/i, "").trim();
-
-    const dayIndexMatch = header?.match(/^Day (\d+)/);
-    if (!dayIndexMatch) return null;
-
-    const dayIndex = parseInt(dayIndexMatch[1], 10);
-    const blocks = {};
-    let currentBlock = null;
-
-    lines.forEach((line) => {
-      line = line.trim();
-
-      const isHeader = /^(Morning|Afternoon|Evening):$/i.exec(line);
-      if (isHeader) {
-        currentBlock = isHeader[1].toLowerCase();
-        blocks[currentBlock] = [];
-        return;
-      }
-
-      if (/^[•\-]/.test(line) && currentBlock) {
-        blocks[currentBlock].push(line.replace(/^[•\-]\s*/, "").trim());
-      }
-    });
-
-    // Final formatting: { title, desc } for each block
-    const formattedBlocks = {};
-    ["morning", "afternoon", "evening"].forEach((blockKey) => {
-      const entries = blocks[blockKey] || [];
-      if (entries.length > 0) {
-        formattedBlocks[blockKey] = {
-          title: entries[0],
-          desc: entries.slice(1).join(" "),
-        };
-      }
-    });
-
-    return {
-      tripId,
-      dayIndex,
-      summary,
-      blocks: formattedBlocks,
-    };
-  }).filter(Boolean); // Filter out malformed/null days
-
-  // Clean slate + save
+  // Delete old entries and insert new
   await TripDay.deleteMany({ tripId });
   const created = await TripDay.insertMany(tripDays);
   return created.length;
