@@ -1,12 +1,10 @@
-// routes/TripWell/tripPlanner.js
+// routes/TripWell/tripIntentRoutes.js
 
 const express = require("express");
 const router = express.Router();
-
 const TripIntent = require("../../models/TripWell/TripIntent");
 
-// ✅ DO NOT include /tripwell here — it's mounted in index.js
-router.post("/tripplanner/:tripId", async (req, res) => {
+router.post("/tripintent/:tripId", async (req, res) => {
   try {
     const { tripId } = req.params;
     const { priorities, vibes, mobility, budget, travelPace, userId } = req.body;
@@ -36,9 +34,9 @@ router.post("/tripplanner/:tripId", async (req, res) => {
       });
     }
 
-    return res.json({ success: true }); // No GPT scene generation for now
+    return res.json({ success: true });
   } catch (err) {
-    console.error("🔥 TripPlanner route error:", err);
+    console.error("🔥 TripIntent save error:", err);
     return res.status(500).json({ error: "Server error" });
   }
 });

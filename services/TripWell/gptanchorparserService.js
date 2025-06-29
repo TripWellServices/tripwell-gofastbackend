@@ -1,10 +1,6 @@
-// services/TripWell/gptanchorparserService.js
-
 const OpenAI = require("openai");
+const AnchorSelect = require("../../models/TripWell/AnchorSelects");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// 🎯 Marlo's Job: Parse raw Angela anchor data for structure + logic
-// to support downstream itinerary building
 
 function buildAnchorParserPrompt(anchorJsonArrayString) {
   return `
@@ -28,8 +24,18 @@ ${anchorJsonArrayString}
   `.trim();
 }
 
-async function parseAnchorSuggestionsWithLogic(anchorJsonArray) {
-  const prompt = buildAnchorParserPrompt(JSON.stringify(anchorJsonArray, null, 2));
+// 🎯 Marlo pulls from AnchorSelect model
+async function parseAndEnrichAnchors(tripId, userId) {
+  if (!tripId || !userId) throw new Error("Missing tripId or userId");
+
+  const anchorSelect = await AnchorSelect.findOne({ tripId, userId });
+  if (!anchorSelect || !Array.isArray(anchorSelect.selectedAnchors)) {
+    throw new Error("No anchor selections found");
+  }
+
+  const prompt = buildAnchorParserPrompt(
+    JSON.stringify(anchorSelect.selectedAnchors, null, 2)
+  );
 
   try {
     const response = await openai.chat.completions.create({
@@ -39,7 +45,7 @@ async function parseAnchorSuggestionsWithLogic(anchorJsonArray) {
         { role: "user", content: prompt }
       ],
       temperature: 0.6,
-      max_tokens: 1000
+      max_tokens: 1000,
     });
 
     const enriched = JSON.parse(response.choices?.[0]?.message?.content || "[]");
@@ -50,4 +56,4 @@ async function parseAnchorSuggestionsWithLogic(anchorJsonArray) {
   }
 }
 
-module.exports = { parseAnchorSuggestionsWithLogic };
+module.exports = { parseAndEnrichAnchors };
