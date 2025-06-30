@@ -2,37 +2,28 @@
 
 const express = require("express");
 const router = express.Router();
-const TripDay = require("../../models/TripWell/TripDay");
+const { parseSingleDayModify } = require("../../services/TripWell/parseSingleDayModify");
+const { saveParsedDayModification } = require("../../services/TripWell/singleDayModifyfromParseSaver");
 
-// 💾 Save final GPT-modified TripDay after user approval
-router.post("/tripwell/saveday/:tripId/:dayIndex", async (req, res) => {
+// 💾 Parse and Save final GPT-modified TripDay after user approval
+router.post("/tripwell/parseandsave/:tripId/:dayIndex", async (req, res) => {
   const { tripId, dayIndex } = req.params;
-  const { summary, blocks } = req.body;
+  const { gptOutput } = req.body;
 
   try {
     const dayIndexNum = parseInt(dayIndex, 10);
-    if (isNaN(dayIndexNum)) {
-      return res.status(400).json({ error: "Invalid day index" });
+    if (!tripId || isNaN(dayIndexNum)) {
+      return res.status(400).json({ error: "Invalid tripId or dayIndex" });
     }
 
-    if (!summary || typeof blocks !== "object") {
-      return res.status(400).json({ error: "Missing summary or blocks" });
-    }
+    const parsedDay = parseSingleDayModify(gptOutput);
 
-    const updated = await TripDay.findOneAndUpdate(
-      { tripId, dayIndex: dayIndexNum },
-      { summary, blocks },
-      { new: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ error: "Trip day not found" });
-    }
+    const updated = await saveParsedDayModification({ tripId, dayIndex: dayIndexNum, parsedDay });
 
     res.status(200).json({ message: "Trip day updated successfully", tripDay: updated });
   } catch (err) {
-    console.error("🛑 Error saving trip day:", err);
-    res.status(500).json({ error: "Failed to save trip day" });
+    console.error("🛑 Error parsing and saving trip day:", err);
+    res.status(500).json({ error: "Failed to parse and save trip day" });
   }
 });
 

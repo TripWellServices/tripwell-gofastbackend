@@ -3,9 +3,8 @@ const router = express.Router();
 const TripDay = require("../../models/TripWell/TripDay");
 const tripDayGPTModifier = require("../../services/TripWell/dayGPTModifierService");
 
-router.post("/tripwell/modifyday/:tripId/:dayIndex", async (req, res) => {
-  const { tripId, dayIndex } = req.params;
-  const { feedback } = req.body;
+router.post("/tripwell/modifygpt/day", async (req, res) => {
+  const { tripId, dayIndex, feedback } = req.body;
 
   try {
     const tripDay = await TripDay.findOne({ tripId, dayIndex });
@@ -18,14 +17,11 @@ router.post("/tripwell/modifyday/:tripId/:dayIndex", async (req, res) => {
       summary: tripDay.summary
     });
 
-    tripDay.blocks = updatedDay.blocks;
-    tripDay.summary = updatedDay.summary;
-    await tripDay.save();
-
-    res.json(tripDay);
+    // 🧠 Don't save — just return it for preview
+    res.json(updatedDay);
   } catch (err) {
-    console.error("Error modifying trip day:", err);
-    res.status(500).json({ error: "Failed to modify trip day" });
+    console.error("Error modifying trip day with GPT:", err);
+    res.status(500).json({ error: "Failed to generate modified trip day" });
   }
 });
 
