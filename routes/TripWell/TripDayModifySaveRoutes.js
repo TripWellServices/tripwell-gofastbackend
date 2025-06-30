@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const TripDay = require("../../models/TripWell/TripDay");
 
+// 💾 Save final GPT-modified TripDay after user approval
 router.post("/tripwell/saveday/:tripId/:dayIndex", async (req, res) => {
   const { tripId, dayIndex } = req.params;
   const { summary, blocks } = req.body;
