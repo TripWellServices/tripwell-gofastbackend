@@ -1,35 +1,27 @@
-// routes/TripWell/TripReflectionSaveRoutes.js
-
 const express = require("express");
 const router = express.Router();
 const TripReflection = require("../../models/TripWell/TripReflection");
 
-router.post("/tripwell/reflect/:tripId", async (req, res) => {
+// 💾 Save or update a reflection for a specific trip day
+router.post("/tripwell/reflection/:tripId/:dayIndex", async (req, res) => {
+  const { tripId, dayIndex } = req.params;
+  const { summary, moodTag, journalText } = req.body;
+  const userId = req.user?.uid;
+
+  if (!userId) return res.status(401).json({ error: "User not authenticated" });
+  if (!tripId || isNaN(parseInt(dayIndex))) return res.status(400).json({ error: "Invalid tripId or dayIndex" });
+
   try {
-    const { tripId } = req.params;
-    const userId = req.user?.uid;
-    const {
-      overallMood,
-      favoriteMemory,
-      lessonsLearned,
-      wouldDoDifferently
-    } = req.body;
+    const filter = { tripId, dayIndex: parseInt(dayIndex), userId };
+    const update = { summary, moodTag, journalText };
+    const options = { new: true, upsert: true, setDefaultsOnInsert: true };
 
-    if (!userId) return res.status(401).json({ error: "User not authenticated" });
-
-    const reflection = await TripReflection.create({
-      tripId,
-      userId,
-      overallMood,
-      favoriteMemory,
-      lessonsLearned,
-      wouldDoDifferently
-    });
+    const reflection = await TripReflection.findOneAndUpdate(filter, update, options);
 
     res.status(200).json({ message: "Reflection saved", reflection });
   } catch (err) {
-    console.error("🧠 Error saving trip reflection:", err);
-    res.status(500).json({ error: "Failed to save trip reflection" });
+    console.error("🛑 Error saving reflection:", err);
+    res.status(500).json({ error: "Failed to save reflection" });
   }
 });
 

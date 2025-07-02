@@ -1,25 +1,21 @@
-// models/TripWell/TripReflection.js
-
 const mongoose = require("mongoose");
 
-const tripReflectionSchema = new mongoose.Schema({
-  tripId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "TripBase",
-    required: true,
-  },
-  userId: {
-    type: String, // Firebase UID
-    required: true,
-  },
-  overallMood: String, // e.g., emoji or short word
-  favoriteMemory: String,
-  lessonsLearned: String,
-  wouldDoDifferently: String,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  }
-});
+const TripReflectionSchema = new mongoose.Schema(
+  {
+    tripId: { type: String, required: true },
+    dayIndex: { type: Number, required: true },
+    userId: { type: String, required: true },
 
-module.exports = mongoose.model("TripReflection", tripReflectionSchema);
+    // Pulled from TripDay for recall
+    summary: { type: String, default: "" },
+
+    // Mood tag or sentiment category
+    moodTag: { type: String, default: "" },
+
+    // Freeform reflection text
+    journalText: { type: String, default: "" }
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("TripReflection", TripReflectionSchema);
