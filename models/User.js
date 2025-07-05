@@ -4,32 +4,30 @@ const userSchema = new mongoose.Schema({
   // 🔐 Auth core (from Firebase)
   firebaseId: { type: String, required: true, unique: true },
   userId: { type: String, required: true, unique: true }, // mirror of firebaseId
-  email: { type: String, required: true },
-  name: String,
-  preferredName: String,
+
+  // Optional early-stage fields
+  email: { type: String, default: "" },
+  name: { type: String, default: "" },
+  preferredName: { type: String, default: "" },
 
   // 📍 Location
-  location: String, // e.g., "Baltimore, MD"
+  location: { type: String, default: "" },
 
   // 🌴 TripWell profile data
   profile: {
-    familySituation: [String],   // ["I'm a parent", "Travel solo"]
-    travelStyle: [String],       // ["Planner", "DIY travel"]
-    tripVibe: [String],          // ["Culture", "Fitness"]
+    familySituation: { type: [String], default: [] },
+    travelStyle: { type: [String], default: [] },
+    tripVibe: { type: [String], default: [] }
   },
 
   // 🧭 Active trip state (MVP 1)
-  tripId: { type: String },         // ✅ This is the one true active trip
+  tripId: { type: String, default: null },
 
   // 📦 Archived trip state (MVP 2)
-  pastTripId: { type: String },     // ✅ Last trip stored after completion
+  pastTripId: { type: String, default: null },
 
-  // 🏷️ Role in the system (new!)
-  role: {
-    type: String,
-    enum: ["originator", "participant", "viewer", "admin", "noroleset"],
-    default: "noroleset"
-  },
+  // 🧢 Role field
+  role: { type: String, default: "noroleset" },
 
   // 🏃 GoFast training state (optional)
   userStatus: {
@@ -48,9 +46,8 @@ const userSchema = new mongoose.Schema({
     default: "registered"
   },
 
-  lastGarminLog: { type: Date },
+  lastGarminLog: { type: Date, default: null },
 
-  // ⏱ Timestamps
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
