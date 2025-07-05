@@ -24,6 +24,13 @@ const userSchema = new mongoose.Schema({
   // 📦 Archived trip state (MVP 2)
   pastTripId: { type: String },     // ✅ Last trip stored after completion
 
+  // 🏷️ Role in the system (new!)
+  role: {
+    type: String,
+    enum: ["originator", "participant", "viewer", "admin", "noroleset"],
+    default: "noroleset"
+  },
+
   // 🏃 GoFast training state (optional)
   userStatus: {
     type: String,
