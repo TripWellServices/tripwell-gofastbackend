@@ -1,8 +1,7 @@
-// routes/TripWell/tripIntentRoutes.js
-
 const express = require("express");
 const router = express.Router();
 const TripIntent = require("../../models/TripWell/TripIntent");
+const setTripIntentId = require("../../services/TripWell/setTripIntentId");
 
 router.post("/tripintent/:tripId", async (req, res) => {
   try {
@@ -22,8 +21,11 @@ router.post("/tripintent/:tripId", async (req, res) => {
       existing.budget = budget;
       existing.travelPace = travelPace;
       await existing.save();
+
+      // 🔁 Re-link to user in case not already set
+      await setTripIntentId(userId, existing._id);
     } else {
-      await TripIntent.create({
+      const newIntent = await TripIntent.create({
         tripId,
         userId,
         priorities,
@@ -32,6 +34,8 @@ router.post("/tripintent/:tripId", async (req, res) => {
         budget,
         travelPace,
       });
+
+      await setTripIntentId(userId, newIntent._id);
     }
 
     return res.json({ success: true });

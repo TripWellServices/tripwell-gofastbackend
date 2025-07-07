@@ -1,13 +1,13 @@
+// services/TripWell/userTripService.js
+
 const User = require("../../models/User");
 
-// 🔗 Link trip _id to user by Mongo _id (aka userId)
 async function setUserTrip(userId, tripId) {
-  if (!tripId) throw new Error("Missing tripId");
-  if (!userId) throw new Error("Missing userId");
+  if (!tripId || !userId) throw new Error("Missing required ID");
 
   const user = await User.findByIdAndUpdate(
     userId,
-    { tripId: tripId.toString() },
+    { tripId, role: "originator" },
     { new: true }
   );
 
@@ -15,19 +15,6 @@ async function setUserTrip(userId, tripId) {
   return user;
 }
 
-// 💤 Archive trip
-async function archiveTrip(userId, tripId) {
-  return await User.findByIdAndUpdate(
-    userId,
-    {
-      tripId: null,
-      pastTripId: tripId.toString()
-    },
-    { new: true }
-  );
-}
-
 module.exports = {
   setUserTrip,
-  archiveTrip
 };

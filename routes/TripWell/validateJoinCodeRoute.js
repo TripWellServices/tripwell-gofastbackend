@@ -19,17 +19,18 @@ router.post("/tripwell/validatejoincode", async (req, res) => {
       return res.status(404).json({ error: "Trip not found." });
     }
 
-    // Optional: Replace with user lookup later if needed
-    const creatorName = "Trip Owner";
-
+    // Return minimal trip info for confirmation UI
     return res.status(200).json({
       tripId: trip._id,
       tripName: trip.tripName,
-      creatorName,
+      destination: trip.destination || "",
+      startDate: trip.startDate || null,
+      endDate: trip.endDate || null,
+      creatorName: "Trip Owner" // Optional: replace with actual user lookup later
     });
 
   } catch (error) {
-    console.error("Error validating join code:", error);
+    console.error("❌ Error validating join code:", error);
     return res.status(500).json({ error: "Server error validating join code." });
   }
 });
