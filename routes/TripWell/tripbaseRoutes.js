@@ -1,40 +1,42 @@
 const express = require("express");
 const router = express.Router();
 const TripBase = require("../../models/TripWell/TripBase");
+const { setUserTrip } = require("../../services/TripWell/userUpdateService");
 const { parseTrip } = require("../../services/TripWell/tripSetupService");
-const { setUserTrip } = require("../../services/TripWell/userTripService");
 
+// === CREATE NEW TRIP ===
 router.post("/tripbase", async (req, res) => {
   try {
     const { userId, tripName, purpose, startDate, endDate, joinCode } = req.body;
 
-    // 1. Validate required fields
-    if (!userId || !tripName || !purpose || !startDate || !endDate || !joinCode) {
-      return res.status(400).json({ error: "Missing required fields." });
+    if (!userId || !tripName || !startDate || !endDate || !purpose || !joinCode) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // 2. Create base trip
-    const trip = await new TripBase({
+    // 1. Create and save TripBase model
+    let trip = new TripBase({
       userId,
       tripName,
       purpose,
       startDate,
       endDate,
       joinCode,
-    }).save();
+    });
 
-    // 3. Enrich with canonical parser (city, season, duration, etc.)
-    const enriched = parseTrip(trip);
-    await TripBase.findByIdAndUpdate(trip._id, enriched);
+    await trip.save();
 
-    // 4. Link to user
+    // 2. Parse & enrich trip (season, destination, etc.)
+    trip = parseTrip(trip);
+
+    // 3. Update user model with tripId + originator role
     await setUserTrip(userId, trip._id);
 
-    // 5. Return enriched trip
-    res.status(201).json({ trip: enriched });
-
+    // ✅ Return trip._id to front end for navigation
+    res.status(201).json({ tripId: trip._id });
   } catch (err) {
     console.error("❌ Trip creation failed:", err);
     res.status(500).json({ error: "Trip creation failed" });
   }
 });
+
+module.exports = router;
