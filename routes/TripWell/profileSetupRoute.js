@@ -17,15 +17,15 @@ router.post("/profile/setup", verifyFirebaseToken, async (req, res) => {
     tripVibe
   } = req.body;
 
-  // ✅ Confirm DB connection name before saving
   console.log("📦 Profile setup hitting DB:", mongoose.connection.name);
 
   try {
-    const updatedUser = await User.findOneAndUpdate(
-      { firebaseId },
-      {
+    let user = await User.findOne({ firebaseId });
+
+    if (!user) {
+      // First-time user creation
+      user = new User({
         firebaseId,
-        userId: firebaseId,
         email,
         name,
         location,
@@ -34,11 +34,28 @@ router.post("/profile/setup", verifyFirebaseToken, async (req, res) => {
           travelStyle,
           tripVibe
         }
-      },
-      { upsert: true, new: true }
-    );
+      });
 
-    res.status(200).json({ user: updatedUser });
+      await user.save(); // _id is created here
+
+      // Now set userId = _id
+      user.userId = user._id;
+      await user.save();
+    } else {
+      // Update existing user
+      user.email = email;
+      user.name = name;
+      user.location = location;
+      user.profile = {
+        familySituation,
+        travelStyle,
+        tripVibe
+      };
+
+      await user.save();
+    }
+
+    res.status(200).json({ user });
   } catch (err) {
     console.error("🔥 Profile setup error:", err);
     res.status(500).json({ error: "Server error" });

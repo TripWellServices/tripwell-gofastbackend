@@ -1,46 +1,34 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../../models/User");
-const Trip = require("../../models/TripWell/TripBase");
 
-// 🔥 GET /tripwell/whoami — canonical hydration route
+// 🔥 GET /tripwell/whoami — identity-only hydration
 router.get("/whoami", async (req, res) => {
   try {
-    const firebaseUID = req.user.uid;
+    const firebaseId = req.user.uid;
 
-    // 🔍 Use your canonical userId (mirrored from Firebase UID)
-    let user = await User.findOne({ userId: firebaseUID });
+    const user = await User.findOne({ firebaseId });
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // 🩹 Backfill firebaseId if missing (optional)
-    if (!user.firebaseId) {
-      user.firebaseId = firebaseUID;
-      await user.save();
-    }
-
-    // 🧳 Hydrate trip
-    let trip = null;
-    if (user.tripId) {
-      trip = await Trip.findById(user.tripId);
-      if (!trip) {
-        console.warn(`⚠️ No trip found for tripId: ${user.tripId}`);
-      }
-    }
-
-    // ✅ Final response
-    res.json({ user, trip });
+    // 🧼 Identity-only return — no trip hydration, no extras
+    res.json({
+      userId: user._id,
+      role: user.role || "participant",
+      firebaseId: user.firebaseId,
+      email: user.email,
+      name: user.name
+    });
   } catch (err) {
     console.error("❌ whoami error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// 🧪 Sanity ping for route validation
 router.get("/", (req, res) => {
-  res.send("✅ TripWell whoami route is mounted and ready.");
+  res.send("✅ TripWell whoami route is mounted and clean.");
 });
 
 module.exports = router;

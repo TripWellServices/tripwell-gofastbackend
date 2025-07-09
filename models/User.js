@@ -3,7 +3,9 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema({
   // 🔐 Firebase Auth
   firebaseId: { type: String, required: true, unique: true },
-  userId: { type: String, required: true, unique: true }, // mirror of firebaseId
+
+  // 🔁 Internal Identity Mirror (from _id)
+  userId: { type: mongoose.Schema.Types.ObjectId, unique: true },
 
   // 🧑 Personal Info
   email: { type: String, default: "" },
@@ -13,24 +15,24 @@ const userSchema = new mongoose.Schema({
   // 📍 Location
   location: { type: String, default: "" },
 
-  // 🌴 Profile Preferences (static, not trip-specific)
+  // 🌴 Profile Preferences
   profile: {
     travelStyle: { type: [String], default: [] },
     tripVibe: { type: [String], default: [] }
   },
 
   // 🧭 Active Trip State
-  tripId: { type: String, default: null },          // Assigned on create/join
-  tripIntentId: { type: String, default: null },    // Set after intent form
-  itineraryId: { type: String, default: null },     // Set after itinerary built
-  anchorSelectComplete: { type: Boolean, default: false }, // True after anchor select
-  tripStarted: { type: Boolean, default: false },   // True once trip is kicked off
+  tripId: { type: String, default: null },
+  tripIntentId: { type: String, default: null },
+  itineraryId: { type: String, default: null },
+  anchorSelectComplete: { type: Boolean, default: false },
+  tripStarted: { type: Boolean, default: false },
 
-  // 🗂 Archived Trips (MVP2+)
+  // 🗂 Archived Trips
   pastTripId: { type: String, default: null },
 
-  // 🎭 Role Assignment
-  role: { type: String, default: "noroleset" }, // originator or participant
+  // 🎭 Role
+  role: { type: String, default: "noroleset" },
 
   // 🏃 GoFast Mode
   userStatus: {
@@ -43,7 +45,6 @@ const userSchema = new mongoose.Schema({
   },
   lastGarminLog: { type: Date, default: null },
 
-  // 🕒 Timestamps
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
