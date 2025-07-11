@@ -1,15 +1,7 @@
-const mongoose = require('mongoose');
-
-const DestinationSchema = new mongoose.Schema({
-  locationId: { type: String, required: true, unique: true },
-  city: { type: String, required: true },
-  startDate: Date,
-  endDate: Date,
-  notes: String
-}, { _id: false });
+const mongoose = require("mongoose");
 
 const TripBaseSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   joinCode: { type: String, required: true, unique: true },
   tripName: { type: String, required: true },
   purpose: { type: String, required: true },
@@ -17,23 +9,22 @@ const TripBaseSchema = new mongoose.Schema({
   endDate: { type: Date, required: true },
   isMultiCity: { type: Boolean, default: false },
   city: { type: String },
-  destination: { type: String },
   partyCount: { type: Number, default: 1 },
-  whoWith: { type: [String], default: [] },
-  season: { type: String },        // ✅ NEW
-  daysTotal: { type: Number },     // ✅ NEW
+  whoWith: {
+    type: [String],
+    default: [],
+    enum: ["spouse", "kids", "friends", "parents", "multigen", "solo", "other"]
+  },
+  season: { type: String },
+  daysTotal: { type: Number },
   createdAt: { type: Date, default: Date.now }
 });
 
-TripBaseSchema.pre("save", function(next) {
-  if (this.destinations?.[0]?.city) {
-    this.city = this.destinations[0].city;
-  } else if (!this.city) {
+TripBaseSchema.pre("save", function (next) {
+  if (!this.city) {
     this.city = this.tripName || "Unknown";
   }
-
-  this.destination = this.city;
   next();
 });
 
-module.exports = mongoose.model('TripBase', TripBaseSchema);
+module.exports = mongoose.model("TripBase", TripBaseSchema);

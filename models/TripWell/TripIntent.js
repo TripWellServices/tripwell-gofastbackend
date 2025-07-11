@@ -1,17 +1,15 @@
 const mongoose = require("mongoose");
 
 const TripIntentSchema = new mongoose.Schema({
-  tripId: { type: mongoose.Schema.Types.ObjectId, ref: "Trip", required: true },
-  userId: { type: String, required: true }, // ✅ Firebase UID
-  whoWith: { type: String, default: "" },   // ✅ NEW: "Who are you going with?"
-  priorities: [String],
-  vibes: [String],
-  mobility: [String],
-  budget: String,
-  travelPace: [String],
+  tripId: { type: mongoose.Schema.Types.ObjectId, ref: "TripBase", required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  priorities: { type: [String], default: [] },
+  vibes: { type: [String], default: [] },
+  mobility: { type: [String], default: [] },
+  travelPace: { type: [String], default: [] },
+  budget: { type: String, default: "" }
 }, { timestamps: true });
 
-// Prevent duplicates per trip/user
 TripIntentSchema.index({ tripId: 1, userId: 1 }, { unique: true });
 
 module.exports = mongoose.model("TripIntent", TripIntentSchema);

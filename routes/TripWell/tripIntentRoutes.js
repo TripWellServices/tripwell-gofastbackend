@@ -2,17 +2,20 @@ const express = require("express");
 const router = express.Router();
 const TripIntent = require("../../models/TripWell/TripIntent");
 const setTripIntentId = require("../../services/TripWell/setTripIntentId");
+const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
+const User = require("../../models/User");
 
-router.post("/tripintent/:tripId", async (req, res) => {
+// POST /tripwell/tripintent/:tripId
+router.post("/tripintent/:tripId", verifyFirebaseToken, async (req, res) => {
   try {
     const { tripId } = req.params;
-    const { priorities, vibes, mobility, budget, travelPace, userId } = req.body;
+    const firebaseId = req.user.uid;
+    const { priorities, vibes, mobility, budget, travelPace } = req.body;
 
-    if (!tripId || !userId) {
-      return res.status(400).json({ error: "Missing tripId or userId" });
-    }
+    const user = await User.findOne({ firebaseId });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    const existing = await TripIntent.findOne({ tripId, userId });
+    const existing = await TripIntent.findOne({ tripId, userId: user._id });
 
     if (existing) {
       existing.priorities = priorities;
@@ -22,12 +25,11 @@ router.post("/tripintent/:tripId", async (req, res) => {
       existing.travelPace = travelPace;
       await existing.save();
 
-      // 🔁 Re-link to user in case not already set
-      await setTripIntentId(userId, existing._id);
+      await setTripIntentId(user._id, existing._id);
     } else {
       const newIntent = await TripIntent.create({
         tripId,
-        userId,
+        userId: user._id,
         priorities,
         vibes,
         mobility,
@@ -35,7 +37,7 @@ router.post("/tripintent/:tripId", async (req, res) => {
         travelPace,
       });
 
-      await setTripIntentId(userId, newIntent._id);
+      await setTripIntentId(user._id, newIntent._id);
     }
 
     return res.json({ success: true });
