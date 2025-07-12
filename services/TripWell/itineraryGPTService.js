@@ -6,22 +6,20 @@ const openai = new OpenAI();
 
 async function generateItineraryFromAnchorLogic(tripId) {
   try {
-    const tripIntent = await TripIntent.findById(tripId);
     const tripBase = await TripBase.findById(tripId);
+    const tripIntent = await TripIntent.findOne({ tripId });
     const anchorLogicList = await AnchorLogic.find({ tripId });
 
     if (!tripIntent || !tripBase || anchorLogicList.length === 0) {
       throw new Error("Missing trip data or anchors.");
     }
 
-    const { destination, season, startDate, daysTotal, purpose, whoWith } = tripBase;
+    const { city, season, startDate, daysTotal, purpose, whoWith } = tripBase;
 
-    // Generate day map with travel day (Day 0)
     const start = new Date(startDate);
     const dayMap = Array.from({ length: daysTotal + 1 }).map((_, i) => {
       const date = new Date(start);
-      date.setDate(start.getDate() + (i - 1)); // Day 0 = travel day
-
+      date.setDate(start.getDate() + (i - 1));
       return {
         dayIndex: i - 1,
         dayNumber: i,
@@ -39,16 +37,38 @@ async function generateItineraryFromAnchorLogic(tripId) {
     const systemPrompt = `
 You are Angela, a highly intuitive AI travel planner.
 
-You are building a ${daysTotal}-day itinerary for a trip to ${destination} during the ${season}.
-This trip is ${whoWith?.join(", ") || "unspecified"} and the purpose is "${purpose || "to enjoy and explore"}".
+You are building a ${daysTotal}-day itinerary for a trip to ${city} during the ${season}.
+The purpose of this trip is "${purpose || "to enjoy and explore"}", and it is being taken with ${whoWith?.join(", ") || "unspecified"}.
 
-The traveler has already selected experiences (anchors) — use them to guide your day structure.
-Use smart pacing:
-- Group anchors by neighborhood
-- Include food in afternoon or evening
-- Spread out major attractions
+The traveler has already selected anchor experiences — these are core experiences they *want to do*. Use them to shape the itinerary structure. Anchors reflect the *user’s intent and priorities* — do not ignore them.
 
-Follow this format:
+Each day of the trip should include:
+- A brief day summary
+- Morning activities
+- Afternoon activities
+- Evening activities
+
+**Anchor integration guidance:**
+- Spread anchors across the trip days to ensure variety and pacing
+- Use one anchor per day (typically), unless two fit naturally together
+- For anchors marked as \`isDayTrip: true\`, treat them as full-day excursions and structure the day around that location
+- Group nearby anchors to avoid inefficient travel
+- Include food/cultural moments, especially in the afternoon or evening
+- Avoid packing too much into a single day unless the vibe allows for it
+
+**Day 0** is the travel day — keep it light, flexible, and optional
+
+All days (0 through ${daysTotal}) must include:
+- Real calendar dates
+- Accurate weekdays
+- A well-paced mix of activity, rest, and delight
+
+You will be provided:
+- A calendar map of the trip
+- The anchor experiences to integrate
+- The original trip intent form
+
+Output should follow this exact format:
 
 Day X – {Weekday}, {Month Day}  
 Summary of the day: ...
@@ -62,10 +82,8 @@ Afternoon:
 Evening:
 • ...
 
-Day 0 should be a travel day with light optional content only.
-
-Only include days 0 through ${daysTotal}. Each day must use its real date and weekday from the calendar below.
-    `.trim();
+Only include Day 0 through Day ${daysTotal} — no extras.
+`.trim();
 
     const userPrompt = `
 Here is the trip calendar:
@@ -76,7 +94,7 @@ ${JSON.stringify(anchorLogicList[0]?.enrichedAnchors || [], null, 2)}
 
 Here is the trip intent:
 ${JSON.stringify(tripIntent, null, 2)}
-    `.trim();
+`.trim();
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
@@ -90,7 +108,7 @@ ${JSON.stringify(tripIntent, null, 2)}
     const content = completion.choices?.[0]?.message?.content;
     if (!content) throw new Error("No GPT output received.");
 
-    return content.trim(); // Plain string for MVP2 display
+    return content.trim();
   } catch (error) {
     console.error("Angela itinerary generation error:", error);
     throw error;

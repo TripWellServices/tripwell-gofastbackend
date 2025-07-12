@@ -1,7 +1,8 @@
+// routes/TripWell/AnchorSelectSaveRoutes.js
+
 const express = require("express");
 const router = express.Router();
 
-const { parseAnchorSuggestionsWithLogic } = require("../../services/TripWell/gptanchorparserService");
 const { saveAnchorLogic } = require("../../services/TripWell/anchorlogicSaveService");
 const User = require("../../models/User");
 
@@ -15,26 +16,11 @@ router.post("/anchorselectparsesave/:tripId", async (req, res) => {
   }
 
   try {
-    // 1. Build placeholder objects for GPT parsing
-    const placeholderAnchors = anchorTitles.map((title) => ({
-      title,
-      description: "",
-      location: "",
-      isDayTrip: false,
-      suggestedFollowOn: "",
-    }));
+    // ✅ Save enriched anchors (calls Marlo + DB logic)
+    await saveAnchorLogic(tripId, userId, anchorTitles);
 
-    // 2. Parse via GPT (Marlo)
-    const enriched = await parseAnchorSuggestionsWithLogic(placeholderAnchors);
-
-    // 3. Save enriched anchors to AnchorLogic
-    await saveAnchorLogic(tripId, userId, enriched);
-
-    // 4. ✅ Mark anchorSelectComplete = true on User
-    await User.findOneAndUpdate(
-      { userId },
-      { anchorSelectComplete: true }
-    );
+    // ✅ Update user progress
+    await User.findByIdAndUpdate(userId, { anchorSelectComplete: true });
 
     return res.status(200).json({ success: true });
   } catch (err) {

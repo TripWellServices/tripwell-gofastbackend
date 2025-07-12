@@ -1,3 +1,5 @@
+// models/TripWell/AnchorLogic.js
+
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
@@ -8,7 +10,8 @@ const AnchorLogicSchema = new Schema({
     required: true,
   },
   userId: {
-    type: String, // Firebase UID
+    type: Schema.Types.ObjectId, // ✅ Canon: Mongo _id
+    ref: "User",
     required: true,
   },
   enrichedAnchors: [
@@ -30,5 +33,8 @@ const AnchorLogicSchema = new Schema({
     default: Date.now,
   },
 });
+
+// 🔐 Canonical: One anchor logic doc per user/trip combo
+AnchorLogicSchema.index({ tripId: 1, userId: 1 }, { unique: true });
 
 module.exports = mongoose.model("AnchorLogic", AnchorLogicSchema);

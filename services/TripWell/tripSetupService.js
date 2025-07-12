@@ -1,5 +1,3 @@
-// services/TripWell/tripSetupService.js
-
 const { differenceInCalendarDays, format } = require("date-fns");
 
 function getSeason(date) {
@@ -18,23 +16,8 @@ function parseTrip(trip) {
   const start = new Date(parsed.startDate);
   const end = new Date(parsed.endDate);
 
-  // Normalize city + destination
-  const fallbackCity =
-    parsed.destination?.trim() ||
-    parsed.city?.trim() ||
-    parsed.destinations?.[0]?.city?.trim() ||
-    "Unknown";
-
-  parsed.city = fallbackCity;
-  parsed.destination = fallbackCity;
-
-  // Add day count
   parsed.daysTotal = differenceInCalendarDays(end, start) + 1;
-
-  // Format range string
   parsed.dateRange = `${format(start, "MMM d")} – ${format(end, "MMM d")}`;
-
-  // Season
   parsed.season = getSeason(start);
 
   return parsed;

@@ -2,25 +2,29 @@ const TripDay = require("../../models/TripWell/TripDay");
 const { parseAngelaItinerary } = require("./gptitineraryparserService");
 
 /**
- * Save parsed itinerary data into TripDay collection.
- * @param {string} tripId - Firebase UID or ObjectId (if refactored)
- * @param {string} itineraryString - Raw GPT output from Angela
- * @returns {Promise<number>} Number of days saved
+ * Save parsed GPT itinerary into the TripDay collection.
+ * Skips "Day 0" (typically a travel day).
+ *
+ * @param {string} tripId - The MongoDB trip ID
+ * @param {string} itineraryString - Raw GPT output string from Angela
+ * @returns {Promise<number>} - Count of days saved
  */
-async function saveTripDaysFromAngela(tripId, itineraryString) {
-  // Parse GPT output into modal-ready format
+async function saveTripDaysGpt(tripId, itineraryString) {
   const parsedDays = parseAngelaItinerary(itineraryString);
 
-  // Inject tripId into each parsed day block
-  const tripDays = parsedDays.map(day => ({
+  const filteredDays = parsedDays.filter(
+    (day) => day.dayIndex !== 0 && !/^Day 0\b/.test(day.label)
+  );
+
+  const tripDays = filteredDays.map((day) => ({
     ...day,
-    tripId
+    tripId,
   }));
 
-  // Delete old entries and insert new
   await TripDay.deleteMany({ tripId });
   const created = await TripDay.insertMany(tripDays);
+
   return created.length;
 }
 
-module.exports = { saveTripDaysFromAngela };
+module.exports = { saveTripDaysGpt };
