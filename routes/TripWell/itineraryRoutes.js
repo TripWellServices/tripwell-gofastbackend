@@ -1,47 +1,51 @@
 const express = require("express");
 const router = express.Router();
+const axios = require("axios");
 
-const { generateItineraryFromAnchorLogic } = require("../../services/TripWell/itineraryGPTService"); // Angela
-const { parseAngelaItinerary } = require("../../services/TripWell/gptItineraryParserService");      // Marlo
-const { setUserItineraryId } = require("../../services/TripWell/setUserItineraryIdService");        // 🆕 Canonical setter
-const TripDay = require("../../models/TripWell/TripDay");
+const { generateItineraryFromAnchorLogic } = require("../../services/TripWell/itineraryGPTService");
+const { parseAngelaItinerary } = require("../../services/TripWell/gptItineraryParserService");
+const { saveTripDaysGpt } = require("../../services/TripWell/itinerarySaveService");
 
-// POST /tripwell/itinerary/:tripId
-router.post("/tripwell/itinerary/:tripId", async (req, res) => {
-  const { tripId } = req.params;
-  const { userId } = req.body;
-
-  if (!tripId || !userId) {
-    return res.status(400).json({ error: "Missing tripId or userId" });
-  }
-
+async function verifyUserTrip(req, res, next) {
   try {
-    // 🧠 Step 1: Angela builds the raw itinerary string
-    const itineraryText = await generateItineraryFromAnchorLogic(tripId);
+    const whoami = await axios.get("http://localhost:3000/tripwell/whoami", { headers: req.headers });
+    const tripStatusResp = await axios.get("http://localhost:3000/tripwell/tripstatus", { headers: req.headers });
 
-    // 🪄 Step 2: Marlo parses it into structured TripDays
-    const tripDays = parseAngelaItinerary(itineraryText, tripId);
+    const user = whoami.data.user;
+    const tripStatus = tripStatusResp.data.tripStatus;
 
-    if (!tripDays || tripDays.length === 0) {
-      throw new Error("Parsed TripDays array is empty.");
+    if (!user || !tripStatus?.tripId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    if (user.role !== "originator") {
+      return res.status(403).json({ error: "Forbidden" });
     }
 
-    // 💾 Step 3: Clean slate + insert new TripDays
-    await TripDay.deleteMany({ tripId });
-    const created = await TripDay.insertMany(tripDays);
-
-    // ✅ Step 4: Update User with itineraryId (first day’s ID = canonical ID)
-    await setUserItineraryId(userId, created[0]._id);
-
-    res.status(200).json({
-      message: `Itinerary generated, parsed, and saved successfully.`,
-      daysSaved: created.length,
-      itineraryId: created[0]._id
-    });
-
+    req.tripId = tripStatus.tripId;
+    next();
   } catch (err) {
-    console.error("🛑 Itinerary full stack failure:", err);
-    res.status(500).json({ error: "Itinerary generation and save failed." });
+    console.error("Auth verify error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+router.post("/tripwell/itinerary/build", verifyUserTrip, async (req, res) => {
+  const tripId = req.tripId;
+
+  try {
+    const itineraryText = await generateItineraryFromAnchorLogic(tripId);
+    const tripDays = parseAngelaItinerary(itineraryText);
+
+    if (!tripDays || tripDays.length === 0) {
+      return res.status(500).json({ error: "Parsed itinerary is empty" });
+    }
+
+    const daysSaved = await saveTripDaysGpt(tripId, itineraryText);
+
+    return res.status(200).json({ daysSaved });
+  } catch (err) {
+    console.error("Itinerary build failure:", err);
+    return res.status(500).json({ error: "Failed to build itinerary" });
   }
 });
 
