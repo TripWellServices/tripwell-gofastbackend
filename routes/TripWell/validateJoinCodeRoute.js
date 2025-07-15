@@ -1,38 +1,35 @@
-const express = require("express");
-const router = express.Router();
-const TripBase = require("../../models/TripWell/TripBase");
-
-// POST /tripwell/validatejoincode
 router.post("/tripwell/validatejoincode", async (req, res) => {
+  const { code } = req.body;
+
+  if (!code) {
+    return res.status(400).json({ error: "Join code is required" });
+  }
+
   try {
-    const rawCode = req.body.code;
-
-    if (!rawCode) {
-      return res.status(400).json({ error: "Join code is required." });
-    }
-
-    const joinCode = rawCode.trim().toLowerCase();
+    const joinCode = code.trim().toLowerCase();
 
     const trip = await TripBase.findOne({ joinCode });
-
     if (!trip) {
-      return res.status(404).json({ error: "Trip not found." });
+      return res.status(404).json({ error: "Trip not found" });
     }
 
-    // Return minimal trip info for confirmation UI
-    return res.status(200).json({
+    const originator = await User.findOne({
       tripId: trip._id,
-      tripName: trip.tripName,
-      destination: trip.destination || "",
-      startDate: trip.startDate || null,
-      endDate: trip.endDate || null,
-      creatorName: "Trip Owner" // Optional: replace with actual user lookup later
+      role: "originator",
     });
 
-  } catch (error) {
-    console.error("❌ Error validating join code:", error);
-    return res.status(500).json({ error: "Server error validating join code." });
+    const creatorFirstName = originator?.name?.split(" ")[0] || "Trip lead";
+
+    return res.json({
+      tripId: trip._id,
+      tripName: trip.tripName,
+      city: trip.city,
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      creatorFirstName, // optional for future use
+    });
+  } catch (err) {
+    console.error("❌ Error validating join code:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
-
-module.exports = router;
