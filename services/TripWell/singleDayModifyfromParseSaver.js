@@ -1,38 +1,39 @@
-// services/TripWell/singleDayModifyfromParseSaver.js
-
 const TripDay = require("../../models/TripWell/TripDay");
 
 /**
- * Save parsed single-day modification to the correct TripDay by index.
- * @param {string} tripId
- * @param {number} dayIndex
- * @param {object} parsedDay - Output of parseSingleDayModify()
- * @param {string} parsedDay.summary
- * @param {object} parsedDay.blocks
- * @returns {Promise<TripDay>}
+ * Saves a single block modification into the TripDay document.
+ * This is canon: used in block-level GPT flows (TripModifyDay, TripLive).
+ *
+ * @param {Object} params
+ * @param {string} params.tripId
+ * @param {number} params.dayIndex
+ * @param {string} params.block - "morning" | "afternoon" | "evening"
+ * @param {Object} params.updatedBlock - { title: string, desc: string }
+ * @returns {Promise<Object>} - Updated TripDay document
  */
-async function saveParsedDayModification({ tripId, dayIndex, parsedDay }) {
-  if (!tripId || typeof dayIndex !== "number") {
-    throw new Error("Invalid tripId or dayIndex");
+async function saveParsedDayModification({ tripId, dayIndex, block, updatedBlock }) {
+  if (!tripId || typeof dayIndex !== "number" || !block || !updatedBlock) {
+    throw new Error("Missing required fields for block save");
   }
 
-  const { summary, blocks } = parsedDay || {};
-
-  if (!summary || typeof blocks !== "object") {
-    throw new Error("Parsed day missing summary or blocks");
+  const validBlocks = ["morning", "afternoon", "evening"];
+  if (!validBlocks.includes(block)) {
+    throw new Error(`Invalid block: ${block}`);
   }
 
-  const updated = await TripDay.findOneAndUpdate(
-    { tripId, dayIndex },
-    { summary, blocks },
-    { new: true }
-  );
-
-  if (!updated) {
+  const tripDay = await TripDay.findOne({ tripId, dayIndex });
+  if (!tripDay) {
     throw new Error(`TripDay not found for tripId ${tripId}, dayIndex ${dayIndex}`);
   }
 
-  return updated;
+  tripDay.blocks[block] = {
+    title: updatedBlock.title?.trim() || "(No title)",
+    desc: updatedBlock.desc?.trim() || "(No description)",
+  };
+
+  await tripDay.save();
+
+  return tripDay;
 }
 
 module.exports = { saveParsedDayModification };

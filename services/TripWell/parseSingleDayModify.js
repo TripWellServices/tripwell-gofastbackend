@@ -1,6 +1,39 @@
 // services/TripWell/parseSingleDayModify.js
 
-/**
+/**/**
+ * Parse a single-block GPT modification output (Angela).
+ * Assumes output is either a valid JSON string or structured object.
+ */
+function parseSingleDayModify(gptOutput) {
+  let parsed = {};
+
+  try {
+    if (typeof gptOutput === "string") {
+      parsed = JSON.parse(gptOutput);
+    } else if (typeof gptOutput === "object" && gptOutput !== null) {
+      parsed = gptOutput;
+    } else {
+      throw new Error("Invalid GPT output format");
+    }
+
+    const { block } = parsed;
+
+    if (!block || typeof block !== "object") {
+      throw new Error("Missing block in GPT response");
+    }
+
+    return {
+      title: block.title?.trim() || "(No title)",
+      desc: block.desc?.trim() || "(No description)"
+    };
+  } catch (err) {
+    console.error("🛑 Error in parseSingleDayModify:", err);
+    throw new Error("Failed to parse block-level GPT output");
+  }
+}
+
+module.exports = { parseSingleDayModify };
+
  * Parse a single-day GPT modification output (Angela).
  * Assumes output is either a valid JSON string or structured object.
  */

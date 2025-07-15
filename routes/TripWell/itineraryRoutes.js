@@ -1,45 +1,30 @@
 const express = require("express");
 const router = express.Router();
-const axios = require("axios");
 
 const { generateItineraryFromAnchorLogic } = require("../../services/TripWell/itineraryGPTService");
 const { parseAngelaItinerary } = require("../../services/TripWell/gptItineraryParserService");
 const { saveTripDaysGpt } = require("../../services/TripWell/itinerarySaveService");
 
-async function verifyUserTrip(req, res, next) {
-  try {
-    const whoami = await axios.get("http://localhost:3000/tripwell/whoami", { headers: req.headers });
-    const tripStatusResp = await axios.get("http://localhost:3000/tripwell/tripstatus", { headers: req.headers });
+// Canonical route: POST /tripwell/itinerary/build
+router.post("/tripwell/itinerary/build", async (req, res) => {
+  const { tripId } = req.body;
 
-    const user = whoami.data.user;
-    const tripStatus = tripStatusResp.data.tripStatus;
-
-    if (!user || !tripStatus?.tripId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    if (user.role !== "originator") {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    req.tripId = tripStatus.tripId;
-    next();
-  } catch (err) {
-    console.error("Auth verify error:", err);
-    res.status(500).json({ error: "Internal server error" });
+  if (!tripId) {
+    return res.status(400).json({ error: "Missing tripId" });
   }
-}
-
-router.post("/tripwell/itinerary/build", verifyUserTrip, async (req, res) => {
-  const tripId = req.tripId;
 
   try {
+    // 🧠 Step 1: Generate raw itinerary from Angela
     const itineraryText = await generateItineraryFromAnchorLogic(tripId);
-    const tripDays = parseAngelaItinerary(itineraryText);
 
-    if (!tripDays || tripDays.length === 0) {
+    // 🪄 Step 2: Parse into structured TripDays via Marlo
+    const parsedDays = parseAngelaItinerary(itineraryText);
+
+    if (!parsedDays || parsedDays.length === 0) {
       return res.status(500).json({ error: "Parsed itinerary is empty" });
     }
 
+    // 💾 Step 3: Save to TripDay model (skipping Day 0)
     const daysSaved = await saveTripDaysGpt(tripId, itineraryText);
 
     return res.status(200).json({ daysSaved });

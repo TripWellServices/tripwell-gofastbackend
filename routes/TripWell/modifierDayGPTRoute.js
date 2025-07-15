@@ -1,49 +1,72 @@
-// routes/TripWell/modifierDayGPTRoute.js
+  const express = require("express");
+  const router = express.Router();
 
-const express = require("express");
-const router = express.Router();
+  const TripDay = require("../../models/TripWell/TripDay");
+  const tripDayGPTModifier = require("../../services/TripWell/tripDayGPTModifier");
+  const parseSingleDayModify = require("../../services/TripWell/parseSingleDayModify");
+  const saveParsedDayModification = require("../../services/TripWell/singleDayModifyfromParseSaver");
 
-// Canonical services for modifying a trip day
-const TripDay = require("../../models/TripWell/TripDay");
-const tripDayGPTModifier = require("../../services/TripWell/tripDayGPTModifier"); // GPT-only
-const { saveParsedDayModification } = require("../../services/TripWell/singleDayModifyfromParseSaver");
-const { parseSingleDayModify } = require("../../services/TripWell/parseSingleDayModify");
+  router.post("/tripwell/modifygpt/day", async (req, res) => {
+    const { tripId, dayIndex, feedback, summary, blocks, save } = req.body;
 
-router.post("/tripwell/modifygpt/day", async (req, res) => {
-  const { tripId, dayIndex, feedback } = req.body;
+    if (!tripId || typeof dayIndex !== "number") {
+      return res.status(400).json({ error: "Missing tripId or dayIndex" });
+    }
 
-  if (!tripId || typeof dayIndex !== "number" || !feedback) {
-    return res.status(400).json({ error: "Missing tripId, dayIndex, or feedback" });
-  }
+    try {
+      // ✅ SAVE MODE
+      if (save === true) {
+        if (!summary || !blocks) {
+          return res.status(400).json({ error: "Missing summary or blocks to save" });
+        }
 
-  try {
-    // Fetch original TripDay content
-    const tripDay = await TripDay.findOne({ tripId, dayIndex });
-    if (!tripDay) return res.status(404).json({ error: "Trip day not found" });
+        const parsed = parseSingleDayModify({ summary, blocks });
 
-    // Call GPT to get revised day
-    const gptOutput = await tripDayGPTModifier({
-      feedback,
-      dayIndex,
-      previousBlocks: tripDay.blocks,
-      summary: tripDay.summary
-    });
+        const updated = await saveParsedDayModification({
+          tripId,
+          dayIndex,
+          parsed,
+        });
 
-    // Parse (optional, but safe)
-    const parsed = parseSingleDayModify(gptOutput);
+        return res.json({ success: true, updated });
+      }
 
-    // Save back to DB
-    const updated = await saveParsedDayModification({
-      tripId,
-      dayIndex,
-      parsedDay: parsed
-    });
+      // ✅ GPT LOOP MODE
+      if (!feedback) {
+        return res.status(400).json({ error: "Missing feedback for GPT modify" });
+      }
 
-    res.json(updated);
-  } catch (err) {
-    console.error("🔥 Error modifying trip day:", err);
-    res.status(500).json({ error: "Trip day modification failed" });
-  }
-});
+      // First GPT call — allow backend to hydrate if summary + blocks are missing
+      let contextSummary = summary;
+      let contextBlocks = blocks;
 
-module.exports = router;
+      if (!contextSummary || !contextBlocks) {
+        const tripDay = await TripDay.findOne({ tripId, dayIndex });
+        if (!tripDay) {
+          return res.status(404).json({ error: "TripDay not found" });
+        }
+
+        contextSummary = tripDay.summary;
+        contextBlocks = tripDay.blocks;
+      }
+
+      // Always require summary + blocks to be defined now
+      if (!contextSummary || !contextBlocks) {
+        return res.status(400).json({ error: "No summary + blocks for GPT call" });
+      }
+
+      const gptOutput = await tripDayGPTModifier({
+        summary: contextSummary,
+        blocks: contextBlocks,
+        feedback,
+      });
+
+      const parsed = parseSingleDayModify(gptOutput);
+      return res.json(parsed); // frontend will store in currentDayDraft
+    } catch (err) {
+      console.error("Error in /modifygpt/day:", err);
+      res.status(500).json({ error: "Internal error" });
+    }
+  });
+
+  module.exports = router;

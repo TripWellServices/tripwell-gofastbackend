@@ -1,10 +1,3 @@
-const mongoose = require("mongoose");
-
-const blockSchema = new mongoose.Schema({
-  title: String,
-  desc: String
-}, { _id: false });
-
 const tripDaySchema = new mongoose.Schema({
   tripId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -22,7 +15,18 @@ const tripDaySchema = new mongoose.Schema({
     morning: blockSchema,
     afternoon: blockSchema,
     evening: blockSchema
+  },
+  isComplete: {
+    type: Boolean,
+    default: false
+  },
+  modifiedByUser: {
+    type: Boolean,
+    default: false
+  },
+  modificationMethod: {
+    type: String,
+    enum: ["gpt", "manual", null],
+    default: null
   }
 }, { timestamps: true });
-
-module.exports = mongoose.model("TripDay", tripDaySchema);
