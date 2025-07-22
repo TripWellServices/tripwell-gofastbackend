@@ -31,14 +31,24 @@ router.get("/tripwell/livestatus/:tripId", authenticate, async (req, res) => {
       }
     }
 
-    // 🔒 Canonical: Mark trip as complete if final evening is done
+    // 🔒 Canonical: Trip is complete if final evening block is marked complete
     const isLastDay = currentDayIndex === totalDays;
     const finalDay = tripDays[totalDays - 1];
-
     const finalEveningComplete = finalDay?.blocks?.evening?.complete === true;
 
     if (!trip.tripComplete && isLastDay && finalEveningComplete) {
       await TripBase.findByIdAndUpdate(tripId, { tripComplete: true });
+    }
+
+    // 📦 Add full day data for hydration
+    let dayData = null;
+    if (currentDay) {
+      dayData = {
+        city: currentDay.city || "",
+        dateStr: currentDay.dateStr || "",
+        summary: currentDay.summary || "",
+        blocks: currentDay.blocks || {}
+      };
     }
 
     return res.json({
@@ -47,6 +57,7 @@ router.get("/tripwell/livestatus/:tripId", authenticate, async (req, res) => {
       currentBlock,
       totalDays,
       tripComplete: trip.tripComplete || (isLastDay && finalEveningComplete),
+      dayData
     });
   } catch (err) {
     console.error("Error fetching trip live status:", err);
