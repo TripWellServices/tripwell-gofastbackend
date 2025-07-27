@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const TripReflection = require("../../models/TripWell/TripReflection");
 
-// 💾 Save or update a reflection for a specific trip day
+// 💾 Save or update a reflection for a specific trip day (frontend passes summary)
 router.post("/tripwell/reflection/:tripId/:dayIndex", async (req, res) => {
   const { tripId, dayIndex } = req.params;
   const { summary, moodTag, journalText } = req.body;

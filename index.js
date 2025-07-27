@@ -54,18 +54,27 @@ mongoose
 // === MIDDLEWARE ===
 const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
 
-// === TRIPWELL CORE ROUTES // 🧭 TripWell Route Mounts (modularized)
-app.use("/tripwell/anchors", require("./routes/TripWell/tripAnchorRoutes"));
-app.use("/tripwell/anchorselects", require("./routes/TripWell/anchorSelectRoutes"));
-app.use("/tripwell/itinerary", require("./routes/TripWell/itineraryRoutes"));
-app.use("/tripwell/profile", require("./routes/TripWell/profileSetup"));
-app.use("/tripwell/scene", require("./routes/TripWell/sceneSetter"));
-app.use("/tripwell/chat", require("./routes/TripWell/tripChat"));
-app.use("/tripwell/gpt", require("./routes/TripWell/tripGPT"));
-app.use("/tripwell/tripplanner", require("./routes/TripWell/tripPlanner"));
-app.use("/tripwell/tripbase", require("./routes/TripWell/tripbaseRoutes"));
-app.use("/tripwell/userupdate", require("./routes/TripWell/userTripUpdate"));
-app.use("/tripwell/whoami", require("./routes/TripWell/whoami"));
+// ✅ TripWell Full Route Mounts
+app.use("/tripwell/intent", require("./routes/TripWell/tripIntentRoutes"));
+app.use("/tripwell/tripCreated", require("./routes/TripWell/tripCreatedRoute"));
+app.use("/tripwell/saveanchors", require("./routes/TripWell/AnchorSelectSaveRoutes"));
+
+app.use("/tripwell/modifydays", require("./routes/TripWell/ItineraryUpdateRoute"));
+app.use("/tripwell/buildpreview", require("./routes/TripWell/tripDayBuildPreviewRoute"));
+
+app.use("/tripwell/livestatus", require("./routes/TripWell/tripLiveStatusRoute"));
+app.use("/tripwell/block/save", require("./routes/TripWell/tripDayBlockSaveRoute"));
+app.use("/tripwell/block/complete", require("./routes/TripWell/tripBlockCompleteRoute"));
+
+app.use("/tripwell/reflection", require("./routes/TripWell/TripReflectionSaveRoutes"));
+app.use("/tripwell/lookback", require("./routes/TripWell/lookbackRoute"));
+
+app.use("/tripwell/start", require("./routes/TripWell/tripStartRoute"));
+app.use("/tripwell/status", require("./routes/TripWell/tripStatusRoute"));
+app.use("/tripwell/validateJoinCode", require("./routes/TripWell/validateJoinCodeRoute"));
+app.use("/tripwell/user/createOrFind", require("./routes/TripWell/TripWellUserRoute"));
+app.use("/tripwell/participant/create", require("./routes/TripWell/participantUserCreateRoute"));
+
 
 
 // === TRIPWELL GPT SECURE FLOW (Requires Firebase token) ===
