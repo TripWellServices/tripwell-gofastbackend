@@ -1,3 +1,11 @@
+const express = require("express");
+const path = require("path");
+const router = express.Router();
+
+const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
+const User = require(path.resolve(__dirname, "../../models/User"));
+
+// POST /tripwell/validatejoincode
 router.post("/tripwell/validatejoincode", async (req, res) => {
   const { code } = req.body;
 
@@ -7,8 +15,8 @@ router.post("/tripwell/validatejoincode", async (req, res) => {
 
   try {
     const joinCode = code.trim().toLowerCase();
-
     const trip = await TripBase.findOne({ joinCode });
+
     if (!trip) {
       return res.status(404).json({ error: "Trip not found" });
     }
@@ -26,10 +34,12 @@ router.post("/tripwell/validatejoincode", async (req, res) => {
       city: trip.city,
       startDate: trip.startDate,
       endDate: trip.endDate,
-      creatorFirstName, // optional for future use
+      creatorFirstName,
     });
   } catch (err) {
     console.error("❌ Error validating join code:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
+
+module.exports = router;

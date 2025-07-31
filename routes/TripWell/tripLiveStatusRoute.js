@@ -1,11 +1,12 @@
 const express = require("express");
+const path = require("path");
 const router = express.Router();
 
-const TripBase = require("../../models/TripWell/TripBase");
-const TripDay = require("../../models/TripWell/TripDay");
-const { authenticate } = require("../../middleware/authenticate");
+const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
+const TripDay = require(path.resolve(__dirname, "../../models/TripWell/TripDay"));
+const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
-router.get("/tripwell/livestatus/:tripId", authenticate, async (req, res) => {
+router.get("/tripwell/livestatus/:tripId", verifyFirebaseToken, async (req, res) => {
   const { tripId } = req.params;
   const userId = req.user._id;
 

@@ -1,14 +1,12 @@
-// routes/tripwell/lookbackRoute.js
-
 const express = require("express");
 const router = express.Router();
-const { authenticate } = require("../../middleware/authenticate");
 
+const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const TripBase = require("../../models/TripWell/TripBase");
 const TripDay = require("../../models/TripWell/TripDay");
 
 // 🔥 GET /tripwell/lookback/:tripId — hydrate last completed day for reflections
-router.get("/tripwell/lookback/:tripId", authenticate, async (req, res) => {
+router.get("/tripwell/lookback/:tripId", verifyFirebaseToken, async (req, res) => {
   const { tripId } = req.params;
   const userId = req.user._id;
 

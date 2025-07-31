@@ -54,7 +54,7 @@ mongoose
 // === MIDDLEWARE ===
 const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
 
-// ✅ TripWell Full Route Mounts
+// ✅ TripWell Route Mounts
 app.use("/tripwell/intent", require("./routes/TripWell/tripIntentRoutes"));
 app.use("/tripwell/tripCreated", require("./routes/TripWell/tripCreatedRoute"));
 app.use("/tripwell/saveanchors", require("./routes/TripWell/AnchorSelectSaveRoutes"));
@@ -64,7 +64,7 @@ app.use("/tripwell/buildpreview", require("./routes/TripWell/tripDayBuildPreview
 
 app.use("/tripwell/livestatus", require("./routes/TripWell/tripLiveStatusRoute"));
 app.use("/tripwell/block/save", require("./routes/TripWell/tripDayBlockSaveRoute"));
-app.use("/tripwell/block/complete", require("./routes/TripWell/tripBlockCompleteRoute"));
+app.use("/tripwell/block/complete", require("./routes/TripWell/TripDoAllCompleterRoute"));
 
 app.use("/tripwell/reflection", require("./routes/TripWell/TripReflectionSaveRoutes"));
 app.use("/tripwell/lookback", require("./routes/TripWell/lookbackRoute"));
@@ -75,21 +75,15 @@ app.use("/tripwell/validateJoinCode", require("./routes/TripWell/validateJoinCod
 app.use("/tripwell/user/createOrFind", require("./routes/TripWell/TripWellUserRoute"));
 app.use("/tripwell/participant/create", require("./routes/TripWell/participantUserCreateRoute"));
 
-
-
-// === TRIPWELL GPT SECURE FLOW (Requires Firebase token) ===
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));        // Auth + user/trip hydration
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripChat"));      // Save user question
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripGPT"));       // GPT reply
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/sceneSetter"));   // GPT scene intro
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/tripPlanner"));   // GPT anchor suggestions
+// === TRIPWELL SECURE FLOW (Auth-protected)
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));
 
 // === ROOT CHECK ===
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "ok",
     service: "TripWell Backend API",
-    message: "🔥 Welcome to the TripWell backend. Routes are mounted under /trip and /tripwell.",
+    message: "🔥 Welcome to the TripWell backend. Routes are mounted under /tripwell.",
     version: "1.0.0",
   });
 });

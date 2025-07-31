@@ -1,9 +1,10 @@
 const express = require("express");
+const path = require("path");
 const router = express.Router();
-const TripIntent = require("../../models/TripWell/TripIntent");
-const setTripIntentId = require("../../services/TripWell/setTripIntentId");
-const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
-const User = require("../../models/User");
+
+const TripIntent = require(path.resolve(__dirname, "../../models/TripWell/TripIntent"));
+const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
+const User = require(path.resolve(__dirname, "../../models/User"));
 
 // POST /tripwell/tripintent/:tripId
 router.post("/tripintent/:tripId", verifyFirebaseToken, async (req, res) => {
@@ -24,10 +25,8 @@ router.post("/tripintent/:tripId", verifyFirebaseToken, async (req, res) => {
       existing.budget = budget;
       existing.travelPace = travelPace;
       await existing.save();
-
-      await setTripIntentId(user._id, existing._id);
     } else {
-      const newIntent = await TripIntent.create({
+      await TripIntent.create({
         tripId,
         userId: user._id,
         priorities,
@@ -36,8 +35,6 @@ router.post("/tripintent/:tripId", verifyFirebaseToken, async (req, res) => {
         budget,
         travelPace,
       });
-
-      await setTripIntentId(user._id, newIntent._id);
     }
 
     return res.json({ success: true });

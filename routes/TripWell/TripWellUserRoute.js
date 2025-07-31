@@ -1,24 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const TripWellUser = require("../../models/TripWellUser"); // renamed canonical model
+const TripWellUser = require("../../models/TripWellUser");
 
-// 🔥 POST /tripwell/user/createOrFind — Firebase identity + Mongo user init
 router.post("/createOrFind", async (req, res) => {
   try {
-    const { firebaseUID, email } = req.body;
+    const { firebaseId, email } = req.body;
 
-    if (!firebaseUID || !email) {
-      return res.status(400).json({ error: "Missing firebaseUID or email" });
+    if (!firebaseId || !email) {
+      return res.status(400).json({ error: "Missing firebaseId or email" });
     }
 
-    let user = await TripWellUser.findOne({ firebaseUID });
+    let user = await TripWellUser.findOne({ firebaseId });
 
     if (!user) {
       user = new TripWellUser({
-        firebaseUID,
+        firebaseId,
         email,
-        name: "",
-        city: "",
+        name: null,
+        city: null,
         travelStyle: [],
         tripVibe: [],
         tripId: null,
@@ -28,10 +27,10 @@ router.post("/createOrFind", async (req, res) => {
       await user.save();
     }
 
-    res.json(user);
+    return res.status(200).json(user);
   } catch (err) {
-    console.error("❌ createOrFind error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Error in createOrFind:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
