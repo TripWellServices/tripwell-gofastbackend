@@ -7,8 +7,8 @@ const TripBaseSchema = new mongoose.Schema({
   purpose: { type: String, required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
+  city: { type: String, required: true }, // ✅ Canon patch
   isMultiCity: { type: Boolean, default: false },
-  city: { type: String },
   partyCount: { type: Number, default: 1 },
   whoWith: {
     type: [String],
@@ -18,13 +18,6 @@ const TripBaseSchema = new mongoose.Schema({
   season: { type: String },
   daysTotal: { type: Number },
   createdAt: { type: Date, default: Date.now }
-});
-
-TripBaseSchema.pre("save", function (next) {
-  if (!this.city) {
-    this.city = this.tripName || "Unknown";
-  }
-  next();
 });
 
 module.exports = mongoose.model("TripBase", TripBaseSchema);

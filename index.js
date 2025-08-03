@@ -9,7 +9,7 @@ const app = express();
 // === CORS CONFIG ===
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://tripwell-frontend.vercel.app"
+  "https://tripwell-frontend.vercel.app",
 ];
 
 const corsOptions = {
@@ -54,7 +54,7 @@ mongoose
 // === MIDDLEWARE ===
 const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
 
-// ✅ TripWell Route Mounts
+// ✅ TripWell Route Mounts (Unprotected)
 app.use("/tripwell/intent", require("./routes/TripWell/tripIntentRoutes"));
 app.use("/tripwell/tripCreated", require("./routes/TripWell/tripCreatedRoute"));
 app.use("/tripwell/saveanchors", require("./routes/TripWell/AnchorSelectSaveRoutes"));
@@ -72,10 +72,14 @@ app.use("/tripwell/lookback", require("./routes/TripWell/lookbackRoute"));
 app.use("/tripwell/start", require("./routes/TripWell/tripStartRoute"));
 app.use("/tripwell/status", require("./routes/TripWell/tripStatusRoute"));
 app.use("/tripwell/validateJoinCode", require("./routes/TripWell/validateJoinCodeRoute"));
+
 app.use("/tripwell/user/createOrFind", require("./routes/TripWell/TripWellUserRoute"));
 app.use("/tripwell/participant/create", require("./routes/TripWell/participantUserCreateRoute"));
 
-// === TRIPWELL SECURE FLOW (Auth-protected)
+// ✅ NEW: Join Code Availability Check (Originator Flow)
+app.use("/tripwell", require("./routes/TripWell/JoinCodeCheckRoute"));
+
+// ✅ Secure Auth-Protected Flow
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));
 
 // === ROOT CHECK ===

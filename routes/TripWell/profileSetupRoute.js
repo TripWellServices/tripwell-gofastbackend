@@ -1,63 +1,44 @@
 const express = require("express");
 const router = express.Router();
+const TripWellUser = require("../../models/TripWellUser");
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
-const mongoose = require("mongoose");
-const User = require("../../models/User");
 
-// POST /api/users/profile/setup
-router.post("/profile/setup", verifyFirebaseToken, async (req, res) => {
-  const firebaseId = req.user.uid;
+// Update user profile (after Access step)
+router.put("/profile", verifyFirebaseToken, async (req, res) => {
+  const firebaseId = req.user.uid; // from Firebase token
 
   const {
-    name,
-    email,
-    location,
-    familySituation,
+    firstName,
+    lastName,
+    hometownCity,
+    state,
     travelStyle,
     tripVibe
   } = req.body;
 
-  console.log("📦 Profile setup hitting DB:", mongoose.connection.name);
-
   try {
-    let user = await User.findOne({ firebaseId });
-
-    if (!user) {
-      // First-time user creation
-      user = new User({
-        firebaseId,
-        email,
-        name,
-        location,
-        profile: {
-          familySituation,
+    const user = await TripWellUser.findOneAndUpdate(
+      { firebaseId },
+      {
+        $set: {
+          firstName,
+          lastName,
+          hometownCity,
+          state,
           travelStyle,
           tripVibe
         }
-      });
+      },
+      { new: true }
+    );
 
-      await user.save(); // _id is created here
-
-      // Now set userId = _id
-      user.userId = user._id;
-      await user.save();
-    } else {
-      // Update existing user
-      user.email = email;
-      user.name = name;
-      user.location = location;
-      user.profile = {
-        familySituation,
-        travelStyle,
-        tripVibe
-      };
-
-      await user.save();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json({ user });
+    res.status(200).json(user);
   } catch (err) {
-    console.error("🔥 Profile setup error:", err);
+    console.error("🔥 Error updating profile:", err);
     res.status(500).json({ error: "Server error" });
   }
 });

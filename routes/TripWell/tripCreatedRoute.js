@@ -3,18 +3,21 @@
 const express = require("express");
 const router = express.Router();
 const TripBase = require("../../models/TripWell/TripBase");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
+const { verifyFirebaseToken } = require("../../middleware/authMiddleware");
 
-// GET /tripwell/tripcreated/:tripId
-router.get("/tripcreated/:tripId", async (req, res) => {
+// 🔐 GET /tripwell/tripcreated
+// Description: Returns the current user's trip based on Firebase auth
+router.get("/tripcreated", verifyFirebaseToken, async (req, res) => {
   try {
-    const { tripId } = req.params;
+    const firebaseId = req.user.uid;
 
-    if (!tripId) {
-      return res.status(400).json({ error: "Trip ID is required" });
+    const user = await TripWellUser.findOne({ firebaseId });
+    if (!user || !user.tripId) {
+      return res.status(404).json({ error: "No trip found for user" });
     }
 
-    const trip = await TripBase.findById(tripId);
-
+    const trip = await TripBase.findById(user.tripId);
     if (!trip) {
       return res.status(404).json({ error: "Trip not found" });
     }
@@ -27,12 +30,12 @@ router.get("/tripcreated/:tripId", async (req, res) => {
       joinCode,
       whoWith,
       partyCount,
-      city
+      city,
     } = trip;
 
     return res.status(200).json({
       trip: {
-        tripId: trip._id, // ✅ Explicit alias
+        tripId: trip._id,
         tripName,
         purpose,
         startDate,
@@ -40,11 +43,11 @@ router.get("/tripcreated/:tripId", async (req, res) => {
         joinCode,
         whoWith,
         partyCount,
-        city
-      }
+        city,
+      },
     });
   } catch (err) {
-    console.error("❌ TripCreated route failed:", err);
+    console.error("❌ tripcreated lookup failed:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 });

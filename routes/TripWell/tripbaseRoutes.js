@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const TripBase = require("../../models/TripWell/TripBase");
-const { setUserTrip } = require("../../services/TripWell/userUpdateService");
+const { setUserTrip } = require("../../services/TripWell/userTripService");
 const { parseTrip } = require("../../services/TripWell/tripSetupService");
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const User = require("../../models/User");
@@ -16,8 +16,13 @@ router.post("/tripbase", verifyFirebaseToken, async (req, res) => {
     endDate,
     joinCode,
     whoWith,
-    partyCount
+    partyCount,
+    city, // ✅ Required now
   } = req.body;
+
+  if (!city) {
+    return res.status(400).json({ error: "City is required" });
+  }
 
   try {
     const user = await User.findOne({ firebaseId });
@@ -31,14 +36,19 @@ router.post("/tripbase", verifyFirebaseToken, async (req, res) => {
       endDate,
       joinCode,
       whoWith,
-      partyCount
+      partyCount,
+      city, // ✅ Store the real value now
     });
 
     await trip.save();
+
+    // 🔄 Enrich trip metadata (season, daysTotal, etc.)
     trip = parseTrip(trip);
 
+    // 🔗 Attach trip to user + set role
     await setUserTrip(user._id, trip._id);
 
+    // ✅ Return trip ID to frontend
     res.status(201).json({ tripId: trip._id });
   } catch (err) {
     console.error("❌ Trip creation failed:", err);
