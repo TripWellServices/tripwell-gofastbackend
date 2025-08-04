@@ -73,7 +73,9 @@ app.use("/tripwell/start", require("./routes/TripWell/tripStartRoute"));
 app.use("/tripwell/status", require("./routes/TripWell/tripStatusRoute"));
 app.use("/tripwell/validateJoinCode", require("./routes/TripWell/validateJoinCodeRoute"));
 
-app.use("/tripwell/user/createOrFind", require("./routes/TripWell/TripWellUserRoute"));
+// ✅ FIXED: Mount user route cleanly so POST /tripwell/user/createOrFind works
+app.use("/tripwell/user", require("./routes/TripWell/TripWellUserRoute"));
+
 app.use("/tripwell/participant/create", require("./routes/TripWell/participantUserCreateRoute"));
 
 // ✅ NEW: Join Code Availability Check (Originator Flow)
