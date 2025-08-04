@@ -1,3 +1,5 @@
+// tripwellUserRoute.js
+
 const express = require("express");
 const router = express.Router();
 const TripWellUser = require("../../models/TripWellUser");
@@ -16,12 +18,15 @@ router.post("/createOrFind", async (req, res) => {
       user = new TripWellUser({
         firebaseId,
         email,
-        name: null,
-        city: null,
-        travelStyle: [],
-        tripVibe: [],
+        name: null,           // Legacy placeholder
+        firstName: null,      // ✅ Profile field
+        lastName: null,       // ✅ Profile field
+        hometownCity: null,   // ✅ Profile field
+        state: null,          // ✅ Profile field
+        travelStyle: [],      // ✅ Profile field
+        tripVibe: [],         // ✅ Profile field
         tripId: null,
-        role: "noroleset",
+        role: "noroleset",    // Will be assigned later
       });
 
       await user.save();
