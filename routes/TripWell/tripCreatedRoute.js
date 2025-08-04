@@ -3,14 +3,14 @@
 const express = require("express");
 const router = express.Router();
 const TripBase = require("../../models/TripWell/TripBase");
-const TripWellUser = require("../../models/TripWell/TripWellUser");
-const { verifyFirebaseToken } = require("../../middleware/authMiddleware");
+const TripWellUser = require("../../models/TripWellUser"); // ✅ Global user model at base of /models
+const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken"); // ✅ Correct middleware path
 
 // 🔐 GET /tripwell/tripcreated
-// Description: Returns the current user's trip based on Firebase auth
+// Description: Returns the current user's trip based on Firebase token in header
 router.get("/tripcreated", verifyFirebaseToken, async (req, res) => {
   try {
-    const firebaseId = req.user.uid;
+    const firebaseId = req.user.uid; // 👈 Populated by Firebase middleware
 
     const user = await TripWellUser.findOne({ firebaseId });
     if (!user || !user.tripId) {
