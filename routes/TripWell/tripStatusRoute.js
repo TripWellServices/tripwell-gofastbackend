@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
+const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const User = require("../../models/User");
 const TripBase = require("../../models/TripWell/TripBase");
 const TripIntent = require("../../models/TripWell/TripIntent");
 const AnchorLogic = require("../../models/TripWell/AnchorLogic");
 const TripDay = require("../../models/TripWell/TripDay");
 
-router.get("/tripstatus", async (req, res) => {
+router.get("/tripstatus", verifyFirebaseToken, async (req, res) => {
   try {
     const firebaseId = req.user.uid;
     const user = await User.findOne({ firebaseId });
@@ -17,7 +18,6 @@ router.get("/tripstatus", async (req, res) => {
     let tripStarted = false;
     let tripComplete = false;
 
-    // Canonical trip hydration
     let trip = null;
     if (user.tripId) {
       trip = await TripBase.findById(user.tripId);
@@ -41,7 +41,6 @@ router.get("/tripstatus", async (req, res) => {
 
     if (!trip) return res.json({ tripStatus: status });
 
-    // Check intent, anchors, days using real tripId
     const [intent, anchors, days] = await Promise.all([
       TripIntent.findOne({ tripId }),
       AnchorLogic.findOne({ tripId }),
