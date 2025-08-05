@@ -7,7 +7,7 @@ const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const User = require("../../models/User");
 
 // POST /tripwell/tripbase
-router.post("/tripbase", verifyFirebaseToken, async (req, res) => {
+router.post("/", verifyFirebaseToken, async (req, res) => {
   const firebaseId = req.user.uid;
   const {
     tripName,

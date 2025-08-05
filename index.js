@@ -90,6 +90,8 @@ app.use(
 );
 app.use("/tripwell/lookback", require("./routes/TripWell/lookbackRoute"));
 
+app.use("/tripwell/tripbase", require("./routes/TripWell/tripbaseRoutes"));
+
 app.use("/tripwell/start", require("./routes/TripWell/tripStartRoute"));
 app.use("/tripwell/tripstatus", require("./routes/TripWell/tripStatusRoute"));
 app.use(
