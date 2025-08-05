@@ -1,13 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../../models/User");
+const TripWellUser = require("../../models/TripWellUser");
 
 // 🔥 GET /tripwell/whoami — identity-only hydration
 router.get("/whoami", async (req, res) => {
   try {
     const firebaseId = req.user.uid;
 
-    const user = await User.findOne({ firebaseId });
+    const user = await TripWellUser.findOne({ firebaseId });
+    console.log("👤 User:", user);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -19,7 +21,7 @@ router.get("/whoami", async (req, res) => {
       role: user.role || "participant",
       firebaseId: user.firebaseId,
       email: user.email,
-      name: user.name
+      name: user.name,
     });
   } catch (err) {
     console.error("❌ whoami error:", err);

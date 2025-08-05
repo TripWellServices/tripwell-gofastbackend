@@ -3,6 +3,7 @@ const router = express.Router();
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const User = require("../../models/User");
 const TripBase = require("../../models/TripWell/TripBase");
+const TripWellUser = require("../../models/TripWellUser");
 const TripIntent = require("../../models/TripWell/TripIntent");
 const AnchorLogic = require("../../models/TripWell/AnchorLogic");
 const TripDay = require("../../models/TripWell/TripDay");
@@ -10,7 +11,9 @@ const TripDay = require("../../models/TripWell/TripDay");
 router.get("/", verifyFirebaseToken, async (req, res) => {
   try {
     const firebaseId = req.user.uid;
-    const user = await User.findOne({ firebaseId });
+    console.log("🔐 Firebase ID:", firebaseId);
+    const user = await TripWellUser.findOne({ firebaseId });
+    console.log("👤 User:", user);
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -36,7 +39,7 @@ router.get("/", verifyFirebaseToken, async (req, res) => {
       anchorsExist: false,
       daysExist: false,
       tripStarted,
-      tripComplete
+      tripComplete,
     };
 
     if (!trip) return res.json({ tripStatus: status });
@@ -44,7 +47,7 @@ router.get("/", verifyFirebaseToken, async (req, res) => {
     const [intent, anchors, days] = await Promise.all([
       TripIntent.findOne({ tripId }),
       AnchorLogic.findOne({ tripId }),
-      TripDay.findOne({ tripId })
+      TripDay.findOne({ tripId }),
     ]);
 
     if (intent) status.intentExists = true;
@@ -52,7 +55,6 @@ router.get("/", verifyFirebaseToken, async (req, res) => {
     if (days) status.daysExist = true;
 
     res.json({ tripStatus: status });
-
   } catch (err) {
     console.error("❌ tripstatus error:", err);
     res.status(500).json({ error: "Internal server error" });
