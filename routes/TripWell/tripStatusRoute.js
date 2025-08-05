@@ -7,7 +7,7 @@ const TripIntent = require("../../models/TripWell/TripIntent");
 const AnchorLogic = require("../../models/TripWell/AnchorLogic");
 const TripDay = require("../../models/TripWell/TripDay");
 
-router.get("/tripstatus", verifyFirebaseToken, async (req, res) => {
+router.get("/", verifyFirebaseToken, async (req, res) => {
   try {
     const firebaseId = req.user.uid;
     const user = await User.findOne({ firebaseId });

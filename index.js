@@ -91,7 +91,7 @@ app.use(
 app.use("/tripwell/lookback", require("./routes/TripWell/lookbackRoute"));
 
 app.use("/tripwell/start", require("./routes/TripWell/tripStartRoute"));
-app.use("/tripwell/status", require("./routes/TripWell/tripStatusRoute"));
+app.use("/tripwell/tripstatus", require("./routes/TripWell/tripStatusRoute"));
 app.use(
   "/tripwell/validateJoinCode",
   require("./routes/TripWell/validateJoinCodeRoute"),
