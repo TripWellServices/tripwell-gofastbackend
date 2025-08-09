@@ -1,4 +1,14 @@
-// POST /tripwell/tripbase
+// routes/TripWell/tripbaseRoutes.js
+const express = require("express");
+const router = express.Router();
+
+const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
+const User = require("../../models/User");
+const TripBase = require("../../models/TripWell/TripBase");
+const { setUserTrip } = require("../../services/TripWell/userTripService");
+const { parseTrip } = require("../../services/TripWell/tripSetupService");
+
+// POST /tripwell/tripbase  (mounted in index.js)
 router.post("/", verifyFirebaseToken, async (req, res) => {
   try {
     console.log("➡️  POST /tripwell/tripbase");
@@ -12,10 +22,10 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       joinCode, whoWith, partyCount, city
     } = req.body;
 
-    // Required field validation (purpose added)
+    // Required fields — purpose added
     const missing = [];
     if (!tripName) missing.push("tripName");
-    if (!purpose) missing.push("purpose"); // ✅ now required
+    if (!purpose) missing.push("purpose");
     if (!startDate) missing.push("startDate");
     if (!endDate) missing.push("endDate");
     if (!city) missing.push("city");
@@ -23,7 +33,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
     }
 
-    // Date order check
+    // Date sanity
     if (new Date(startDate) > new Date(endDate)) {
       return res.status(400).json({ error: "startDate must be on/before endDate" });
     }
@@ -56,3 +66,5 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     return res.status(500).json({ error: "Trip creation failed" });
   }
 });
+
+module.exports = router;
