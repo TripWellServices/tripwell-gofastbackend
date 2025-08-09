@@ -1,36 +1,33 @@
+// /routes/TripWell/whoami.js
 const express = require("express");
 const router = express.Router();
-const User = require("../../models/User");
 const TripWellUser = require("../../models/TripWellUser");
 
-// 🔥 GET /tripwell/whoami — identity-only hydration
-router.get("/whoami", async (req, res) => {
+// GET /tripwell/whoami
+// Protected by verifyFirebaseToken in index.js
+router.get("/", async (req, res) => {
   try {
-    const firebaseId = req.user.uid;
+    const firebaseId = req.user.uid; // Comes from verifyFirebaseToken middleware
 
+    if (!firebaseId) {
+      return res.status(401).json({ error: "No Firebase UID in request" });
+    }
+
+    // Find full TripWell user by firebaseId
     const user = await TripWellUser.findOne({ firebaseId });
-    console.log("👤 User:", user);
+
+    console.log("👤 WHOAMI User:", user);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // 🧼 Identity-only return — no trip hydration, no extras
-    res.json({
-      userId: user._id,
-      role: user.role || "participant",
-      firebaseId: user.firebaseId,
-      email: user.email,
-      name: user.name,
-    });
+    // Send back the *full* user object
+    res.json(user);
   } catch (err) {
-    console.error("❌ whoami error:", err);
+    console.error("❌ WHOAMI error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
-});
-
-router.get("/", (req, res) => {
-  res.send("✅ TripWell whoami route is mounted and clean.");
 });
 
 module.exports = router;
