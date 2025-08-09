@@ -1,23 +1,25 @@
+// models/TripWell/TripBase.js
 const mongoose = require("mongoose");
 
 const TripBaseSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  joinCode: { type: String, required: true, unique: true },
-  tripName: { type: String, required: true },
-  purpose: { type: String, required: true },
+  userId:    { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  joinCode:  { type: String, required: true, unique: true },
+  tripName:  { type: String, required: true },
+  purpose:   { type: String, required: true },        // matches your route validation
   startDate: { type: Date, required: true },
-  endDate: { type: Date, required: true },
-  city: { type: String, required: true }, // ✅ Canon patch
+  endDate:   { type: Date, required: true },
+  city:      { type: String, required: true },
   isMultiCity: { type: Boolean, default: false },
-  partyCount: { type: Number, default: 1 },
+  partyCount:  { type: Number, default: 1, min: 1 },  // hardened
   whoWith: {
     type: [String],
     default: [],
     enum: ["spouse", "kids", "friends", "parents", "multigen", "solo", "other"]
   },
-  season: { type: String },
+  season:    { type: String },
   daysTotal: { type: Number },
-  createdAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true }); // replaces manual createdAt
+// make sure the unique actually exists in Mongo
+TripBaseSchema.index({ joinCode: 1 }, { unique: true });
 
 module.exports = mongoose.model("TripBase", TripBaseSchema);

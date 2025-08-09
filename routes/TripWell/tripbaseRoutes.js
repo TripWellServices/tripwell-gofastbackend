@@ -1,59 +1,58 @@
-const express = require("express");
-const router = express.Router();
-const TripBase = require("../../models/TripWell/TripBase");
-const { setUserTrip } = require("../../services/TripWell/userTripService");
-const { parseTrip } = require("../../services/TripWell/tripSetupService");
-const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
-const User = require("../../models/User");
-
 // POST /tripwell/tripbase
 router.post("/", verifyFirebaseToken, async (req, res) => {
-  const firebaseId = req.user.uid;
-  const {
-    tripName,
-    purpose,
-    startDate,
-    endDate,
-    joinCode,
-    whoWith,
-    partyCount,
-    city, // ✅ Required now
-  } = req.body;
-
-  if (!city) {
-    return res.status(400).json({ error: "City is required" });
-  }
-
   try {
+    console.log("➡️  POST /tripwell/tripbase");
+    console.log("📥 body:", req.body);
+
+    const firebaseId = req.user?.uid;
+    if (!firebaseId) return res.status(401).json({ error: "Unauthorized" });
+
+    const {
+      tripName, purpose, startDate, endDate,
+      joinCode, whoWith, partyCount, city
+    } = req.body;
+
+    // Required field validation (purpose added)
+    const missing = [];
+    if (!tripName) missing.push("tripName");
+    if (!purpose) missing.push("purpose"); // ✅ now required
+    if (!startDate) missing.push("startDate");
+    if (!endDate) missing.push("endDate");
+    if (!city) missing.push("city");
+    if (missing.length) {
+      return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
+    }
+
+    // Date order check
+    if (new Date(startDate) > new Date(endDate)) {
+      return res.status(400).json({ error: "startDate must be on/before endDate" });
+    }
+
     const user = await User.findOne({ firebaseId });
     if (!user) return res.status(404).json({ error: "User not found" });
 
     let trip = new TripBase({
       userId: user._id,
-      tripName,
-      purpose,
-      startDate,
-      endDate,
-      joinCode,
-      whoWith,
-      partyCount,
-      city, // ✅ Store the real value now
+      tripName, purpose, startDate, endDate,
+      joinCode, whoWith, partyCount, city
     });
 
-    await trip.save();
+    try {
+      await trip.save();
+    } catch (err) {
+      if (err.code === 11000 && err.keyPattern?.joinCode) {
+        return res.status(409).json({ error: "Join code already taken" });
+      }
+      throw err;
+    }
 
-    // 🔄 Enrich trip metadata (season, daysTotal, etc.)
     trip = parseTrip(trip);
-
-    // 🔗 Attach trip to user + set role
     await setUserTrip(user._id, trip._id);
 
-    // ✅ Return trip ID to frontend
-    res.status(201).json({ tripId: trip._id });
+    console.log("✅ Trip created:", String(trip._id));
+    return res.status(201).json({ tripId: trip._id });
   } catch (err) {
     console.error("❌ Trip creation failed:", err);
-    res.status(500).json({ error: "Trip creation failed" });
+    return res.status(500).json({ error: "Trip creation failed" });
   }
 });
-
-module.exports = router;
