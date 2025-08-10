@@ -21,22 +21,9 @@ router.get("/whoami", async (req, res) => {
       return res.json({ user: null });
     }
 
-    // ✅ Return full user model fields for hydration
+    // ✅ Return complete TripWellUser model for hydration
     return res.json({
-      user: {
-        _id: user._id,
-        firebaseId: user.firebaseId,
-        email: user.email,
-        name: user.name,             // legacy placeholder
-        firstName: user.firstName,   // profile field
-        lastName: user.lastName,     // profile field
-        hometownCity: user.hometownCity, // profile field
-        state: user.state,           // profile field
-        travelStyle: user.travelStyle, // array
-        tripVibe: user.tripVibe,     // array
-        tripId: user.tripId,
-        role: user.role,
-      }
+      user: user.toObject()
     });
   } catch (err) {
     console.error("❌ whoami error:", err);
