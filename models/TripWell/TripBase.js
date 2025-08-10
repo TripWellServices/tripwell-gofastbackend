@@ -2,7 +2,7 @@
 const mongoose = require("mongoose");
 
 const TripBaseSchema = new mongoose.Schema({
-  joinCode:  { type: String, required: true, unique: true },
+  joinCode:  { type: String, required: true }, // No unique constraint - JoinCode registry handles this
   tripName:  { type: String, required: true },
   purpose:   { type: String, required: true },        // matches your route validation
   startDate: { type: Date, required: true },
@@ -18,7 +18,5 @@ const TripBaseSchema = new mongoose.Schema({
   season:    { type: String },
   daysTotal: { type: Number },
 }, { timestamps: true }); // replaces manual createdAt
-// make sure the unique actually exists in Mongo
-TripBaseSchema.index({ joinCode: 1 }, { unique: true });
 
 module.exports = mongoose.model("TripBase", TripBaseSchema);

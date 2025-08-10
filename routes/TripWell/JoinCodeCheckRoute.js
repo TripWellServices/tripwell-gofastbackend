@@ -2,7 +2,7 @@
 
 const express = require("express");
 const router = express.Router();
-const TripRegistryService = require("../../services/TripWell/TripRegistryService"); // ✅ Correct path to service
+const { isJoinCodeAvailable } = require("../../services/TripWell/joinCodeRegistryService");
 
 // POST /tripwell/joincodecheck
 router.post("/joincodecheck", async (req, res) => {
@@ -14,10 +14,10 @@ router.post("/joincodecheck", async (req, res) => {
       return res.status(400).json({ error: "Join code is required and must be a string." });
     }
 
-    // 🔍 Check if join code is already taken
-    const isTaken = await TripRegistryService.isJoinCodeTaken(joinCode);
+    // 🔍 Check if join code is available using the registry
+    const isAvailable = await isJoinCodeAvailable(joinCode);
 
-    return res.status(200).json({ available: !isTaken });
+    return res.status(200).json({ available: isAvailable });
   } catch (err) {
     console.error("❌ Join code check failed:", err);
     return res.status(500).json({ error: "Internal server error" });
