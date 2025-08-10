@@ -2,7 +2,6 @@
 const mongoose = require("mongoose");
 
 const TripBaseSchema = new mongoose.Schema({
-  userId:    { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   joinCode:  { type: String, required: true, unique: true },
   tripName:  { type: String, required: true },
   purpose:   { type: String, required: true },        // matches your route validation

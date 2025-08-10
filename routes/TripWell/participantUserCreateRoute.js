@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const admin = require("firebase-admin");
 const TripBase = require("../../models/TripWell/TripBase");
-const User = require("../../models/User");
+const TripWellUser = require("../../models/TripWellUser");
 
 // POST /tripwell/participantuser/create
 router.post("/tripwell/participantuser/create", async (req, res) => {
@@ -29,13 +29,12 @@ router.post("/tripwell/participantuser/create", async (req, res) => {
       return res.status(404).json({ error: "Trip not found for provided join code." });
     }
 
-    let user = await User.findOne({ firebaseId });
+    let user = await TripWellUser.findOne({ firebaseId });
 
     if (!user) {
       // Create a new participant user
-      user = new User({
+      user = new TripWellUser({
         firebaseId,
-        userId: firebaseId,
         email,
         tripId: trip._id,
         role: "participant",

@@ -3,7 +3,7 @@ const path = require("path");
 const router = express.Router();
 
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
-const User = require(path.resolve(__dirname, "../../models/User"));
+const TripWellUser = require(path.resolve(__dirname, "../../models/TripWellUser"));
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
 // PATCH /tripwell/starttrip/:tripId
@@ -12,7 +12,7 @@ router.patch("/starttrip/:tripId", verifyFirebaseToken, async (req, res) => {
   const firebaseId = req.user.uid;
 
   try {
-    const user = await User.findOne({ firebaseId });
+    const user = await TripWellUser.findOne({ firebaseId });
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const trip = await TripBase.findById(tripId);

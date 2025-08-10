@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const admin = require("firebase-admin");
 
-const User = require("../../models/User");
+const TripWellUser = require("../../models/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 const TripIntent = require("../../models/TripWell/TripIntent");
 
@@ -17,7 +17,7 @@ router.get("/tripwell/participant/highlights", async (req, res) => {
 
     const token = authHeader.split("Bearer ")[1];
     const decoded = await admin.auth().verifyIdToken(token);
-    const user = await User.findOne({ firebaseId: decoded.uid });
+    const user = await TripWellUser.findOne({ firebaseId: decoded.uid });
 
     if (!user || !user.tripId) {
       return res.status(404).json({ error: "User or trip not found" });

@@ -6,18 +6,21 @@ const TripBase = require("../../models/TripWell/TripBase");
 const TripWellUser = require("../../models/TripWellUser"); // ✅ Global user model at base of /models
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken"); // ✅ Correct middleware path
 
-// 🔐 GET /tripwell/tripcreated
-// Description: Returns the current user's trip based on Firebase token in header
-router.get("/tripcreated", verifyFirebaseToken, async (req, res) => {
+// Test route to verify parameter parsing
+router.get("/tripcreated/test/:tripId", (req, res) => {
+  console.log("🧪 Test route hit with tripId:", req.params.tripId);
+  res.json({ message: "Test route working", tripId: req.params.tripId });
+});
+
+// 🔐 GET /tripwell/tripcreated/:tripId
+// Description: Returns the trip by tripId from URL parameter
+router.get("/tripcreated/:tripId", verifyFirebaseToken, async (req, res) => {
   try {
-    const firebaseId = req.user.uid; // 👈 Populated by Firebase middleware
+    console.log("➡️  GET /tripwell/tripcreated/:tripId");
+    const { tripId } = req.params;
+    console.log("🎯 Trip ID from URL:", tripId);
 
-    const user = await TripWellUser.findOne({ firebaseId });
-    if (!user || !user.tripId) {
-      return res.status(404).json({ error: "No trip found for user" });
-    }
-
-    const trip = await TripBase.findById(user.tripId);
+    const trip = await TripBase.findById(tripId);
     if (!trip) {
       return res.status(404).json({ error: "Trip not found" });
     }

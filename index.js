@@ -55,6 +55,8 @@ mongoose
 const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
 
 // ✅ TripWell Route Mounts — unified under /tripwell
+app.use("/tripwell", require("./routes/TripWell/tripbaseRoutes"));
+app.use("/tripwell", require("./routes/TripWell/JoinCodeCheckRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripIntentRoutes"));
 app.use("/tripwell", require("./routes/TripWell/tripCreatedRoute"));
 app.use("/tripwell", require("./routes/TripWell/AnchorSelectSaveRoutes"));
@@ -65,13 +67,11 @@ app.use("/tripwell", require("./routes/TripWell/tripDayBlockSaveRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripDoAllCompleterRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripReflectionSaveRoutes"));
 app.use("/tripwell", require("./routes/TripWell/lookbackRoute"));
-app.use("/tripwell", require("./routes/TripWell/tripbaseRoutes"));
 app.use("/tripwell", require("./routes/TripWell/tripStartRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripStatusRoute"));
 app.use("/tripwell", require("./routes/TripWell/validateJoinCodeRoute"));
 app.use("/tripwell/user", require("./routes/TripWell/TripWellUserRoute"));
 app.use("/tripwell/participant", require("./routes/TripWell/participantUserCreateRoute"));
-app.use("/tripwell", require("./routes/TripWell/JoinCodeCheckRoute"));
 
 // ✅ Secure Auth-Protected Flow
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));

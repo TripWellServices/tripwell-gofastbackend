@@ -4,7 +4,7 @@ const router = express.Router();
 
 const TripIntent = require(path.resolve(__dirname, "../../models/TripWell/TripIntent"));
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
-const User = require(path.resolve(__dirname, "../../models/User"));
+const TripWellUser = require(path.resolve(__dirname, "../../models/TripWellUser"));
 
 // POST /tripwell/tripintent/:tripId
 router.post("/tripintent/:tripId", verifyFirebaseToken, async (req, res) => {
@@ -13,7 +13,7 @@ router.post("/tripintent/:tripId", verifyFirebaseToken, async (req, res) => {
     const firebaseId = req.user.uid;
     const { priorities, vibes, mobility, budget, travelPace } = req.body;
 
-    const user = await User.findOne({ firebaseId });
+    const user = await TripWellUser.findOne({ firebaseId });
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const existing = await TripIntent.findOne({ tripId, userId: user._id });

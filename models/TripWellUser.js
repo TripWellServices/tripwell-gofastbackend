@@ -30,7 +30,7 @@ const tripWellUserSchema = new mongoose.Schema(
     state: { type: String, default: "" },
     travelStyle: { type: [String], default: [] },
     tripVibe: { type: [String], default: [] },
-    tripId: { type: String, default: null }, // set post trip creation
+    tripId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set post trip creation
     role: { type: String, default: "noroleset" } // set post trip creation
   },
   { timestamps: true }
