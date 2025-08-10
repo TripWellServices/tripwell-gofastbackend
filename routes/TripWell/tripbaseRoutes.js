@@ -13,90 +13,52 @@ router.get("/test", (req, res) => {
   res.json({ message: "tripbaseRoutes is working!" });
 });
 
-// POST /tripwell/tripbase  (mounted in index.js)
-router.post("/tripbase", verifyFirebaseToken, async (req, res) => {
+// POST /tripwell/tripbase (Pattern A: mounted at /tripwell/tripbase, route is /)
+router.post("/", verifyFirebaseToken, async (req, res) => {
   try {
-    console.log("➡️  POST /tripwell/tripbase");
-    console.log("📥 body:", req.body);
-
+    console.log("📝 tripbase body:", req.body);
     const firebaseId = req.user?.uid;
-    if (!firebaseId) return res.status(401).json({ error: "Unauthorized" });
+    if (!firebaseId) return res.status(401).json({ ok: false, error: "Unauthorized" });
 
     const {
-      tripName, purpose, startDate, endDate,
-      joinCode, whoWith, partyCount, city
+      tripName, purpose, startDate, endDate, city, joinCode,
+      whoWith = [], partyCount
     } = req.body;
 
-    // Required fields — purpose added
-    const missing = [];
-    if (!tripName) missing.push("tripName");
-    if (!purpose) missing.push("purpose");
-    if (!startDate) missing.push("startDate");
-    if (!endDate) missing.push("endDate");
-    if (!city) missing.push("city");
-    if (missing.length) {
-      return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
+    if (!tripName || !city || !startDate || !endDate) {
+      return res.status(400).json({ ok: false, error: "Missing required fields" });
     }
 
-    // Date sanity
-    if (new Date(startDate) > new Date(endDate)) {
-      return res.status(400).json({ error: "startDate must be on/before endDate" });
-    }
-
-    // Ensure whoWith is an array
-    if (!Array.isArray(whoWith)) {
-      return res.status(400).json({ error: "whoWith must be an array" });
-    }
-
-    // Verify the user exists and matches the Firebase token
+    // Verify the user exists
     const user = await TripWellUser.findOne({ firebaseId });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) return res.status(404).json({ ok: false, error: "User not found" });
 
-    let trip = new TripBase({
-      tripName, purpose, startDate, endDate,
-      joinCode, whoWith, partyCount, city
-    });
+    const payload = {
+      tripName,
+      purpose,
+      city,
+      joinCode,
+      whoWith: Array.isArray(whoWith) ? whoWith : [],
+      partyCount: (partyCount ?? null),
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+    };
 
-    try {
-      console.log("💾 Saving trip to database...");
-      await trip.save();
-      console.log("✅ Trip saved successfully");
-    } catch (err) {
-      console.error("❌ Trip save failed:", err);
-      if (err.code === 11000 && err.keyPattern?.joinCode) {
-        return res.status(409).json({ error: "Join code already taken" });
-      }
-      throw err;
-    }
-
-    console.log("🔄 Parsing trip...");
-    try {
-      trip = parseTrip(trip);
-      console.log("✅ Trip parsed successfully");
-    } catch (err) {
-      console.error("❌ Trip parsing failed:", err);
-      throw err;
-    }
+    const doc = await TripBase.create(payload);
     
-    console.log("🔄 Setting user trip...");
-    console.log("   User ID:", String(user._id));
-    console.log("   Trip ID:", String(trip._id));
-    try {
-      await setUserTrip(user._id, trip._id);
-      console.log("✅ User trip set successfully");
-    } catch (err) {
-      console.error("❌ User trip set failed:", err);
-      throw err;
-    }
+    // Update user with tripId and role
+    await setUserTrip(user._id, doc._id);
     
-    console.log("✅ Trip created successfully!");
-    console.log("   Trip ID:", String(trip._id));
-    console.log("   User updated with tripId and role");
-    
-    return res.status(201).json({ tripId: trip._id });
+    return res.status(201).json({ ok: true, tripId: doc._id });
   } catch (err) {
-    console.error("❌ Trip creation failed:", err);
-    return res.status(500).json({ error: "Trip creation failed" });
+    console.error("❌ tripbase error:", err);
+    if (err.code === 11000 && err.keyPattern?.joinCode) {
+      return res.status(409).json({ ok: false, error: "Join code already taken" });
+    }
+    if (err.name === "ValidationError") {
+      return res.status(400).json({ ok: false, error: Object.values(err.errors).map(e=>e.message).join(", ") });
+    }
+    return res.status(500).json({ ok: false, error: err.message });
   }
 });
 

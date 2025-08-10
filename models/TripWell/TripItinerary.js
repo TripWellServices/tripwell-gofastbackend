@@ -10,7 +10,8 @@ const tripItinerarySchema = new Schema({
     required: true,
   },
   userId: {
-    type: String, // Firebase UID
+    type: Schema.Types.ObjectId, // ✅ MongoDB _id, not Firebase UID
+    ref: "TripWellUser",
     required: true,
   },
   tripDayIds: [
@@ -19,10 +20,6 @@ const tripItinerarySchema = new Schema({
       ref: "TripDay",
     },
   ],
-  sourceAskId: {
-    type: Schema.Types.ObjectId,
-    ref: "TripAsk",
-  },
   generatedFromGPT: {
     type: Boolean,
     default: false,

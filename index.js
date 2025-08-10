@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const morgan = require("morgan");
 const admin = require("firebase-admin");
 require("dotenv").config();
 
@@ -30,6 +31,7 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
 // === PARSER ===
+app.use(morgan("dev"));
 app.use(express.json());
 
 // === FIREBASE ADMIN INIT ===
@@ -54,8 +56,9 @@ mongoose
 // === MIDDLEWARE ===
 const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
 
-// ✅ TripWell Route Mounts — unified under /tripwell
-app.use("/tripwell", require("./routes/TripWell/tripbaseRoutes"));
+// ✅ TripWell Route Mounts — Pattern A
+const tripbaseRoutes = require("./routes/TripWell/tripbaseRoutes");
+app.use("/tripwell/tripbase", tripbaseRoutes);
 app.use("/tripwell", require("./routes/TripWell/JoinCodeCheckRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripIntentRoutes"));
 app.use("/tripwell", require("./routes/TripWell/tripCreatedRoute"));
@@ -85,6 +88,12 @@ app.get("/", (req, res) => {
     message: "🔥 Welcome to the TripWell backend. Routes are mounted under /tripwell.",
     version: "1.0.0",
   });
+});
+
+// === ERROR HANDLER ===
+app.use((err, req, res, next) => {
+  console.error("🔥 Unhandled error:", err);
+  res.status(500).json({ ok: false, error: err.message });
 });
 
 // === SERVER START ===
