@@ -8,7 +8,6 @@ const TripBaseSchema = new mongoose.Schema({
   startDate: { type: Date, required: true },
   endDate:   { type: Date, required: true },
   city:      { type: String, required: true },
-  isMultiCity: { type: Boolean, default: false },
   partyCount:  { type: Number, default: 1, min: 1 },  // hardened
   whoWith: {
     type: [String],

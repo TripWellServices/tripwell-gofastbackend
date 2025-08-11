@@ -7,6 +7,7 @@ const TripWellUser = require("../../models/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 const { setUserTrip } = require("../../services/TripWell/userTripService");
 const { parseTrip } = require("../../services/TripWell/tripSetupService");
+const { pushTripToRegistry } = require("../../services/TripWell/joinCodePushService");
 
 router.post("/", verifyFirebaseToken, async (req, res) => {
   try {
@@ -45,7 +46,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     const user = await TripWellUser.findOne({ firebaseId: uid });
     if (!user) {
       console.warn("trip-setup: User not found for patch work, but trip was saved");
-      return res.status(201).json({ ok: true });
+      return res.status(201).json({ ok: true, tripId: doc._id });
     }
 
     // 3a) Update trip base (parse/enrich with daysTotal, season, etc.)
@@ -69,8 +70,17 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       // Continue anyway - user update is not critical
     }
 
-    // Don't return tripId. Just signal success.
-    return res.status(201).json({ ok: true });
+    // 3c) Push to JoinCode registry
+    try {
+      await pushTripToRegistry(doc._id, user._id);
+      console.log("✅ Pushed to JoinCode registry");
+    } catch (e) {
+      console.warn("trip-setup: join code registry push failed:", e.message);
+      // Continue anyway - join code registry is not critical
+    }
+
+    // Return tripId for frontend navigation
+    return res.status(201).json({ ok: true, tripId: doc._id });
   } catch (err) {
     console.error("❌ trip-setup error:", err);
     if (err.name === "ValidationError") {

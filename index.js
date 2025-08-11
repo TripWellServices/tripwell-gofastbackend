@@ -60,7 +60,6 @@ const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
 app.use("/tripwell/trip-setup", require("./routes/TripWell/tripSetupRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripBaseLoadRoute"));
 app.use("/tripwell", require("./routes/TripWell/JoinCodeCheckRoute"));
-app.use("/tripwell/joincode-push", require("./routes/TripWell/joinCodePushRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripIntentRoutes"));
 app.use("/tripwell", require("./routes/TripWell/tripCreatedRoute"));
 app.use("/tripwell", require("./routes/TripWell/AnchorSelectSaveRoutes"));

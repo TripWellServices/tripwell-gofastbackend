@@ -3,8 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const TripBase = require("../../models/TripWell/TripBase");
-const TripWellUser = require("../../models/TripWellUser"); // ✅ Global user model at base of /models
-const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken"); // ✅ Correct middleware path
+const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 
 // Test route to verify parameter parsing
 router.get("/tripcreated/test/:tripId", (req, res) => {
@@ -14,6 +13,7 @@ router.get("/tripcreated/test/:tripId", (req, res) => {
 
 // 🔐 GET /tripwell/tripcreated/:tripId
 // Description: Returns the trip by tripId from URL parameter
+// Simplified - users can only reach this after creating a trip
 router.get("/tripcreated/:tripId", verifyFirebaseToken, async (req, res) => {
   try {
     console.log("➡️  GET /tripwell/tripcreated/:tripId");
