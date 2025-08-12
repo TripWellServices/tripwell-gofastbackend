@@ -4,8 +4,8 @@
 const mongoose = require('mongoose');
 const TripWellUser = require('../models/TripWellUser');
 
-// MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/gofast';
+// MongoDB connection - use same env var as main app, fallback to local
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/GoFastFamily';
 
 // Adam's Firebase ID
 const ADAM_FIREBASE_ID = "5m5XpT4J6Qf8B2tMUawHBKbvKbA2";
@@ -13,8 +13,13 @@ const ADAM_FIREBASE_ID = "5m5XpT4J6Qf8B2tMUawHBKbvKbA2";
 async function flushAdamTripId() {
   try {
     console.log('🔌 Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('📍 Using connection:', MONGO_URI.includes('localhost') ? 'Local MongoDB' : 'Remote MongoDB');
+    await mongoose.connect(MONGO_URI, {
+      dbName: "GoFastFamily",
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('✅ Connected to MongoDB GoFastFamily');
 
     console.log('🔍 Finding Adam\'s user record...');
     const adamUser = await TripWellUser.findOne({ firebaseId: ADAM_FIREBASE_ID });
