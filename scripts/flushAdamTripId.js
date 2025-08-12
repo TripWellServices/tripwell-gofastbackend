@@ -4,8 +4,8 @@
 const mongoose = require('mongoose');
 const TripWellUser = require('../models/TripWellUser');
 
-// MongoDB connection - use same env var as main app, fallback to local
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/GoFastFamily';
+// MongoDB connection - use same env var as main app
+const MONGO_URI = process.env.MONGO_URI;
 
 // Adam's Firebase ID
 const ADAM_FIREBASE_ID = "5m5XpT4J6Qf8B2tMUawHBKbvKbA2";
@@ -13,7 +13,10 @@ const ADAM_FIREBASE_ID = "5m5XpT4J6Qf8B2tMUawHBKbvKbA2";
 async function flushAdamTripId() {
   try {
     console.log('🔌 Connecting to MongoDB...');
-    console.log('📍 Using connection:', MONGO_URI.includes('localhost') ? 'Local MongoDB' : 'Remote MongoDB');
+    if (!MONGO_URI) {
+      console.error('❌ MONGO_URI environment variable not set');
+      return;
+    }
     await mongoose.connect(MONGO_URI, {
       dbName: "GoFastFamily",
       useNewUrlParser: true,
