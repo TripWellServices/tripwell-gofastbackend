@@ -1,73 +1,58 @@
 // scripts/flushAdamTripId.js
-// Targeted script to flush Adam's tripId only
+// Targeted script to flush Adam's tripId and role
 
 const mongoose = require('mongoose');
-const TripWellUser = require('../models/TripWellUser');
+require('dotenv').config(); // Load .env
+const TripWellUser = require('../models/TripWellUser'); // Correct path
 
-// MongoDB connection - use same env var as main app
 const MONGO_URI = process.env.MONGO_URI;
-
-// Adam's Firebase ID
 const ADAM_FIREBASE_ID = "5m5XpT4J6Qf8B2tMUawHBKbvKbA2";
 
-async function flushAdamTripId() {
+async function flushAdamTripIdAndRole() {
   try {
     console.log('🔌 Connecting to MongoDB...');
-    if (!MONGO_URI) {
-      console.error('❌ MONGO_URI environment variable not set');
-      return;
-    }
+    if (!MONGO_URI) throw new Error('❌ MONGO_URI environment variable not set');
+
     await mongoose.connect(MONGO_URI, {
-      dbName: "GoFastFamily",
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('✅ Connected to MongoDB GoFastFamily');
+    console.log('✅ Connected to MongoDB');
 
     console.log('🔍 Finding Adam\'s user record...');
     const adamUser = await TripWellUser.findOne({ firebaseId: ADAM_FIREBASE_ID });
-    
+
     if (!adamUser) {
       console.log('❌ Adam\'s user record not found');
       return;
     }
 
-    console.log('📊 Adam\'s current record:', {
+    console.log('📊 Current record:', {
       email: adamUser.email,
       firstName: adamUser.firstName,
       lastName: adamUser.lastName,
-      tripId: adamUser.tripId
+      tripId: adamUser.tripId,
+      role: adamUser.role
     });
 
-    if (!adamUser.tripId) {
-      console.log('✅ Adam already has no tripId - nothing to flush');
+    if (!adamUser.tripId && !adamUser.role) {
+      console.log('✅ Already has no tripId or role - nothing to flush');
       return;
     }
 
-    console.log('🧹 Flushing Adam\'s tripId...');
-    const result = await TripWellUser.updateOne(
-      { firebaseId: ADAM_FIREBASE_ID },
-      { $unset: { tripId: "" } }
-    );
+    console.log('🧹 Flushing tripId and role...');
+    adamUser.tripId = null;
+    adamUser.role = null;
+    await adamUser.save();
 
-    if (result.modifiedCount === 1) {
-      console.log('✅ Successfully flushed Adam\'s tripId');
-    } else {
-      console.log('⚠️ No changes made to Adam\'s record');
-    }
-
-    // Verify the flush
-    const updatedAdam = await TripWellUser.findOne({ firebaseId: ADAM_FIREBASE_ID });
-    console.log('🔍 Verification - Adam\'s tripId after flush:', updatedAdam.tripId);
-
-    if (!updatedAdam.tripId) {
-      console.log('🎉 SUCCESS: Adam\'s tripId has been flushed!');
-    } else {
-      console.log('❌ ERROR: Adam still has tripId');
-    }
+    console.log('🎉 SUCCESS: Flushed tripId and role!');
+    console.log('📊 Updated record:', {
+      tripId: adamUser.tripId,
+      role: adamUser.role
+    });
 
   } catch (error) {
-    console.error('❌ Error flushing Adam\'s tripId:', error);
+    console.error('❌ Error flushing:', error);
   } finally {
     console.log('🔌 Disconnecting from MongoDB...');
     await mongoose.disconnect();
@@ -75,10 +60,9 @@ async function flushAdamTripId() {
   }
 }
 
-// Run the script
 if (require.main === module) {
-  console.log('🚀 Starting Adam\'s tripId flush script...');
-  flushAdamTripId()
+  console.log('🚀 Starting Adam\'s tripId & role flush script...');
+  flushAdamTripIdAndRole()
     .then(() => {
       console.log('✅ Script completed');
       process.exit(0);
@@ -89,4 +73,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = flushAdamTripId;
+module.exports = flushAdamTripIdAndRole;
