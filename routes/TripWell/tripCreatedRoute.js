@@ -36,6 +36,7 @@ router.get("/tripcreated/:tripId", verifyFirebaseToken, async (req, res) => {
       city,
     } = trip;
 
+    res.set("Cache-Control", "no-store");
     return res.status(200).json({
       trip: {
         tripId: trip._id,
