@@ -18,6 +18,7 @@ router.get("/whoami", async (req, res) => {
 
     if (!user) {
       // ✅ Return null for frontend to handle (instead of 404 loop)
+      res.set("Cache-Control", "no-store");
       return res.json({ user: null });
     }
 
