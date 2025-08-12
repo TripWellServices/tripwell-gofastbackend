@@ -42,7 +42,10 @@ router.get("/", verifyFirebaseToken, async (req, res) => {
       tripComplete,
     };
 
-    if (!trip) return res.json({ tripStatus: status });
+    if (!trip) {
+      res.set("Cache-Control", "no-store");
+      return res.json({ tripStatus: status });
+    }
 
     const [intent, anchors, days] = await Promise.all([
       TripIntent.findOne({ tripId }),
@@ -54,6 +57,7 @@ router.get("/", verifyFirebaseToken, async (req, res) => {
     if (anchors) status.anchorsExist = true;
     if (days) status.daysExist = true;
 
+    res.set("Cache-Control", "no-store");
     res.json({ tripStatus: status });
   } catch (err) {
     console.error("❌ tripstatus error:", err);

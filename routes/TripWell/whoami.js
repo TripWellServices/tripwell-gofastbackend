@@ -22,6 +22,7 @@ router.get("/whoami", async (req, res) => {
     }
 
     // ✅ Return complete TripWellUser model for hydration
+    res.set("Cache-Control", "no-store");
     return res.json({
       user: user.toObject()
     });
