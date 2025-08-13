@@ -1,0 +1,83 @@
+[1mdiff --git a/routes/TripWell/tripIntentRoutes.js b/routes/TripWell/tripIntentRoutes.js[m
+[1mindex 7e7e75b..be7ae35 100644[m
+[1m--- a/routes/TripWell/tripIntentRoutes.js[m
+[1m+++ b/routes/TripWell/tripIntentRoutes.js[m
+[36m@@ -6,34 +6,42 @@[m [mconst TripIntent = require(path.resolve(__dirname, "../../models/TripWell/TripIn[m
+ const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));[m
+ const TripWellUser = require(path.resolve(__dirname, "../../models/TripWellUser"));[m
+ [m
+[31m-// POST /tripwell/tripintent/:tripId[m
+[31m-router.post("/tripintent/:tripId", verifyFirebaseToken, async (req, res) => {[m
+[32m+[m[32m// POST /tripwell/tripintent[m
+[32m+[m[32mrouter.post("/tripintent", verifyFirebaseToken, async (req, res) => {[m
+   try {[m
+[31m-    const { tripId } = req.params;[m
+     const firebaseId = req.user.uid;[m
+     const { priorities, vibes, mobility, budget, travelPace } = req.body;[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Convert string inputs to arrays for array fields[m
+[32m+[m[32m    const prioritiesArray = priorities ? priorities.split(',').map(p => p.trim()) : [];[m
+[32m+[m[32m    const vibesArray = vibes ? vibes.split(',').map(v => v.trim()) : [];[m
+[32m+[m[32m    const mobilityArray = mobility ? mobility.split(',').map(m => m.trim()) : [];[m
+[32m+[m[32m    const travelPaceArray = travelPace ? travelPace.split(',').map(t => t.trim()) : [];[m
+ [m
+     const user = await TripWellUser.findOne({ firebaseId });[m
+     if (!user) return res.status(404).json({ error: "User not found" });[m
+[31m-[m
+[32m+[m[41m    [m
+[32m+[m[32m    if (!user.tripId) return res.status(400).json({ error: "No trip associated with user" });[m
+[32m+[m[41m    [m
+[32m+[m[32m    const tripId = user.tripId;[m
+     const existing = await TripIntent.findOne({ tripId, userId: user._id });[m
+ [m
+     if (existing) {[m
+[31m-      existing.priorities = priorities;[m
+[31m-      existing.vibes = vibes;[m
+[31m-      existing.mobility = mobility;[m
+[32m+[m[32m      existing.priorities = prioritiesArray;[m
+[32m+[m[32m      existing.vibes = vibesArray;[m
+[32m+[m[32m      existing.mobility = mobilityArray;[m
+       existing.budget = budget;[m
+[31m-      existing.travelPace = travelPace;[m
+[32m+[m[32m      existing.travelPace = travelPaceArray;[m
+       await existing.save();[m
+     } else {[m
+       await TripIntent.create({[m
+         tripId,[m
+         userId: user._id,[m
+[31m-        priorities,[m
+[31m-        vibes,[m
+[31m-        mobility,[m
+[32m+[m[32m        priorities: prioritiesArray,[m
+[32m+[m[32m        vibes: vibesArray,[m
+[32m+[m[32m        mobility: mobilityArray,[m
+         budget,[m
+[31m-        travelPace,[m
+[32m+[m[32m        travelPace: travelPaceArray,[m
+       });[m
+     }[m
+ [m
+[1mdiff --git a/routes/TripWell/tripStatusRoute.js b/routes/TripWell/tripStatusRoute.js[m
+[1mindex bcd881f..20a0473 100644[m
+[1m--- a/routes/TripWell/tripStatusRoute.js[m
+[1m+++ b/routes/TripWell/tripStatusRoute.js[m
+[36m@@ -36,6 +36,7 @@[m [mrouter.get("/", verifyFirebaseToken, async (req, res) => {[m
+       tripId,[m
+       tripExists: !!trip,[m
+       intentExists: false,[m
+[32m+[m[32m      tripIntentId: null,[m
+       anchorsExist: false,[m
+       daysExist: false,[m
+       tripStarted,[m
+[36m@@ -53,7 +54,10 @@[m [mrouter.get("/", verifyFirebaseToken, async (req, res) => {[m
+       TripDay.findOne({ tripId }),[m
+     ]);[m
+ [m
+[31m-    if (intent) status.intentExists = true;[m
+[32m+[m[32m    if (intent) {[m
+[32m+[m[32m      status.intentExists = true;[m
+[32m+[m[32m      status.tripIntentId = intent._id;[m
+[32m+[m[32m    }[m
+     if (anchors) status.anchorsExist = true;[m
+     if (days) status.daysExist = true;[m
+ [m
