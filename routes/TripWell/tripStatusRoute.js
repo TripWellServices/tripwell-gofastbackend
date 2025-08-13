@@ -36,6 +36,7 @@ router.get("/", verifyFirebaseToken, async (req, res) => {
       tripId,
       tripExists: !!trip,
       intentExists: false,
+      tripIntentId: null,
       anchorsExist: false,
       daysExist: false,
       tripStarted,
@@ -53,7 +54,10 @@ router.get("/", verifyFirebaseToken, async (req, res) => {
       TripDay.findOne({ tripId }),
     ]);
 
-    if (intent) status.intentExists = true;
+    if (intent) {
+      status.intentExists = true;
+      status.tripIntentId = intent._id;
+    }
     if (anchors) status.anchorsExist = true;
     if (days) status.daysExist = true;
 
