@@ -34,10 +34,10 @@ router.post("/tripintent", verifyFirebaseToken, async (req, res) => {
     if (!user.tripId) return res.status(400).json({ error: "No trip associated with user" });
     
     const tripId = user.tripId;
-    const existing = await TripIntent.findOne({
-      tripId: mongoose.Types.ObjectId(tripId),
-      userId: user._id
-    });
+         const existing = await TripIntent.findOne({
+       tripId: new mongoose.Types.ObjectId(tripId),
+       userId: user._id
+     });
     console.log("🔍 Existing TripIntent found:", !!existing);
 
     if (existing) {
