@@ -45,6 +45,10 @@ router.post("/tripintent", verifyFirebaseToken, async (req, res) => {
       });
     }
 
+    // Update user's tripIntentId to mark that intent exists
+    user.tripIntentId = tripId;
+    await user.save();
+
     return res.json({ success: true });
   } catch (err) {
     console.error("🔥 TripIntent save error:", err);
