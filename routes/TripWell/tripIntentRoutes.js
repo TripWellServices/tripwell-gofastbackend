@@ -60,6 +60,11 @@ router.post("/tripintent", verifyFirebaseToken, async (req, res) => {
     return res.json({ success: true });
   } catch (err) {
     console.error("🔥 TripIntent save error:", err);
+    console.error("🔥 Error details:", {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
     return res.status(500).json({ error: "Server error" });
   }
 });
