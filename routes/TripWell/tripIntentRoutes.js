@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const mongoose = require("mongoose");
 const router = express.Router();
 
 const TripIntent = require(path.resolve(__dirname, "../../models/TripWell/TripIntent"));
@@ -12,6 +13,14 @@ router.post("/tripintent", verifyFirebaseToken, async (req, res) => {
     const firebaseId = req.user.uid;
     const { priorities, vibes, tripId: payloadTripId } = req.body;
     
+    console.log("🔥 Incoming req.body:", req.body);
+    
+    const user = await TripWellUser.findOne({ firebaseId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    console.log("tripId from user doc:", user.tripId, typeof user.tripId);
+    console.log("TripIntent tripId type in DB:", typeof (await TripIntent.findOne())?.tripId);
+    
     console.log("🔍 Backend received payload:", { priorities, vibes, payloadTripId });
     
     // Convert string inputs to arrays for array fields
@@ -19,16 +28,16 @@ router.post("/tripintent", verifyFirebaseToken, async (req, res) => {
     const vibesArray = vibes ? vibes.split(',').map(v => v.trim()) : [];
 
     console.log("🔍 Converted arrays:", { prioritiesArray, vibesArray });
-
-    const user = await TripWellUser.findOne({ firebaseId });
-    if (!user) return res.status(404).json({ error: "User not found" });
     
     console.log("🔍 User from DB:", { tripId: user.tripId, userId: user._id });
     
     if (!user.tripId) return res.status(400).json({ error: "No trip associated with user" });
     
     const tripId = user.tripId;
-    const existing = await TripIntent.findOne({ tripId, userId: user._id });
+    const existing = await TripIntent.findOne({
+      tripId: mongoose.Types.ObjectId(tripId),
+      userId: user._id
+    });
     console.log("🔍 Existing TripIntent found:", !!existing);
 
     if (existing) {
