@@ -28,7 +28,8 @@ router.get("/localflush", verifyFirebaseToken, async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       hometownCity: user.hometownCity,
-      state: user.state
+      state: user.state,
+      profileComplete: user.profileComplete || false
     };
 
     // Check if user has a trip

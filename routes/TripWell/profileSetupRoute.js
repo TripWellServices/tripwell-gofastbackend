@@ -26,7 +26,8 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           hometownCity,
           state,
           travelStyle,
-          tripVibe
+          tripVibe,
+          profileComplete: true
         }
       },
       { new: true }
