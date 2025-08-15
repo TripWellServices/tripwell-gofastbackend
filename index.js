@@ -75,6 +75,7 @@ app.use("/tripwell", require("./routes/TripWell/lookbackRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripStartRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripStatusRoute"));
 app.use("/tripwell", require("./routes/TripWell/validateJoinCodeRoute"));
+app.use("/tripwell", require("./routes/TripWell/localFlushRoute"));
 app.use("/tripwell/user", require("./routes/TripWell/TripWellUserRoute"));
 app.use("/tripwell/participant", require("./routes/TripWell/participantUserCreateRoute"));
 
