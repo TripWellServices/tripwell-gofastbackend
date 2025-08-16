@@ -32,6 +32,14 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       profileComplete: user.profileComplete || false
     };
 
+    // Auto-fix profileComplete if user has firstName and lastName but profileComplete is false
+    if (user.firstName && user.lastName && user.firstName.trim() !== "" && user.lastName.trim() !== "" && !user.profileComplete) {
+      console.log("🔧 Auto-fixing profileComplete for user with firstName/lastName");
+      user.profileComplete = true;
+      await user.save();
+      userData.profileComplete = true;
+    }
+
     // Check if user has a trip
     if (!user.tripId) {
       return res.json({
