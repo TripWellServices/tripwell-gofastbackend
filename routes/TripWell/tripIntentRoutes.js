@@ -11,7 +11,7 @@ const TripWellUser = require(path.resolve(__dirname, "../../models/TripWellUser"
 router.post("/tripintent", verifyFirebaseToken, async (req, res) => {
   try {
     const firebaseId = req.user.uid;
-    const { priorities, vibes, tripId: payloadTripId } = req.body;
+    const { priorities, vibes, mobility, travelPace, budget, tripId: payloadTripId } = req.body;
     
     console.log("🔥 Incoming req.body:", req.body);
     
@@ -21,13 +21,15 @@ router.post("/tripintent", verifyFirebaseToken, async (req, res) => {
     console.log("tripId from user doc:", user.tripId, typeof user.tripId);
     console.log("TripIntent tripId type in DB:", typeof (await TripIntent.findOne())?.tripId);
     
-    console.log("🔍 Backend received payload:", { priorities, vibes, payloadTripId });
+    console.log("🔍 Backend received payload:", { priorities, vibes, mobility, travelPace, budget, payloadTripId });
     
-    // Convert string inputs to arrays for array fields
-    const prioritiesArray = priorities ? priorities.split(',').map(p => p.trim()) : [];
-    const vibesArray = vibes ? vibes.split(',').map(v => v.trim()) : [];
+    // Handle arrays directly - no more comma splitting
+    const prioritiesArray = Array.isArray(priorities) ? priorities : [];
+    const vibesArray = Array.isArray(vibes) ? vibes : [];
+    const mobilityArray = Array.isArray(mobility) ? mobility : [];
+    const travelPaceArray = Array.isArray(travelPace) ? travelPace : [];
 
-    console.log("🔍 Converted arrays:", { prioritiesArray, vibesArray });
+    console.log("🔍 Arrays received:", { prioritiesArray, vibesArray, mobilityArray, travelPaceArray });
     
     console.log("🔍 User from DB:", { tripId: user.tripId, userId: user._id });
     
@@ -44,6 +46,9 @@ router.post("/tripintent", verifyFirebaseToken, async (req, res) => {
       console.log("🔍 Updating existing TripIntent");
       existing.priorities = prioritiesArray;
       existing.vibes = vibesArray;
+      existing.mobility = mobilityArray;
+      existing.travelPace = travelPaceArray;
+      existing.budget = budget || "";
       await existing.save();
       console.log("✅ Updated existing TripIntent");
     } else {
@@ -53,6 +58,9 @@ router.post("/tripintent", verifyFirebaseToken, async (req, res) => {
         userId: user._id,
         priorities: prioritiesArray,
         vibes: vibesArray,
+        mobility: mobilityArray,
+        travelPace: travelPaceArray,
+        budget: budget || ""
       });
       console.log("✅ Created new TripIntent:", newTripIntent._id);
     }

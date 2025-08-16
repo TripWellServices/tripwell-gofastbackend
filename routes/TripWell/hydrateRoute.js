@@ -7,12 +7,12 @@ const TripIntent = require("../../models/TripWell/TripIntent");
 const AnchorLogic = require("../../models/TripWell/AnchorLogic");
 const TripDay = require("../../models/TripWell/TripDay");
 
-// 🔐 GET /tripwell/localflush
+// 🔐 GET /tripwell/hydrate
 // Description: Returns all localStorage data for the authenticated user
 // This is a one-stop shop for frontend localStorage hydration
-router.get("/localflush", verifyFirebaseToken, async (req, res) => {
+router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
   try {
-    console.log("🔄 GET /tripwell/localflush - Flushing all data for localStorage");
+    console.log("🔄 GET /tripwell/hydrate - Flushing all data for localStorage");
     const firebaseId = req.user.uid;
     
     // Get user data
@@ -71,19 +71,37 @@ router.get("/localflush", verifyFirebaseToken, async (req, res) => {
     };
 
     // Get all related data in parallel
-    const [tripIntent, anchorLogic, tripDays] = await Promise.all([
-      TripIntent.findOne({ tripId: trip._id }),
-      AnchorLogic.findOne({ tripId: trip._id }),
-      TripDay.find({ tripId: trip._id }).sort({ dayIndex: 1 })
-    ]);
+    let tripIntent = null;
+    let anchorLogic = null;
+    let tripDays = [];
+    
+    try {
+      [tripIntent, anchorLogic, tripDays] = await Promise.all([
+        TripIntent.findOne({ tripId: trip._id }).catch(err => {
+          console.warn("⚠️ TripIntent lookup failed (deprecated model):", err.message);
+          return null;
+        }),
+        AnchorLogic.findOne({ tripId: trip._id }).catch(err => {
+          console.warn("⚠️ AnchorLogic lookup failed:", err.message);
+          return null;
+        }),
+        TripDay.find({ tripId: trip._id }).sort({ dayIndex: 1 }).catch(err => {
+          console.warn("⚠️ TripDay lookup failed:", err.message);
+          return [];
+        })
+      ]);
+    } catch (err) {
+      console.warn("⚠️ Some data lookups failed, continuing with available data:", err.message);
+    }
 
     // Build tripIntentData object
     let tripIntentData = null;
     if (tripIntent) {
+      // Handle deprecated TripIntent model - some fields might be missing
       tripIntentData = {
         tripIntentId: tripIntent._id,
-        priorities: tripIntent.priorities ? tripIntent.priorities.split(',') : [],
-        vibes: tripIntent.vibes ? tripIntent.vibes.split(',') : [],
+        priorities: Array.isArray(tripIntent.priorities) ? tripIntent.priorities : [],
+        vibes: Array.isArray(tripIntent.vibes) ? tripIntent.vibes : [],
         budget: tripIntent.budget || ""
       };
     }
