@@ -5,6 +5,8 @@ const TripIntentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   priorities: { type: [String], default: [] },
   vibes: { type: [String], default: [] },
+  mobility: { type: [String], default: [] },
+  travelPace: { type: [String], default: [] },
   budget: { type: String, default: "" }
 }, { timestamps: true });
 
