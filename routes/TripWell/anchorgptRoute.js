@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { generateAnchorSuggestions } = require("../../services/TripWell/anchorgptService");
 
-// GET /tripwell/anchorgpt/:tripId
-router.get("/tripwell/anchorgpt/:tripId", async (req, res) => {
+// GET /anchorgpt/:tripId
+router.get("/anchorgpt/:tripId", async (req, res) => {
   const { tripId } = req.params;
   const { userId } = req.query;
 
