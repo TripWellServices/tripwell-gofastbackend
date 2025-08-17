@@ -4,6 +4,10 @@ const { generateAnchorSuggestions } = require("../../services/TripWell/anchorgpt
 
 // GET /anchorgpt/:tripId
 router.get("/anchorgpt/:tripId", async (req, res) => {
+  console.log("🎯 ANCHOR ROUTE HIT! URL:", req.url);
+  console.log("🎯 Params:", req.params);
+  console.log("🎯 Query:", req.query);
+  
   const { tripId } = req.params;
   const { userId } = req.query;
 
