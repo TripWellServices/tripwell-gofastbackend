@@ -50,49 +50,86 @@ Return only the raw JSON array. No explanations, markdown, or extra commentary.
 async function generateAnchorSuggestions({ tripId, userId }) {
   if (!tripId || !userId) throw new Error("Missing tripId or userId");
 
-  // Hardcoded Paris anchors for now
-  const hardcodedAnchors = [
-    {
-      title: "Eiffel Tower & Seine River Walk",
-      description: "Start your Paris adventure with the iconic Eiffel Tower, then stroll along the Seine River taking in the romantic atmosphere and historic bridges.",
-      location: "Eiffel Tower, 7th Arrondissement",
-      isDayTrip: false,
-      suggestedFollowOn: "Visit the nearby Trocadéro Gardens for the best photo ops, then explore the charming streets of the 7th arrondissement with dinner at a traditional bistro."
-    },
-    {
-      title: "Louvre Museum & Tuileries Garden",
-      description: "Immerse yourself in art history at the world's largest art museum, home to the Mona Lisa and countless masterpieces, followed by a peaceful walk in the formal gardens.",
-      location: "Louvre Museum, 1st Arrondissement",
-      isDayTrip: false,
-      suggestedFollowOn: "Walk through the Tuileries Garden to Place de la Concorde, then explore the luxury shopping on Rue Saint-Honoré or enjoy a café break."
-    },
-    {
-      title: "Notre-Dame & Île de la Cité",
-      description: "Discover the heart of medieval Paris on the historic island, exploring the magnificent Notre-Dame Cathedral and the charming narrow streets that tell the city's oldest stories.",
-      location: "Notre-Dame Cathedral, Île de la Cité",
-      isDayTrip: false,
-      suggestedFollowOn: "Cross to the Left Bank to explore the Latin Quarter's bookstores and cafés, or visit the Sainte-Chapelle for its stunning stained glass."
-    },
-    {
-      title: "Montmartre & Sacré-Cœur",
-      description: "Climb to the highest point in Paris to visit the stunning white basilica and explore the artistic neighborhood that inspired generations of painters and writers.",
-      location: "Montmartre, 18th Arrondissement",
-      isDayTrip: false,
-      suggestedFollowOn: "Wander the cobblestone streets of Montmartre, visit Place du Tertre to see artists at work, and enjoy dinner at a traditional French restaurant."
-    },
-    {
-      title: "Champs-Élysées & Arc de Triomphe",
-      description: "Walk the world's most famous avenue from the Arc de Triomphe, taking in the luxury shops, cafés, and the grand architecture that defines Parisian elegance.",
-      location: "Champs-Élysées, 8th Arrondissement",
-      isDayTrip: false,
-      suggestedFollowOn: "Visit the Arc de Triomphe for panoramic city views, then explore the nearby Parc Monceau or enjoy shopping and people-watching along the avenue."
-    }
-  ];
+  let tripObjectId;
+  try {
+    tripObjectId = new mongoose.Types.ObjectId(tripId);
+  } catch (err) {
+    throw new Error(`Invalid tripId format: ${tripId}`);
+  }
 
-  return {
-    anchors: hardcodedAnchors,
-    raw: { hardcoded: true }
-  };
+  // Fetch both trip data sources with detailed error handling
+  const [tripIntent, tripBase] = await Promise.all([
+    TripIntent.findOne({ tripId: tripObjectId, userId }),
+    TripBase.findOne({ userId, _id: tripObjectId })
+  ]);
+
+  // Detailed error checking
+  if (!tripIntent) {
+    throw new Error(`TripIntent not found for tripId: ${tripId}, userId: ${userId}`);
+  }
+  
+  if (!tripBase) {
+    throw new Error(`TripBase not found for tripId: ${tripId}, userId: ${userId}`);
+  }
+
+  // Validate required fields
+  if (!tripBase.city) {
+    throw new Error(`TripBase missing required field: city for tripId: ${tripId}`);
+  }
+
+  if (!tripBase.purpose) {
+    throw new Error(`TripBase missing required field: purpose for tripId: ${tripId}`);
+  }
+
+  console.log(`Generating anchors for ${tripBase.city} - User: ${userId}, Trip: ${tripId}`);
+  console.log(`TripIntent data:`, {
+    priorities: tripIntent.priorities,
+    vibes: tripIntent.vibes,
+    mobility: tripIntent.mobility,
+    travelPace: tripIntent.travelPace,
+    budget: tripIntent.budget
+  });
+
+  // Check if TripIntent has meaningful data
+  const hasTripIntentData = tripIntent.priorities?.length > 0 || 
+                           tripIntent.vibes?.length > 0 || 
+                           tripIntent.mobility?.length > 0 || 
+                           tripIntent.travelPace?.length > 0 || 
+                           tripIntent.budget;
+
+  if (!hasTripIntentData) {
+    console.warn(`TripIntent has minimal data for tripId: ${tripId} - will use default values in prompt`);
+  }
+
+  const prompt = buildAnchorPrompt({
+    ...tripIntent.toObject(),
+    city: tripBase.city,
+    season: tripBase.season,
+    purpose: tripBase.purpose,
+    whoWith: tripBase.whoWith,
+  });
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: "You are Angela, TripWell's assistant." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.8,
+      max_tokens: 600
+    });
+
+    const parsed = JSON.parse(response.choices?.[0]?.message?.content || "[]");
+
+    return {
+      anchors: parsed,
+      raw: response
+    };
+  } catch (err) {
+    console.error("Anchor GPT failed:", err);
+    throw new Error("Failed to generate anchor suggestions");
+  }
 }
 
 module.exports = { generateAnchorSuggestions };
