@@ -11,9 +11,9 @@ const openai = new OpenAI({
 // 🧠 GPT prompt builder
 function buildAnchorPrompt({ vibes, priorities, mobility, travelPace, budget, city, season, purpose, whoWith }) {
   return `
-You are Angela, TripWell’s smart travel planner.
+You are Angela, TripWell's smart travel planner.
 
-Suggest 5 immersive travel *anchor experiences* based on the traveler’s input. Anchor experiences are major parts of a trip — like a full-day excursion, iconic site visit, or themed cultural activity — that shape the rest of the day.
+Suggest 5 immersive travel *anchor experiences* based on the traveler's input. Anchor experiences are major parts of a trip — like a full-day excursion, iconic site visit, or themed cultural activity — that shape the rest of the day.
 
 Traveler is going to **${city}** during **${season}**.  
 Purpose of trip: ${purpose || "not specified"}  
@@ -50,63 +50,84 @@ Return only the raw JSON array. No explanations, markdown, or extra commentary.
 async function generateAnchorSuggestions({ tripId, userId }) {
   if (!tripId || !userId) throw new Error("Missing tripId or userId");
 
-  const hardcodedPrompt = `
-You are Angela, TripWell's smart travel planner.
+  let tripObjectId;
+  try {
+    tripObjectId = new mongoose.Types.ObjectId(tripId);
+  } catch (err) {
+    throw new Error(`Invalid tripId format: ${tripId}`);
+  }
 
-Suggest 5 immersive travel *anchor experiences* for a family trip to Paris in summer. Anchor experiences are major parts of a trip — like a full-day excursion, iconic site visit, or themed cultural activity — that shape the rest of the day.
+  // Fetch both trip data sources with detailed error handling
+  const [tripIntent, tripBase] = await Promise.all([
+    TripIntent.findOne({ tripId: tripObjectId, userId }),
+    TripBase.findOne({ userId, _id: tripObjectId })
+  ]);
 
-Traveler is going to **Paris** during **Summer**.  
-Purpose of trip: Make memories with my daughter  
-Travel companions: kids
+  // Detailed error checking
+  if (!tripIntent) {
+    throw new Error(`TripIntent not found for tripId: ${tripId}, userId: ${userId}`);
+  }
+  
+  if (!tripBase) {
+    throw new Error(`TripBase not found for tripId: ${tripId}, userId: ${userId}`);
+  }
 
-Traveler Priorities:
-The traveler emphasized these top trip priorities: **culture, food**.  
-Please scope your anchor suggestions around these interests.
+  // Validate required fields
+  if (!tripBase.city) {
+    throw new Error(`TripBase missing required field: city for tripId: ${tripId}`);
+  }
 
-Trip Vibe:
-The intended vibe is **family-friendly, educational** — reflect this in the tone and energy of the experiences you suggest.
+  if (!tripBase.purpose) {
+    throw new Error(`TripBase missing required field: purpose for tripId: ${tripId}`);
+  }
 
-Mobility & Travel Pace:
-The traveler prefers to get around via **walking, metro**.  
-Please suggest anchors and follow-ons that are realistically accessible based on that.  
-Preferred travel pace: **moderate**.
+  console.log(`Generating anchors for ${tripBase.city} - User: ${userId}, Trip: ${tripId}`);
+  console.log(`TripIntent data:`, {
+    priorities: tripIntent.priorities,
+    vibes: tripIntent.vibes,
+    mobility: tripIntent.mobility,
+    travelPace: tripIntent.travelPace,
+    budget: tripIntent.budget
+  });
 
-Budget Guidance:
-The expected daily budget is **mid-range**.  
-Structure your anchor experiences and follow-on suggestions to reflect that.
+  // Check if TripIntent has meaningful data
+  const hasTripIntentData = tripIntent.priorities?.length > 0 || 
+                           tripIntent.vibes?.length > 0 || 
+                           tripIntent.mobility?.length > 0 || 
+                           tripIntent.travelPace?.length > 0 || 
+                           tripIntent.budget;
 
-Respond only with an array of 5 JSON objects. Each object should contain:
-- title (string)
-- description (string)
-- location (string)
-- isDayTrip (boolean)
-- suggestedFollowOn (string) – what the rest of the day looks like after this anchor
+  if (!hasTripIntentData) {
+    console.warn(`TripIntent has minimal data for tripId: ${tripId} - will use default values in prompt`);
+  }
 
-Return only the raw JSON array. No explanations, markdown, or extra commentary.
-`.trim();
+  const prompt = buildAnchorPrompt({
+    ...tripIntent.toObject(),
+    city: tripBase.city,
+    season: tripBase.season,
+    purpose: tripBase.purpose,
+    whoWith: tripBase.whoWith,
+  });
 
   try {
-    console.log("🧪 Testing OpenAI call with hardcoded prompt...");
-    
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         { role: "system", content: "You are Angela, TripWell's assistant." },
-        { role: "user", content: hardcodedPrompt }
+        { role: "user", content: prompt }
       ],
       temperature: 0.8,
       max_tokens: 600
     });
 
     const parsed = JSON.parse(response.choices?.[0]?.message?.content || "[]");
-    console.log("✅ OpenAI call successful! Got anchors:", parsed.length);
 
     return {
       anchors: parsed,
       raw: response
     };
   } catch (err) {
-    console.error("❌ OpenAI call failed:", err);
+    console.error("Anchor GPT failed:", err);
     throw new Error("Failed to generate anchor suggestions");
   }
 }
