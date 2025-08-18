@@ -36,7 +36,23 @@ app.use(express.json());
 
 // === FIREBASE ADMIN INIT ===
 if (!admin.apps.length) {
-  const serviceAccount = require("./firebaseServiceKey.json");
+  let serviceAccount;
+  
+  // Check if we're in production (environment variable exists)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    console.log("✅ Using Firebase service account from environment variable");
+  } else {
+    // Local development - load from file
+    try {
+      serviceAccount = require("./firebaseServiceKey.json");
+      console.log("✅ Using Firebase service account from local file");
+    } catch (error) {
+      console.error("❌ Firebase service account not found. Please ensure firebaseServiceKey.json exists locally or FIREBASE_SERVICE_ACCOUNT environment variable is set.");
+      process.exit(1);
+    }
+  }
+  
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
