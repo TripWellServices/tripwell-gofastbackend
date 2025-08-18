@@ -131,3 +131,9 @@ dist
 
 # Replit debugger
 .breakpoints
+
+# Firebase service account keys
+firebaseServiceKey.json
+serviceAccountKey.json
+config/serviceAccountKey.json
+*.serviceAccountKey.json
