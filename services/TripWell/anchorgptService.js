@@ -1,8 +1,4 @@
 const OpenAI = require("openai");
-const mongoose = require("mongoose");
-
-const TripIntent = require("../../models/TripWell/TripIntent");
-const TripBase = require("../../models/TripWell/TripBase");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -11,9 +7,9 @@ const openai = new OpenAI({
 // 🧠 GPT prompt builder
 function buildAnchorPrompt({ vibes, priorities, mobility, travelPace, budget, city, season, purpose, whoWith }) {
   return `
-You are Angela, TripWell’s smart travel planner.
+You are Angela, TripWell's smart travel planner.
 
-Suggest 5 immersive travel *anchor experiences* based on the traveler’s input. Anchor experiences are major parts of a trip — like a full-day excursion, iconic site visit, or themed cultural activity — that shape the rest of the day.
+Suggest 5 immersive travel *anchor experiences* based on the traveler's input. Anchor experiences are major parts of a trip — like a full-day excursion, iconic site visit, or themed cultural activity — that shape the rest of the day.
 
 Traveler is going to **${city}** during **${season}**.  
 Purpose of trip: ${purpose || "not specified"}  
@@ -47,52 +43,34 @@ Return only the raw JSON array. No explanations, markdown, or extra commentary.
 }
 
 // 🤖 Main GPT anchor suggestion service
-async function generateAnchorSuggestions({ tripId, userId }) {
+async function generateAnchorSuggestions({ tripId, userId, tripData, tripIntentData }) {
   if (!tripId || !userId) throw new Error("Missing tripId or userId");
 
-  const hardcodedPrompt = `
-You are Angela, TripWell's smart travel planner.
+  console.log("🔍 Using localStorage data:", { tripId, userId });
+  console.log("🔍 tripData received:", tripData);
+  console.log("🔍 tripIntentData received:", tripIntentData);
 
-Suggest 5 immersive travel *anchor experiences* for a family trip to Paris in summer. Anchor experiences are major parts of a trip — like a full-day excursion, iconic site visit, or themed cultural activity — that shape the rest of the day.
-
-Traveler is going to **Paris** during **Summer**.  
-Purpose of trip: Make memories with my daughter  
-Travel companions: kids
-
-Traveler Priorities:
-The traveler emphasized these top trip priorities: **culture, food**.  
-Please scope your anchor suggestions around these interests.
-
-Trip Vibe:
-The intended vibe is **family-friendly, educational** — reflect this in the tone and energy of the experiences you suggest.
-
-Mobility & Travel Pace:
-The traveler prefers to get around via **walking, metro**.  
-Please suggest anchors and follow-ons that are realistically accessible based on that.  
-Preferred travel pace: **moderate**.
-
-Budget Guidance:
-The expected daily budget is **mid-range**.  
-Structure your anchor experiences and follow-on suggestions to reflect that.
-
-Respond only with an array of 5 JSON objects. Each object should contain:
-- title (string)
-- description (string)
-- location (string)
-- isDayTrip (boolean)
-- suggestedFollowOn (string) – what the rest of the day looks like after this anchor
-
-Return only the raw JSON array. No explanations, markdown, or extra commentary.
-`.trim();
+  // Use the data from localStorage that frontend sends
+  const prompt = buildAnchorPrompt({
+    city: tripData?.city || "Paris",
+    season: tripData?.season || "Summer", 
+    purpose: tripData?.purpose || "Make memories",
+    whoWith: tripData?.whoWith || ["family"],
+    priorities: tripIntentData?.priorities || ["culture", "food"],
+    vibes: tripIntentData?.vibes || ["family-friendly", "educational"],
+    mobility: tripIntentData?.mobility || ["walking", "metro"],
+    travelPace: tripIntentData?.travelPace || ["moderate"],
+    budget: tripIntentData?.budget || "mid-range"
+  });
 
   try {
-    console.log("🧪 Testing OpenAI call with hardcoded prompt...");
+    console.log("🧪 Calling OpenAI with real data...");
     
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         { role: "system", content: "You are Angela, TripWell's assistant." },
-        { role: "user", content: hardcodedPrompt }
+        { role: "user", content: prompt }
       ],
       temperature: 0.8,
       max_tokens: 600

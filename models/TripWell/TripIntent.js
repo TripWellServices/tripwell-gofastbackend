@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const TripIntentSchema = new mongoose.Schema({
   tripId: { type: mongoose.Schema.Types.ObjectId, ref: "TripBase", required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: String, required: true }, // Firebase ID string
   priorities: { 
     type: [String], 
     default: [],
