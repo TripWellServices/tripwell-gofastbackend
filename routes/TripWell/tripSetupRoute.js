@@ -8,6 +8,7 @@ const TripBase = require("../../models/TripWell/TripBase");
 const { setUserTrip } = require("../../services/TripWell/userTripService");
 const { parseTrip } = require("../../services/TripWell/tripSetupService");
 const { pushTripToRegistry } = require("../../services/TripWell/joinCodePushService");
+const tripExtraService = require("../../services/TripWell/tripExtraService");
 
 router.post("/", verifyFirebaseToken, async (req, res) => {
   try {
@@ -79,8 +80,22 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       // Continue anyway - join code registry is not critical
     }
 
-    // Return tripId for frontend navigation
-    return res.status(201).json({ ok: true, tripId: doc._id });
+    // 4) TRIPEXTRA VALIDATION - Store validation state
+    let tripExtraValidation = null;
+    try {
+      tripExtraValidation = await tripExtraService.validateUserData(uid);
+      console.log("✅ TripExtra validation stored:", tripExtraValidation.summary);
+    } catch (e) {
+      console.warn("trip-setup: TripExtra validation failed:", e.message);
+      // Continue anyway - TripExtra validation is not critical
+    }
+
+    // Return tripId and validation info for frontend
+    return res.status(201).json({ 
+      ok: true, 
+      tripId: doc._id,
+      tripExtraValidation: tripExtraValidation
+    });
   } catch (err) {
     console.error("❌ trip-setup error:", err);
     if (err.name === "ValidationError") {

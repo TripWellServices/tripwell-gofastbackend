@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
-const tripExtraService = require("../../services/TripWell/tripExtra");
+const tripExtraService = require("../../services/TripWell/tripExtraService");
 
 // 🔐 GET /tripwell/hydrate
 // Description: Returns all localStorage data for the authenticated user
