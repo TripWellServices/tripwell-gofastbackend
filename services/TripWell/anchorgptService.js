@@ -82,12 +82,11 @@ async function generateAnchorSuggestions({ tripId, userId, tripData, tripIntentD
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
-        { role: "system", content: "You are Angela, TripWell's assistant. You MUST respond with valid JSON only." },
+        { role: "system", content: "You are Angela, TripWell's assistant. You MUST respond with valid JSON only. Return a JSON object with an 'anchors' array containing anchor experiences." },
         { role: "user", content: prompt }
       ],
       temperature: 0.3,  // Lower temperature for more consistent JSON
-      max_tokens: 800,   // More tokens for complete responses
-      response_format: { type: "json_object" }  // Force JSON response
+      max_tokens: 800    // More tokens for complete responses
     });
 
     const rawContent = response.choices?.[0]?.message?.content || "[]";
@@ -101,6 +100,12 @@ async function generateAnchorSuggestions({ tripId, userId, tripData, tripIntentD
       // Remove markdown code blocks if present
       cleanContent = cleanContent.replace(/```json\n?/g, '').replace(/```\n?/g, '');
       
+      // Try to find JSON content within the response
+      let jsonMatch = cleanContent.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+      if (jsonMatch) {
+        cleanContent = jsonMatch[0];
+      }
+      
       console.log("🧹 Cleaned content:", cleanContent);
       const jsonResponse = JSON.parse(cleanContent);
       
@@ -110,6 +115,14 @@ async function generateAnchorSuggestions({ tripId, userId, tripData, tripIntentD
       } else if (Array.isArray(jsonResponse)) {
         // Fallback: if it's still an array format
         parsed = jsonResponse;
+      } else if (jsonResponse && typeof jsonResponse === 'object') {
+        // Try to find any array in the response
+        const arrays = Object.values(jsonResponse).filter(val => Array.isArray(val));
+        if (arrays.length > 0) {
+          parsed = arrays[0]; // Use the first array found
+        } else {
+          throw new Error("No array found in JSON response");
+        }
       } else {
         throw new Error("Invalid response format: missing anchors array");
       }
@@ -118,6 +131,15 @@ async function generateAnchorSuggestions({ tripId, userId, tripData, tripIntentD
       if (!Array.isArray(parsed)) {
         throw new Error("Anchors is not an array");
       }
+      
+      // Ensure each anchor has required fields
+      parsed = parsed.map(anchor => ({
+        title: anchor.title || anchor.name || "Unnamed Experience",
+        description: anchor.description || `Experience: ${anchor.title || anchor.name}`,
+        location: anchor.location || anchor.place || "",
+        isDayTrip: anchor.isDayTrip || false,
+        suggestedFollowOn: anchor.suggestedFollowOn || anchor.followOn || ""
+      }));
       
     } catch (parseError) {
       console.error("❌ JSON parsing failed:", parseError);
