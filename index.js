@@ -82,6 +82,7 @@ app.use("/tripwell", require("./routes/TripWell/AnchorSelectSaveRoutes"));
 app.use("/tripwell", require("./routes/TripWell/anchorgptRoute"));
 app.use("/tripwell", require("./routes/TripWell/anchorgpttestRoute"));
 app.use("/tripwell", require("./routes/TripWell/ItineraryUpdateRoute"));
+app.use("/tripwell", require("./routes/TripWell/itineraryRoutes"));
 app.use("/tripwell", require("./routes/TripWell/tripDayBuildPreviewRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripLiveStatusRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripDayBlockSaveRoute"));
@@ -93,6 +94,7 @@ app.use("/tripwell", require("./routes/TripWell/tripStatusRoute"));
 app.use("/tripwell", require("./routes/TripWell/validateJoinCodeRoute"));
 app.use("/tripwell", require("./routes/TripWell/hydrateRoute"));
 app.use("/tripwell/user", require("./routes/TripWell/TripWellUserRoute"));
+app.use("/tripwell/user", require("./routes/TripWell/userProgressRoutes"));
 app.use("/tripwell/participant", require("./routes/TripWell/participantUserCreateRoute"));
 
 // ✅ Secure Auth-Protected Flow

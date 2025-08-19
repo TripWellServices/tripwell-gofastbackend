@@ -2,11 +2,14 @@ const express = require("express");
 const router = express.Router();
 
 const { generateItineraryFromAnchorLogic } = require("../../services/TripWell/itineraryGPTService");
-const { parseAngelaItinerary } = require("../../services/TripWell/gptItineraryParserService");
+const { parseAngelaItinerary } = require("../../services/TripWell/gptitineraryparserService");
 const { saveTripDaysGpt } = require("../../services/TripWell/itinerarySaveService");
+const TripWellUser = require("../../models/TripWellUser");
+const TripDay = require("../../models/TripWell/TripDay");
+const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 
-// Canonical route: POST /tripwell/itinerary/build
-router.post("/tripwell/itinerary/build", async (req, res) => {
+// Canonical route: POST /tripwell/itinerary/build (temporarily without auth for testing)
+router.post("/itinerary/build", async (req, res) => {
   const { tripId } = req.body;
 
   if (!tripId) {
@@ -31,6 +34,42 @@ router.post("/tripwell/itinerary/build", async (req, res) => {
   } catch (err) {
     console.error("Itinerary build failure:", err);
     return res.status(500).json({ error: "Failed to build itinerary" });
+  }
+});
+
+// GET /tripwell/itinerary/status/:tripId - Check if user has completed itinerary generation
+router.get("/itinerary/status/:tripId", async (req, res) => {
+  const { tripId } = req.params;
+  
+  if (!tripId) {
+    return res.status(400).json({ error: "Missing tripId" });
+  }
+
+  try {
+    console.log("🔍 Checking itinerary status for trip:", tripId);
+    
+    // Check if itinerary has been generated (TripDay records exist)
+    const tripDays = await TripDay.find({ tripId: tripId }).sort({ dayIndex: 1 });
+    
+    if (!tripDays || tripDays.length === 0) {
+      return res.status(200).json({ 
+        hasCompletedItinerary: false,
+        tripDays: null,
+        message: "Itinerary has not been generated yet"
+      });
+    }
+    
+    // Return the saved itinerary data
+    return res.status(200).json({ 
+      hasCompletedItinerary: true,
+      tripDays: tripDays,
+      totalDays: tripDays.length,
+      message: "Itinerary has been generated"
+    });
+    
+  } catch (err) {
+    console.error("🔥 Error checking itinerary status:", err);
+    return res.status(500).json({ error: "Failed to check itinerary status" });
   }
 });
 

@@ -3,7 +3,7 @@ const router = express.Router();
 const TripDay = require("../../models/TripWell/TripDay");
 
 // Canonical route to hydrate entire itinerary from TripDay model
-router.get("/tripwell/itinerary/days/:tripId", async (req, res) => {
+router.get("/itinerary/days/:tripId", async (req, res) => {
   const { tripId } = req.params;
 
   try {
