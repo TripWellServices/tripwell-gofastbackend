@@ -1,11 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
-const TripWellUser = require("../../models/TripWellUser");
-const TripBase = require("../../models/TripWell/TripBase");
-const TripIntent = require("../../models/TripWell/TripIntent");
-const AnchorLogic = require("../../models/TripWell/AnchorLogic");
-const TripDay = require("../../models/TripWell/TripDay");
+const tripExtraService = require("../../services/TripWell/tripExtra");
 
 // 🔐 GET /tripwell/hydrate
 // Description: Returns all localStorage data for the authenticated user
@@ -15,148 +11,91 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     console.log("🔄 GET /tripwell/hydrate - Flushing all data for localStorage");
     const firebaseId = req.user.uid;
     
-    // Get user data
-    const user = await TripWellUser.findOne({ firebaseId });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // Build userData object
-    const userData = {
-      firebaseId: user.firebaseId,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      hometownCity: user.hometownCity,
-      state: user.state,
-      profileComplete: user.profileComplete || false
-    };
-
-    // Auto-fix profileComplete if user has firstName and lastName but profileComplete is false
-    if (user.firstName && user.lastName && user.firstName.trim() !== "" && user.lastName.trim() !== "" && !user.profileComplete) {
-      console.log("🔧 Auto-fixing profileComplete for user with firstName/lastName");
-      user.profileComplete = true;
-      await user.save();
-      userData.profileComplete = true;
-    }
-
-    // Check if user has a trip
-    if (!user.tripId) {
-      return res.json({
-        userData,
-        tripData: null,
-        tripIntentData: null,
-        anchorSelectData: null,
-        itineraryData: null
-      });
-    }
-
-    // Get trip data
-    const trip = await TripBase.findById(user.tripId);
-    if (!trip) {
-      return res.json({
-        userData,
-        tripData: null,
-        tripIntentData: null,
-        anchorSelectData: null,
-        itineraryData: null
-      });
-    }
-
-    // Build tripData object
-    const tripData = {
-      tripId: trip._id,
-      tripName: trip.tripName,
-      purpose: trip.purpose,
-      startDate: trip.startDate,
-      endDate: trip.endDate,
-      city: trip.city,
-      joinCode: trip.joinCode,
-      whoWith: trip.whoWith || [],
-      partyCount: trip.partyCount,
-      startedTrip: trip.startedTrip || false,
-      tripComplete: trip.tripComplete || false
-    };
-
-    // Get all related data in parallel
-    let tripIntent = null;
-    let anchorLogic = null;
-    let tripDays = [];
+    // First try to get data from backend
+    const localStorageData = await tripExtraService.getLocalStorageData(firebaseId);
     
-    try {
-      [tripIntent, anchorLogic, tripDays] = await Promise.all([
-        TripIntent.findOne({ tripId: trip._id }).catch(err => {
-          console.warn("⚠️ TripIntent lookup failed (deprecated model):", err.message);
-          return null;
-        }),
-        AnchorLogic.findOne({ tripId: trip._id }).catch(err => {
-          console.warn("⚠️ AnchorLogic lookup failed:", err.message);
-          return null;
-        }),
-        TripDay.find({ tripId: trip._id }).sort({ dayIndex: 1 }).catch(err => {
-          console.warn("⚠️ TripDay lookup failed:", err.message);
-          return [];
-        })
-      ]);
-    } catch (err) {
-      console.warn("⚠️ Some data lookups failed, continuing with available data:", err.message);
+    if (localStorageData.error) {
+      return res.status(404).json({ error: localStorageData.error });
     }
 
-    // Build tripIntentData object
-    let tripIntentData = null;
-    if (tripIntent) {
-      // Handle deprecated TripIntent model - some fields might be missing
-      tripIntentData = {
-        tripIntentId: tripIntent._id,
-        priorities: Array.isArray(tripIntent.priorities) ? tripIntent.priorities : [],
-        vibes: Array.isArray(tripIntent.vibes) ? tripIntent.vibes : [],
-        budget: tripIntent.budget || ""
-      };
+    // Validate the data we got
+    let validation;
+    if (localStorageData.tripData) {
+      // Backend flow - validate against database
+      validation = await tripExtraService.validateUserData(firebaseId);
+    } else {
+      // Frontend-only flow - validate against localStorage data
+      validation = await tripExtraService.validateFrontendFlow(firebaseId, localStorageData);
     }
 
-    // Build anchorSelectData object
-    let anchorSelectData = null;
-    if (anchorLogic) {
-      anchorSelectData = {
-        anchors: anchorLogic.anchorTitles || []
-      };
-    }
-
-    // Build itineraryData object
-    let itineraryData = null;
-    if (tripDays && tripDays.length > 0) {
-      itineraryData = {
-        itineraryId: "generated-from-backend",
-        days: tripDays.map(day => ({
-          dayIndex: day.dayIndex,
-          summary: day.summary
-        }))
-      };
-    }
-
-    // Return all data in localStorage format
-    const localStorageData = {
-      userData,
-      tripData,
-      tripIntentData,
-      anchorSelectData,
-      itineraryData
+    // Add validation info to response for debugging
+    const response = {
+      ...localStorageData,
+      validation: {
+        isValid: validation.isValid,
+        missingData: validation.missingData,
+        summary: validation.summary,
+        flow: validation.flow || "unknown"
+      }
     };
 
     console.log("✅ LocalStorage flush complete:", {
-      hasUserData: !!userData,
-      hasTripData: !!tripData,
-      hasTripIntentData: !!tripIntentData,
-      hasAnchorSelectData: !!anchorSelectData,
-      hasItineraryData: !!itineraryData
+      hasUserData: !!localStorageData.userData,
+      hasTripData: !!localStorageData.tripData,
+      hasTripIntentData: !!localStorageData.tripIntentData,
+      hasAnchorSelectData: !!localStorageData.anchorSelectData,
+      hasItineraryData: !!localStorageData.itineraryData,
+      validation: validation.summary,
+      flow: validation.flow
     });
 
     res.set("Cache-Control", "no-store");
-    return res.json(localStorageData);
+    return res.json(response);
 
   } catch (err) {
     console.error("❌ LocalStorage flush failed:", err);
     return res.status(500).json({ error: "Failed to flush localStorage data" });
+  }
+});
+
+// 🔍 GET /tripwell/hydrate/validate
+// Description: Just validate what data is missing (for debugging)
+router.get("/hydrate/validate", verifyFirebaseToken, async (req, res) => {
+  try {
+    console.log("🔍 GET /tripwell/hydrate/validate - Checking data completeness");
+    const firebaseId = req.user.uid;
+    
+    const validation = await tripExtraService.validateUserData(firebaseId);
+    
+    res.json({
+      firebaseId,
+      validation
+    });
+
+  } catch (err) {
+    console.error("❌ Validation check failed:", err);
+    return res.status(500).json({ error: "Failed to validate data" });
+  }
+});
+
+// 🔍 GET /tripwell/hydrate/validate-frontend
+// Description: Validate frontend localStorage data (for frontend-only flow)
+router.post("/hydrate/validate-frontend", verifyFirebaseToken, async (req, res) => {
+  try {
+    console.log("🔍 POST /tripwell/hydrate/validate-frontend - Validating frontend data");
+    const firebaseId = req.user.uid;
+    const localStorageData = req.body;
+    
+    const validation = await tripExtraService.validateFrontendFlow(firebaseId, localStorageData);
+    
+    res.json({
+      firebaseId,
+      validation
+    });
+
+  } catch (err) {
+    console.error("❌ Frontend validation check failed:", err);
+    return res.status(500).json({ error: "Failed to validate frontend data" });
   }
 });
 
