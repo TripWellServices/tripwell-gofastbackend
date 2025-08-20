@@ -78,7 +78,6 @@ app.use("/tripwell", require("./routes/TripWell/TripBaseLoadRoute"));
 app.use("/tripwell", require("./routes/TripWell/JoinCodeCheckRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripIntentRoutes"));
 app.use("/tripwell", require("./routes/TripWell/tripCreatedRoute"));
-app.use("/tripwell", require("./routes/TripWell/AnchorSelectSaveRoutes"));
 app.use("/tripwell", require("./routes/TripWell/anchorgptRoute"));
 app.use("/tripwell", require("./routes/TripWell/anchorgpttestRoute"));
 app.use("/tripwell", require("./routes/TripWell/ItineraryUpdateRoute"));
@@ -98,6 +97,7 @@ app.use("/tripwell/participant", require("./routes/TripWell/participantUserCreat
 // ✅ Secure Auth-Protected Flow
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/profileSetupRoute"));
+app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/AnchorSelectSaveRoutes"));
 
 // === ROOT CHECK ===
 app.get("/", (req, res) => {

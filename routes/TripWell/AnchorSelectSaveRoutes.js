@@ -5,9 +5,10 @@ const router = express.Router();
 
 const { saveAnchorLogic } = require("../../services/TripWell/anchorlogicSaveService");
 const User = require("../../models/User");
+const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 
-// POST /tripwell/anchorselectparsesave/:tripId
-router.post("/anchorselectparsesave/:tripId", async (req, res) => {
+// POST /tripwell/anchorselect/save/:tripId
+router.post("/anchorselect/save/:tripId", verifyFirebaseToken, async (req, res) => {
   const { tripId } = req.params;
   const { userId, anchorTitles } = req.body;
 
