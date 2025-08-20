@@ -32,7 +32,11 @@ const tripWellUserSchema = new mongoose.Schema(
     tripVibe: { type: [String], default: [] },
     profileComplete: { type: Boolean, default: false }, // tracks if profile setup is complete
     tripId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set post trip creation
-    role: { type: String, default: "noroleset" } // set post trip creation
+    role: { 
+      type: String, 
+      default: "noroleset",
+      enum: ["noroleset", "originator", "participant"]
+    } // set post trip creation
   },
   { timestamps: true }
 );

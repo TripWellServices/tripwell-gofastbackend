@@ -308,7 +308,8 @@ class TripExtraService {
         lastName: user.lastName,
         hometownCity: user.hometownCity,
         state: user.state,
-        profileComplete: user.profileComplete || false
+        profileComplete: user.profileComplete || false,
+        role: user.role || "noroleset"
       };
 
       if (!user.tripId) {

@@ -8,7 +8,6 @@ const TripBase = require("../../models/TripWell/TripBase");
 const { setUserTrip } = require("../../services/TripWell/userTripService");
 const { parseTrip } = require("../../services/TripWell/tripSetupService");
 const { pushTripToRegistry } = require("../../services/TripWell/joinCodePushService");
-const tripExtraService = require("../../services/TripWell/tripExtraService");
 
 router.post("/", verifyFirebaseToken, async (req, res) => {
   try {
@@ -51,11 +50,28 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     }
 
     // 3a) Update trip base (parse/enrich with daysTotal, season, etc.)
+    let computedTripData = null;
     try {
       const patch = await parseTrip(doc);
       if (patch && typeof patch === "object" && Object.keys(patch).length) {
         await TripBase.updateOne({ _id: doc._id }, { $set: patch });
         console.log("✅ Updated trip base with patch:", Object.keys(patch));
+        
+        // Store computed data for frontend
+        computedTripData = {
+          tripId: doc._id,
+          tripName: patch.tripName || doc.tripName,
+          purpose: patch.purpose || doc.purpose,
+          startDate: patch.startDate || doc.startDate,
+          endDate: patch.endDate || doc.endDate,
+          city: patch.city || doc.city,
+          joinCode: patch.joinCode || doc.joinCode,
+          whoWith: patch.whoWith || doc.whoWith || [],
+          partyCount: patch.partyCount || doc.partyCount,
+          season: patch.season,
+          daysTotal: patch.daysTotal,
+          dateRange: patch.dateRange
+        };
       }
     } catch (e) {
       console.warn("trip-setup: parseTrip failed:", e.message);
@@ -80,21 +96,11 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       // Continue anyway - join code registry is not critical
     }
 
-    // 4) TRIPEXTRA VALIDATION - Store validation state
-    let tripExtraValidation = null;
-    try {
-      tripExtraValidation = await tripExtraService.validateUserData(uid);
-      console.log("✅ TripExtra validation stored:", tripExtraValidation.summary);
-    } catch (e) {
-      console.warn("trip-setup: TripExtra validation failed:", e.message);
-      // Continue anyway - TripExtra validation is not critical
-    }
-
-    // Return tripId and validation info for frontend
+    // Return tripId and computed trip data for frontend
     return res.status(201).json({ 
       ok: true, 
       tripId: doc._id,
-      tripExtraValidation: tripExtraValidation
+      tripData: computedTripData // Include computed data (daysTotal, season, etc.)
     });
   } catch (err) {
     console.error("❌ trip-setup error:", err);
