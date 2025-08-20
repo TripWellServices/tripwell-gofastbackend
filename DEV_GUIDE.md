@@ -311,15 +311,73 @@ curl -X POST -H "Authorization: Bearer YOUR_TOKEN" \
 
 ### **Step 8: Itinerary Build**
 **Frontend**: AI generates initial itinerary
-**Backend**: `POST /tripwell/itinerarybuild` (protected)
+**Backend**: `POST /tripwell/itinerary/build` (protected)
+
+**Complete Itinerary Build Flow:**
+1. **AnchorSelect** → "Lock In My Picks & Build My Trip 🧠" button clicked
+2. **AnchorSelect** → `handleSubmit()` saves anchors to backend (with token)
+3. **AnchorSelect** → Routes to `/tripwell/itinerarybuild`
+4. **TripItineraryBuilder** → Auto-calls `POST /tripwell/itinerary/build` on mount
+5. **Backend** → `generateItineraryFromAnchorLogic()` - GPT generates raw itinerary
+6. **Backend** → `parseAngelaItinerary()` - Parses into structured TripDays
+7. **Backend** → `saveTripDaysGpt()` - Saves to TripDay model
+8. **Frontend** → Displays generated itinerary with save/modify options
+
+**Model Dependencies:**
+- **TripBase** → Trip details (city, season, dates, purpose)
+- **TripIntent** → User preferences (priorities, vibes, mobility)
+- **AnchorLogic** → Selected anchor experiences
+- **TripDay** → Generated day-by-day itinerary
+
+**Day Indexing Flow (Critical for Live Use):**
+1. **GPT Generation** → Creates "Day X – Weekday, Month Day" format
+2. **Parser Extraction** → `parseAngelaItinerary()` extracts `dayIndex` from header
+3. **Day Filtering** → Skips Day 0 (travel day), keeps Days 1-N
+4. **Database Save** → Saves with `dayIndex` for live trip progression
+5. **Live Trip Use** → Uses `dayIndex` to show current day and track progress
+
+**TripDay Model Structure:**
+```javascript
+{
+  tripId: ObjectId,                    // Required - Trip reference
+  dayIndex: Number,                    // Required - Day number (1, 2, 3...)
+  summary: String,                     // Day summary from GPT
+  blocks: {
+    morning: { title, description, timeOfDay, location, ... },
+    afternoon: { title, description, timeOfDay, location, ... },
+    evening: { title, description, timeOfDay, location, ... }
+  },
+  isComplete: Boolean,                 // Live trip progress tracking
+  modifiedByUser: Boolean,             // Track user modifications
+  modificationMethod: "gpt" | "manual" // Source of modifications
+}
+```
+
+**Backend Processing Steps:**
+1. **Generate Raw Itinerary** → GPT creates day-by-day plan using anchors
+2. **Parse Structured Data** → Convert text to structured TripDay objects
+3. **Save to Database** → Store in TripDay model with dayIndex, summary, activities
 
 **What Can Break:**
-- ❌ **OpenAI API issues** → Generation fails
-- ❌ **Invalid trip data** → GPT prompt fails
+- ❌ **Missing tripId** → 400 error
+- ❌ **No anchor selections** → "Missing trip data or anchors"
+- ❌ **OpenAI API fails** → Generation fails
+- ❌ **Parse fails** → "Parsed itinerary is empty"
+- ❌ **Day index parsing fails** → Invalid dayIndex values
 - ❌ **Save fails** → Database error
+- ❌ **Token missing** → 401 Unauthorized
+
+**Day Indexing Issues to Check:**
+- **GPT Format** → Must generate "Day X – Weekday, Month Day" format
+- **Parser Regex** → Must extract dayIndex from header correctly
+- **Day 0 Filtering** → Travel day should be skipped
+- **Unique Constraint** → One TripDay per tripId + dayIndex combination
+- **Live Trip Sync** → dayIndex must match live trip progression
 
 **Flow Logic:**
-- ✅ **Itinerary generated** → Route to `/itinerarymodify`
+- ✅ **Itinerary generated** → Display with save/modify options
+- ✅ **User saves** → Route to `/prephub`
+- ✅ **User modifies** → Route to `/tripwell/itineraryupdate`
 
 **Debug Commands:**
 ```bash
@@ -327,7 +385,16 @@ curl -X POST -H "Authorization: Bearer YOUR_TOKEN" \
 curl -X POST -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"tripId":"TRIP_ID"}' \
-  http://localhost:5000/tripwell/itinerarybuild
+  http://localhost:5000/tripwell/itinerary/build
+
+# Check if TripDays were saved with correct dayIndex
+# MongoDB: db.tripdays.find({tripId: ObjectId("TRIP_ID")}, {dayIndex: 1, summary: 1})
+
+# Check dayIndex sequence (should be 1, 2, 3... not 0, 1, 2...)
+# MongoDB: db.tripdays.find({tripId: ObjectId("TRIP_ID")}).sort({dayIndex: 1})
+
+# Check anchor selections exist
+# MongoDB: db.anchorlogics.findOne({tripId: ObjectId("TRIP_ID")})
 ```
 
 ### **Step 9: Itinerary Modify**
