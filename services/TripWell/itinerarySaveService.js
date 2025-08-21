@@ -10,11 +10,18 @@ const { parseAngelaItinerary } = require("./gptitineraryparserService");
  * @returns {Promise<number>} - Count of days saved
  */
 async function saveTripDaysGpt(tripId, itineraryString) {
+  console.log("🔍 Raw itinerary string length:", itineraryString.length);
+  console.log("🔍 Raw itinerary string preview:", itineraryString.substring(0, 500));
+  
   const parsedDays = parseAngelaItinerary(itineraryString);
+  console.log("🔍 Parsed days count:", parsedDays.length);
+  console.log("🔍 Parsed days:", JSON.stringify(parsedDays, null, 2));
 
   const filteredDays = parsedDays.filter(
     (day) => day.dayIndex !== 0 && !/^Day 0\b/.test(day.label)
   );
+  console.log("🔍 Filtered days count:", filteredDays.length);
+  console.log("🔍 Filtered days:", JSON.stringify(filteredDays, null, 2));
 
   const tripDays = filteredDays.map((day) => ({
     ...day,
@@ -23,6 +30,7 @@ async function saveTripDaysGpt(tripId, itineraryString) {
 
   await TripDay.deleteMany({ tripId });
   const created = await TripDay.insertMany(tripDays);
+  console.log("🔍 Created TripDay documents:", created.length);
 
   return created.length;
 }
