@@ -88,11 +88,22 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     });
 
     // Get related data in parallel
+    console.log("🔍 Querying for tripId:", trip._id.toString(), "userId:", firebaseId);
     const [tripIntent, anchorLogic, tripDays] = await Promise.all([
-      TripIntent.findOne({ tripId: trip._id }).catch(() => null),
+      TripIntent.findOne({ tripId: trip._id, userId: firebaseId }).catch(() => null),
       AnchorLogic.findOne({ tripId: trip._id }).catch(() => null),
       TripDay.find({ tripId: trip._id }).sort({ dayIndex: 1 }).catch(() => [])
     ]);
+    
+    console.log("🔍 TripIntent found:", !!tripIntent);
+    if (tripIntent) {
+      console.log("🔍 TripIntent data:", {
+        tripId: tripIntent.tripId,
+        priorities: tripIntent.priorities,
+        mobility: tripIntent.mobility,
+        travelPace: tripIntent.travelPace
+      });
+    }
 
     // Build tripIntentData
     let tripIntentData = null;
