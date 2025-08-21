@@ -55,6 +55,48 @@ TripWell is a Node.js/Express backend with MongoDB database, Firebase authentica
 }
 ```
 
+## 🔐 **FIREBASE AUTHENTICATION PATTERN** (CRITICAL!)
+
+**The Money Call:** `auth.onAuthStateChanged()` is the key to Firebase auth working properly!
+
+**Why This Matters:**
+- Firebase auth state isn't always ready immediately when components load
+- `auth.currentUser` can be `null` even when user is signed in
+- Components need to wait for Firebase to tell them auth state is ready
+
+**The Working Pattern (Used in Home.jsx, LocalUniversalRouter.jsx):**
+```javascript
+// Wait for Firebase auth to be ready
+await new Promise(resolve => {
+  const unsubscribe = auth.onAuthStateChanged(user => {
+    unsubscribe();
+    resolve(user);
+  });
+});
+
+const firebaseUser = auth.currentUser;
+if (!firebaseUser) {
+  // Handle no user case
+  return navigate("/access");
+}
+
+// Now safe to get token
+const token = await firebaseUser.getIdToken();
+```
+
+**What NOT to do:**
+```javascript
+// ❌ This can fail if Firebase isn't ready
+const user = auth.currentUser;
+if (!user) {
+  throw new Error("No authenticated user"); // This breaks!
+}
+```
+
+**Protected vs Unprotected Endpoints:**
+- **Unprotected**: `POST /tripwell/user/createOrFind` - No token needed
+- **Protected**: `GET /tripwell/hydrate` - Needs Firebase token in Authorization header
+
 ## 🔄 **COMPLETE USER FLOW** (What to Debug)
 
 ### **Step 1: Access → Firebase Authentication**
