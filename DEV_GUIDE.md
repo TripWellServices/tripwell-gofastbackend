@@ -379,6 +379,12 @@ curl -X POST -H "Authorization: Bearer YOUR_TOKEN" \
 - ✅ **User saves** → Route to `/prephub`
 - ✅ **User modifies** → Route to `/tripwell/itineraryupdate`
 
+**Modification Navigation Flow:**
+- ✅ **TripDaysOverview** → "Modify This Day" → **TripModifyDay** (`/modify/day/${tripId}/${dayIndex}`)
+- ✅ **TripModifyDay** → "Edit This Block" → **TripModifyBlock** (`/modify/block/${tripId}/${dayIndex}/${timeOfDay}`)
+- ✅ **TripModifyBlock** → "Save This Block" → **Back to TripDaysOverview** (`/tripwell/itineraryupdate`) ✅ **NO LOOP!**
+- ✅ **TripModifyDay** → "Back to All Days" → **TripDaysOverview** (`/tripwell/itineraryupdate`)
+
 **Debug Commands:**
 ```bash
 # Test itinerary generation
@@ -880,6 +886,69 @@ When debugging the live frontend:
 ### **Step 14: Reflection**
 - [ ] Reflection form works
 - [ ] Reflection saves correctly
+
+## 🎯 **Live Trip Experience Flow**
+
+### **Complete Live Trip Journey:**
+1. **PreTripHub** → "Start My Trip!" → Auto-calculates current day index
+2. **TripLiveDay** → Shows day overview with all blocks
+3. **TripLiveDayBlock** → Sequential block experience (morning → afternoon → evening)
+4. **TripDayLookback** → Evening reflection with mood tags and journal
+5. **TripReflection** → Saves to database, routes to next day or completion
+
+### **Key Components:**
+- **Day Index Auto-Calculation**: Based on trip dates vs current date
+- **Block Progression**: morning → afternoon → evening → reflection
+- **GPT Integration**: Live itinerary modifications and Q&A
+- **Reflection System**: Mood tags + journal text saved to TripReflection model
+- **Trip Completion**: Triggered when final evening block is marked complete
+
+### **Backend Endpoints for Live Flow:**
+- `GET /tripwell/livestatus/:tripId` - Get current day/block status
+- `POST /tripwell/doallcomplete` - Mark block as complete
+- `POST /tripwell/reflection/:tripId/:dayIndex` - Save daily reflection
+- `POST /tripwell/livedaygpt/block` - GPT-powered modifications
+- `POST /tripwell/livedaygpt/ask` - Ask Angela questions
+
+### **Trip Completion Flow:**
+1. **Block Completion** → `POST /tripwell/doallcomplete` marks block as complete
+2. **Day Completion** → When all blocks (morning/afternoon/evening) are complete, day is marked complete
+3. **Evening Reflection** → After evening block completion, routes to `/daylookback` for reflection
+4. **Trip Completion** → When final evening block of final day is complete, `tripComplete: true` is set
+5. **TripComplete Page** → Shows completion message and routes to `/reflections`
+6. **Reflections Hub** → Shows trip memories and routes to `/reflections/:tripId`
+
+### **TripDay Model Block Completion:**
+```javascript
+{
+  tripId: ObjectId,
+  dayIndex: Number,
+  blocks: {
+    morning: { 
+      title: String,
+      description: String,
+      complete: Boolean,  // ✅ Added for live tracking
+      // ... other fields
+    },
+    afternoon: { /* same structure */ },
+    evening: { /* same structure */ }
+  },
+  isComplete: Boolean,    // Day complete when all blocks complete
+  // ... other fields
+}
+```
+
+### **TripReflection Model:**
+```javascript
+{
+  tripId: ObjectId,       // Trip reference
+  dayIndex: Number,       // Which day (1, 2, 3...)
+  userId: ObjectId,       // User reference
+  summary: String,        // Pulled from TripDay
+  moodTag: String,        // User's mood selection
+  journalText: String     // Freeform reflection text
+}
+```
 
 ## 🚨 **Common Error Patterns**
 

@@ -16,6 +16,10 @@ const blockSchema = new mongoose.Schema({
   gptGenerated: {
     type: Boolean,
     default: true
+  },
+  complete: {
+    type: Boolean,
+    default: false
   }
 }, { _id: false }); // Reuse this inline without creating separate IDs for subdocs
 

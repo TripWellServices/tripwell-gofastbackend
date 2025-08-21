@@ -17,14 +17,14 @@ router.post("/tripwell/itinerary/build", async (req, res) => {
     // 🧠 Step 1: Generate raw itinerary from Angela
     const itineraryText = await generateItineraryFromAnchorLogic(tripId);
 
-    // 🪄 Step 2: Parse into structured TripDays via Marlo
+    // 🪄 Step 2: Parse into structured TripDays via Marlo (for validation)
     const parsedDays = parseAngelaItinerary(itineraryText);
 
     if (!parsedDays || parsedDays.length === 0) {
       return res.status(500).json({ error: "Parsed itinerary is empty" });
     }
 
-    // 💾 Step 3: Save to TripDay model (skipping Day 0)
+    // 💾 Step 3: Save to TripDay model (passing raw text - service will parse again)
     const daysSaved = await saveTripDaysGpt(tripId, itineraryText);
 
     return res.status(200).json({ daysSaved });
