@@ -3,25 +3,11 @@ const mongoose = require("mongoose");
 const blockSchema = new mongoose.Schema({
   title: String,
   description: String,
-  timeOfDay: {
-    type: String,
-    enum: ["morning", "afternoon", "evening"]
-  },
-  location: String,
-  neighborhoodTag: String,
-  isTicketed: Boolean,
-  isDayTrip: Boolean,
-  notes: String,
-  suggestedFollowOn: String,
-  gptGenerated: {
-    type: Boolean,
-    default: true
-  },
   complete: {
     type: Boolean,
     default: false
   }
-}, { _id: false }); // Reuse this inline without creating separate IDs for subdocs
+}, { _id: false }); // Simplified for MVP1
 
 const tripDaySchema = new mongoose.Schema({
   tripId: {
