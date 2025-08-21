@@ -90,32 +90,59 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     // Get related data in parallel
     console.log("🔍 Querying for tripId:", trip._id.toString(), "userId:", firebaseId);
     const [tripIntent, anchorLogic, tripDays] = await Promise.all([
-      TripIntent.findOne({ tripId: trip._id, userId: firebaseId }).catch(() => null),
+      // Try to find TripIntent by tripId and userId (Firebase ID)
+      TripIntent.findOne({ tripId: trip._id, userId: firebaseId }).catch((err) => {
+        console.log("❌ TripIntent query error:", err);
+        return null;
+      }),
       AnchorLogic.findOne({ tripId: trip._id }).catch(() => null),
       TripDay.find({ tripId: trip._id }).sort({ dayIndex: 1 }).catch(() => [])
     ]);
     
-    console.log("🔍 TripIntent found:", !!tripIntent);
-    if (tripIntent) {
+    // If no TripIntent found with Firebase ID, try to find by tripId only
+    let finalTripIntent = tripIntent;
+    if (!tripIntent) {
+      console.log("🔍 No TripIntent found with Firebase ID, trying tripId only...");
+      finalTripIntent = await TripIntent.findOne({ tripId: trip._id }).catch(() => null);
+      if (finalTripIntent) {
+        console.log("🔍 Found TripIntent with tripId only:", finalTripIntent._id);
+      }
+    }
+    
+    console.log("🔍 TripIntent found:", !!finalTripIntent);
+    if (finalTripIntent) {
       console.log("🔍 TripIntent data:", {
-        tripId: tripIntent.tripId,
-        priorities: tripIntent.priorities,
-        mobility: tripIntent.mobility,
-        travelPace: tripIntent.travelPace
+        tripId: finalTripIntent.tripId,
+        priorities: finalTripIntent.priorities,
+        mobility: finalTripIntent.mobility,
+        travelPace: finalTripIntent.travelPace
       });
     }
 
     // Build tripIntentData
     let tripIntentData = null;
-    if (tripIntent) {
+    if (finalTripIntent) {
+      console.log("🔍 Raw TripIntent from DB:", {
+        _id: finalTripIntent._id,
+        tripId: finalTripIntent.tripId,
+        userId: finalTripIntent.userId,
+        priorities: finalTripIntent.priorities,
+        vibes: finalTripIntent.vibes,
+        mobility: finalTripIntent.mobility,
+        travelPace: finalTripIntent.travelPace,
+        budget: finalTripIntent.budget
+      });
+      
       tripIntentData = {
-        tripIntentId: tripIntent._id,
-        priorities: Array.isArray(tripIntent.priorities) ? tripIntent.priorities : [],
-        vibes: Array.isArray(tripIntent.vibes) ? tripIntent.vibes : [],
-        mobility: Array.isArray(tripIntent.mobility) ? tripIntent.mobility : [],
-        travelPace: Array.isArray(tripIntent.travelPace) ? tripIntent.travelPace : [],
-        budget: tripIntent.budget || ""
+        tripIntentId: finalTripIntent._id,
+        priorities: Array.isArray(finalTripIntent.priorities) ? finalTripIntent.priorities : [],
+        vibes: Array.isArray(finalTripIntent.vibes) ? finalTripIntent.vibes : [],
+        mobility: Array.isArray(finalTripIntent.mobility) ? finalTripIntent.mobility : [],
+        travelPace: Array.isArray(finalTripIntent.travelPace) ? finalTripIntent.travelPace : [],
+        budget: finalTripIntent.budget || ""
       };
+      
+      console.log("🔍 Built tripIntentData:", tripIntentData);
     }
 
     // Build anchorSelectData
@@ -140,6 +167,16 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
           summary: day.summary,
           blocks: day.blocks || {}
         }))
+      };
+    } else {
+      // Even if no tripDays, still return basic itinerary data
+      itineraryData = {
+        itineraryId: trip._id.toString(),
+        tripId: trip._id.toString(),
+        tripName: trip.tripName,
+        city: trip.city,
+        daysTotal: trip.daysTotal,
+        days: []
       };
     }
 
