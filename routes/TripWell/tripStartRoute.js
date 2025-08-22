@@ -6,8 +6,8 @@ const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase
 const TripWellUser = require(path.resolve(__dirname, "../../models/TripWellUser"));
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
-// PATCH /tripwell/starttrip/:tripId
-router.patch("/starttrip/:tripId", verifyFirebaseToken, async (req, res) => {
+// POST /tripwell/starttrip/:tripId
+router.post("/starttrip/:tripId", verifyFirebaseToken, async (req, res) => {
   const { tripId } = req.params;
   const firebaseId = req.user.uid;
 
