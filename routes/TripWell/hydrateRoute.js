@@ -138,15 +138,18 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       console.log("🔍 Built tripIntentData:", tripIntentData);
     }
 
-    // Build anchorSelectData
+    // Build anchorSelectData from AnchorLogic (the REAL model)
     let anchorSelectData = null;
-    if (anchorLogic) {
-      // ✅ FIX: Extract titles from enrichedAnchors[].title
-      const anchorTitles = anchorLogic.enrichedAnchors?.map(anchor => anchor.title) || [];
+    if (anchorLogic && anchorLogic.enrichedAnchors && anchorLogic.enrichedAnchors.length > 0) {
+      // ✅ FIX: Extract titles from enrichedAnchors[].title (the REAL data)
+      const anchorTitles = anchorLogic.enrichedAnchors.map(anchor => anchor.title);
       anchorSelectData = {
         anchors: anchorTitles
       };
-      console.log("🔍 Built anchorSelectData:", anchorSelectData);
+      console.log("🔍 Built anchorSelectData from AnchorLogic:", anchorSelectData);
+      console.log("🔍 Found", anchorTitles.length, "anchor titles:", anchorTitles);
+    } else {
+      console.log("🔍 No AnchorLogic data found or enrichedAnchors is empty");
     }
 
     // Build itineraryData

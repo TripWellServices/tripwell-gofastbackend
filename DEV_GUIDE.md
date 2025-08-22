@@ -215,6 +215,31 @@ curl -X POST -H "Content-Type: application/json" \
 
 ## 🔑 **CRITICAL DATA LOOKUP PATTERN** (OG Pattern vs Broken Pattern)
 
+## 👻 **GHOST MODEL ISSUE** (FIXED!)
+
+**The Problem:** Naming confusion between `AnchorSelect` (ghost) and `AnchorLogic` (real)
+
+**The Real Model:**
+- **AnchorLogic** → The actual MongoDB model with `enrichedAnchors[]`
+- **Route**: `/anchorselect/save` → But saves to `AnchorLogic` model
+- **Service**: `saveAnchorLogic()` → Correctly saves to `AnchorLogic`
+- **Data**: `anchorSelectData` → Built from `AnchorLogic.enrichedAnchors[].title`
+
+**The Ghost Trail:**
+- Route name suggests `AnchorSelect` model (doesn't exist)
+- Data structure `anchorSelectData.anchors` vs `AnchorLogic.enrichedAnchors`
+- Property confusion: `anchors` vs `anchorTitles` vs `enrichedAnchors`
+
+**Why Server "Saved" Us:**
+- Backend found real `AnchorLogic` data
+- Frontend `anchorSelectData` was empty due to naming confusion
+- Server call found the real data and "fixed" the frontend
+
+**The Fix:**
+- Use consistent naming: `AnchorLogic` everywhere
+- Fix data structure: `anchorSelectData.anchors` should contain real anchor titles
+- Remove redundant server calls: Trust localStorage after hydration
+
 ### **The OG Pattern (tripstatusRoute.js):**
 ```javascript
 // 1. Get user by firebaseId (entry point)
