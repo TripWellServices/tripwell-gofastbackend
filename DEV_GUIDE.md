@@ -97,6 +97,95 @@ if (!user) {
 - **Unprotected**: `POST /tripwell/user/createOrFind` - No token needed
 - **Protected**: `GET /tripwell/hydrate` - Needs Firebase token in Authorization header
 
+## 💾 **LOCALSTORAGE "SDK" PATTERN** (CRITICAL!)
+
+**The Browser Storage "SDK":** localStorage is the browser's built-in storage system!
+
+**Why This Matters:**
+- localStorage persists data across browser sessions
+- Data must be stored as strings (hence JSON.stringify())
+- Acts like a mini database in the browser
+
+**The Storage Pattern:**
+```javascript
+// Save to browser storage "SDK"
+localStorage.setItem("userData", JSON.stringify(userData));
+localStorage.setItem("tripData", JSON.stringify(tripData));
+
+// Retrieve from browser storage "SDK"
+const userData = JSON.parse(localStorage.getItem("userData"));
+const tripData = JSON.parse(localStorage.getItem("tripData"));
+```
+
+**The Handoff Pattern:**
+```
+Backend MongoDB → Frontend Fetch → localStorage.setItem() → Browser Storage "SDK"
+```
+
+**Just Like Firebase SDK:**
+- **Firebase SDK** → Stores tokens in browser
+- **localStorage "SDK"** → Stores data in browser
+- **Both** → Browser's built-in storage systems
+
+**localStorage.setItem() = "Hey browser, save this data for me!"**
+
+## 🔑 **LOCALSTORAGE LANGUAGE PATTERN** (CRITICAL!)
+
+**The Exact Pattern Must Be Consistent Across All Components:**
+
+### **SET Pattern:**
+```javascript
+localStorage.setItem("anchorSelectData", JSON.stringify(freshData.anchorSelectData));
+```
+
+### **GET Pattern:**
+```javascript
+const anchorSelectData = JSON.parse(localStorage.getItem("anchorSelectData") || "null");
+```
+
+### **CHECK Pattern:**
+```javascript
+if (!anchorSelectData || !anchorSelectData.anchors || anchorSelectData.anchors.length === 0) {
+  // No anchors
+}
+```
+
+### **Why This Matters:**
+- **Consistency** → All components use same language
+- **Debugging** → Easy to trace set/get mismatches
+- **No Redundant Calls** → Trust localStorage after hydration
+
+## 🚨 **CRITICAL DATA INCONSISTENCY** (FIXED!)
+
+**The Problem:** `TripIntent` model was using String (Firebase ID) but **ObjectId IS canon** for userId fields!
+
+**What Was Wrong:**
+```javascript
+// TripIntent model (WRONG)
+userId: { type: String, required: true }  // ← Expected Firebase ID string
+```
+
+**What's Correct (ObjectId Canon):**
+```javascript
+// TripIntent model (FIXED)
+userId: { type: mongoose.Schema.Types.ObjectId, ref: "TripWellUser", required: true }  // ← ObjectId is canon
+
+// AnchorLogic model (ALREADY CORRECT)
+userId: { type: Schema.Types.ObjectId, ref: "User", required: true }  // ← ObjectId is canon
+```
+
+**The Fix Applied:**
+- **TripIntent Model**: Changed from `String` to `ObjectId` ✅
+- **TripIntent Route**: Uses `user._id` (ObjectId) ✅
+- **hydrateRoute**: Looks for `user._id` (ObjectId) ✅
+- **Consistency**: Now matches AnchorLogic pattern ✅
+
+**Why This Matters:**
+- **ObjectId IS canon** for userId references across all models
+- Ensures consistent data types and proper MongoDB relationships
+- Fixes `mobility` and `travelPace` missing from hydration
+- Aligns with established patterns in the codebase
+
 ## 🔄 **COMPLETE USER FLOW** (What to Debug)
 
 ### **Step 1: Access → Firebase Authentication**
@@ -123,6 +212,47 @@ curl -X POST -H "Content-Type: application/json" \
 # Check if user exists
 # MongoDB: db.tripwellusers.findOne({firebaseId: "USER_UID"})
 ```
+
+## 🔑 **CRITICAL DATA LOOKUP PATTERN** (OG Pattern vs Broken Pattern)
+
+### **The OG Pattern (tripstatusRoute.js):**
+```javascript
+// 1. Get user by firebaseId (entry point)
+const user = await TripWellUser.findOne({ firebaseId });
+
+// 2. Get tripId from user (the link)
+let tripId = null;
+if (user.tripId) {
+  trip = await TripBase.findById(user.tripId);
+  tripId = trip._id;
+}
+
+// 3. Find everything by tripId ONLY (the unlock)
+const [intent, anchors, days] = await Promise.all([
+  TripIntent.findOne({ tripId }),      // ← Just tripId!
+  AnchorLogic.findOne({ tripId }),     // ← Just tripId!
+  TripDay.findOne({ tripId }),         // ← Just tripId!
+]);
+```
+
+### **The Link Chain:**
+```
+firebaseId → userId → tripId → everything by tripId
+```
+
+### **The Broken Pattern (hydrateRoute.js):**
+```javascript
+// ❌ WRONG: Complex redundant lookups
+const tripIntent = await TripIntent.findOne({ 
+  tripId: trip._id,    // ← Redundant!
+  userId: user._id     // ← Redundant!
+});
+```
+
+### **Why This Matters:**
+- **OG Pattern**: Clean, simple, uses the natural data relationships
+- **Broken Pattern**: Overcomplicated, redundant, prone to errors
+- **The Fix**: Use tripId as the universal lookup key for all trip-related data
 
 ### **Step 2: ProfileSetup → User Profile Creation**
 **Frontend**: User fills out profile (name, hometown, travel style, trip vibe)

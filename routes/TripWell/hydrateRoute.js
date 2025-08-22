@@ -87,11 +87,11 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       daysTotal: trip.daysTotal 
     });
 
-    // Get related data in parallel
-    console.log("🔍 Querying for tripId:", trip._id.toString(), "userId:", firebaseId);
+    // Get related data in parallel using OG pattern
+    console.log("🔍 Querying for tripId:", trip._id.toString());
     const [tripIntent, anchorLogic, tripDays] = await Promise.all([
-      // Try to find TripIntent by tripId and userId (Firebase ID)
-      TripIntent.findOne({ tripId: trip._id, userId: firebaseId }).catch((err) => {
+      // ✅ FIX: Use OG pattern - just tripId
+      TripIntent.findOne({ tripId: trip._id }).catch((err) => {
         console.log("❌ TripIntent query error:", err);
         return null;
       }),
@@ -99,15 +99,8 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       TripDay.find({ tripId: trip._id }).sort({ dayIndex: 1 }).catch(() => [])
     ]);
     
-    // If no TripIntent found with Firebase ID, try to find by tripId only
+    // Use the found TripIntent (ObjectId pattern is now correct)
     let finalTripIntent = tripIntent;
-    if (!tripIntent) {
-      console.log("🔍 No TripIntent found with Firebase ID, trying tripId only...");
-      finalTripIntent = await TripIntent.findOne({ tripId: trip._id }).catch(() => null);
-      if (finalTripIntent) {
-        console.log("🔍 Found TripIntent with tripId only:", finalTripIntent._id);
-      }
-    }
     
     console.log("🔍 TripIntent found:", !!finalTripIntent);
     if (finalTripIntent) {
