@@ -77,7 +77,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       partyCount: trip.partyCount,
       season: trip.season,
       daysTotal: trip.daysTotal,
-      startedTrip: trip.startedTrip || false,
+      startedTrip: (user.role === "originator" && trip.tripStartedByOriginator) || (user.role === "participant" && trip.tripStartedByParticipant) || false,
       tripComplete: trip.tripComplete || false
     };
 
