@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { generateItineraryFromAnchorLogic } = require("../../services/TripWell/itineraryGPTService");
-const { parseAngelaItinerary } = require("../../services/TripWell/gptitineraryparserService");
+const { parseAngelaItinerary } = require("../../services/TripWell/gptItineraryparserService");
 const { saveTripDaysGpt } = require("../../services/TripWell/itinerarySaveService");
 
 // Canonical route: POST /tripwell/itinerary/build
