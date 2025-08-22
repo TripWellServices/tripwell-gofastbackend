@@ -99,6 +99,59 @@ if (!user) {
 
 ## 💾 **LOCALSTORAGE "SDK" PATTERN** (CRITICAL!)
 
+**The localStorage.setItem() is the frontend "SDK handoff" - it's how we persist hydrated data!**
+
+**Why This Matters:**
+- Backend sends data via `/tripwell/hydrate`
+- Frontend saves it to localStorage with `localStorage.setItem()`
+- UniversalRouter reads from localStorage instead of making redundant backend calls
+- This creates a clean separation between hydration and routing logic
+
+**The Working Pattern:**
+```javascript
+// Backend sends: anchorLogicData
+if (freshData.anchorLogicData) {
+  localStorage.setItem("anchorLogic", JSON.stringify(freshData.anchorLogicData));
+}
+
+// UniversalRouter reads: anchorLogic
+let anchorLogic = JSON.parse(localStorage.getItem("anchorLogic") || "null");
+```
+
+## 🎯 **UNIVERSAL ROUTER SUCCESS - DEC 2024** (MAJOR BREAKTHROUGH!)
+
+**After 3 hours of intense debugging, we finally got the UniversalRouter working!**
+
+### **The Ghost Variable Problem:**
+- **Issue**: `ReferenceError: anchorSelectData is not defined`
+- **Root Cause**: Inconsistent naming between `AnchorSelect` (ghost) and `AnchorLogic` (real model)
+- **Fix**: Renamed all references from `anchorSelectData` to `anchorLogic`
+
+### **The Data Flow Fix:**
+- **Backend**: Returns `anchorLogicData` (matches model name)
+- **Frontend**: Saves as `anchorLogic` (matches model name)
+- **UniversalRouter**: Reads `anchorLogic` from localStorage
+
+### **The Working Flow:**
+1. **HydrateLocal** → Calls `/tripwell/hydrate` → Gets `anchorLogicData`
+2. **Frontend** → Saves to localStorage as `anchorLogic`
+3. **UniversalRouter** → Reads `anchorLogic` → Finds 4 anchors ✅
+4. **Routing** → Routes to `/prephub` ✅
+
+### **Key Lessons:**
+- **Consistent naming is critical** - `AnchorLogic` everywhere, not `AnchorSelect`
+- **Trust localStorage after hydration** - No redundant backend calls in router
+- **Debug logs are essential** - We added extensive logging to trace the flow
+- **Remove conflicting routing logic** - AnchorSelect page had its own router that conflicted
+
+### **The Success Logs:**
+```
+✅ Found anchors in localStorage: {count: 4, firstAnchor: 'Eiffel Tower Climbing Experience'}
+✅ Itinerary complete, routing to /prephub
+```
+
+**The UniversalRouter is now the intelligent traffic cop it was meant to be!** 🚦
+
 **The Browser Storage "SDK":** localStorage is the browser's built-in storage system!
 
 **Why This Matters:**
