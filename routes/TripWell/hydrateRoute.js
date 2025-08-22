@@ -141,9 +141,12 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     // Build anchorSelectData
     let anchorSelectData = null;
     if (anchorLogic) {
+      // ✅ FIX: Extract titles from enrichedAnchors[].title
+      const anchorTitles = anchorLogic.enrichedAnchors?.map(anchor => anchor.title) || [];
       anchorSelectData = {
-        anchors: anchorLogic.anchorTitles || []
+        anchors: anchorTitles
       };
+      console.log("🔍 Built anchorSelectData:", anchorSelectData);
     }
 
     // Build itineraryData
