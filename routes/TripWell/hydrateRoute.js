@@ -46,7 +46,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
         userData,
         tripData: null,
         tripIntentData: null,
-        anchorSelectData: null,
+        anchorLogicData: null,
         itineraryData: null
       });
     }
@@ -59,7 +59,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
         userData,
         tripData: null,
         tripIntentData: null,
-        anchorSelectData: null,
+        anchorLogicData: null,
         itineraryData: null
       });
     }
@@ -190,6 +190,9 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     console.log("✅ Hydration complete:", {
       hasUserData: !!userData,
       hasTripData: !!tripData,
+      hasTripIntentData: !!tripIntentData,
+      hasAnchorLogicData: !!anchorLogicData,
+      hasItineraryData: !!itineraryData,
       tripSeason: tripData.season,
       tripDaysTotal: tripData.daysTotal,
       userRole: userData.role
