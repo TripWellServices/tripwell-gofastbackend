@@ -237,8 +237,40 @@ curl -X POST -H "Content-Type: application/json" \
 
 **The Fix:**
 - Use consistent naming: `AnchorLogic` everywhere
-- Fix data structure: `anchorSelectData.anchors` should contain real anchor titles
+- Fix data structure: `anchorLogic.anchors` should contain real anchor titles
 - Remove redundant server calls: Trust localStorage after hydration
+- **REMOVE ANCHORSELECT ROUTER**: AnchorSelect page should NOT have its own routing logic!
+- **BACKEND RETURNS**: `anchorLogicData` (matches model name)
+- **FRONTEND SAVES**: `anchorLogic` (matches model name)
+
+## 🚨 **ANCHORSELECT ROUTER GHOST** (FIXED!)
+
+**The Problem:** AnchorSelect page had its own routing logic that conflicted with UniversalRouter!
+
+**What Was Happening:**
+1. **UniversalRouter**: "No anchors" → Routes to `/anchorselect` ✅
+2. **AnchorSelect Page**: **Has its own router!** → "Oh wait, you DO have anchors!" → Routes to `/itineraryupdate` 🤯
+3. **Result**: Double routing, user gets confused
+
+**The Ghost Router Logic:**
+```javascript
+// In AnchorSelect.jsx useEffect
+if (anchorSelectData && Array.isArray(anchorSelectData.anchors) && anchorSelectData.anchors.length > 0) {
+  console.log("✅ Anchors already exist in localStorage, skipping fetch and navigating to itinerary");
+  const itineraryData = JSON.parse(localStorage.getItem("itineraryData") || "null");
+  if (itineraryData && itineraryData.itineraryId) {
+    navigate("/tripwell/itineraryupdate");  // ← THE GHOST ROUTER!
+  } else {
+    navigate("/tripwell/itinerarybuild");
+  }
+  return;
+}
+```
+
+**The Fix:**
+- **Remove AnchorSelect router logic** - let UniversalRouter handle all routing
+- **AnchorSelect should just show interface** - no navigation decisions
+- **Single source of truth**: UniversalRouter only
 
 ### **The OG Pattern (tripstatusRoute.js):**
 ```javascript
