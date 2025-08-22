@@ -65,6 +65,15 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     }
 
     // Build tripData with computed values
+    console.log("🔍 DEBUG - Backend trip flags:", {
+      userRole: user.role,
+      tripStartedByOriginator: trip.tripStartedByOriginator,
+      tripStartedByParticipant: trip.tripStartedByParticipant
+    });
+    
+    const startedTrip = (user.role === "originator" && trip.tripStartedByOriginator) || (user.role === "participant" && trip.tripStartedByParticipant) || false;
+    console.log("🔍 DEBUG - Computed startedTrip:", startedTrip);
+    
     const tripData = {
       tripId: trip._id,
       tripName: trip.tripName,
@@ -77,7 +86,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       partyCount: trip.partyCount,
       season: trip.season,
       daysTotal: trip.daysTotal,
-      startedTrip: (user.role === "originator" && trip.tripStartedByOriginator) || (user.role === "participant" && trip.tripStartedByParticipant) || false,
+      startedTrip: startedTrip,
       tripComplete: trip.tripComplete || false
     };
 

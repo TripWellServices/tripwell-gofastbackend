@@ -18,6 +18,13 @@ router.patch("/starttrip/:tripId", verifyFirebaseToken, async (req, res) => {
     const trip = await TripBase.findById(tripId);
     if (!trip) return res.status(404).json({ error: "Trip not found" });
 
+    console.log("🔍 DEBUG - Setting trip start flag:", {
+      userRole: user.role,
+      tripId: tripId,
+      beforeOriginator: trip.tripStartedByOriginator,
+      beforeParticipant: trip.tripStartedByParticipant
+    });
+
     if (user.role === "originator") {
       trip.tripStartedByOriginator = true;
     } else if (user.role === "participant") {
@@ -25,6 +32,11 @@ router.patch("/starttrip/:tripId", verifyFirebaseToken, async (req, res) => {
     }
 
     await trip.save();
+    
+    console.log("🔍 DEBUG - After setting trip start flag:", {
+      afterOriginator: trip.tripStartedByOriginator,
+      afterParticipant: trip.tripStartedByParticipant
+    });
 
     res.status(200).json({
       message: "Trip start recorded",
