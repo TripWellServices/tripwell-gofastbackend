@@ -89,6 +89,7 @@ console.log("🔧 tripLiveStatusRoute loaded");
 app.use("/tripwell", require("./routes/TripWell/tripDayBlockSaveRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripDoAllCompleterRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripReflectionSaveRoutes"));
+app.use("/tripwell", require("./routes/TripWell/TripReflectionLoadRoutes"));
 app.use("/tripwell", require("./routes/TripWell/lookbackRoute"));
 app.use("/tripwell", require("./routes/TripWell/askAngelaLiveRoute"));
 app.use("/tripwell", require("./routes/TripWell/livedayGPTModifyBlockRoute"));
