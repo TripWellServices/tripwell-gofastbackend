@@ -9,16 +9,15 @@ const TripReflectionSchema = new mongoose.Schema(
     },
     dayIndex: { type: Number, required: true },
     userId: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "TripWellUser", 
+      type: String, 
       required: true 
     },
 
     // Pulled from TripDay for recall
     summary: { type: String, default: "" },
 
-    // Mood tag or sentiment category
-    moodTag: { type: String, default: "" },
+    // Mood tags or sentiment categories (multiple selection)
+    moodTags: { type: [String], default: [] },
 
     // Freeform reflection text
     journalText: { type: String, default: "" }
