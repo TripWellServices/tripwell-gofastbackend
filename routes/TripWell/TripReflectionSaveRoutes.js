@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const TripReflection = require("../../models/TripWell/TripReflection");
-const { verifyFirebaseToken } = require("../../middleware/auth");
+const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 
 // 💾 Save or update a reflection for a specific trip day (frontend passes summary)
 router.post("/reflection/:tripId/:dayIndex", verifyFirebaseToken, async (req, res) => {
