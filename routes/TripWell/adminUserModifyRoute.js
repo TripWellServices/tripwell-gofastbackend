@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const TripWellUser = require("../../models/TripWellUser");
 
 // Simple admin auth middleware
@@ -43,20 +44,53 @@ router.get("/users", verifyAdminAuth, async (req, res) => {
   }
 });
 
-// DELETE /tripwell/admin/users/:id - Delete a user
+// DELETE /tripwell/admin/users/:id - Delete a user and all associated data
 router.delete("/users/:id", verifyAdminAuth, async (req, res) => {
   try {
     const userId = req.params.id;
     
-    // Find and delete the user
-    const deletedUser = await TripWellUser.findByIdAndDelete(userId);
-    
-    if (!deletedUser) {
+    // Find the user first to get their email for logging
+    const userToDelete = await TripWellUser.findById(userId);
+    if (!userToDelete) {
       return res.status(404).json({ error: "User not found" });
     }
     
-    console.log(`✅ Admin deleted user: ${deletedUser.email} (${userId})`);
-    res.json({ message: "User deleted successfully" });
+    // Import models for cascade deletion
+    const TripIntent = require("../../models/TripWell/TripIntent");
+    const JoinCode = require("../../models/TripWell/JoinCode");
+    const TripItinerary = require("../../models/TripWell/TripItinerary");
+    
+    // Start a session for transaction
+    const session = await mongoose.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        // 1. Delete all TripIntents for this user
+        const deletedTripIntents = await TripIntent.deleteMany({ userId }, { session });
+        console.log(`🗑️ Deleted ${deletedTripIntents.deletedCount} TripIntents for user ${userToDelete.email}`);
+        
+        // 2. Delete all JoinCodes for this user
+        const deletedJoinCodes = await JoinCode.deleteMany({ userId }, { session });
+        console.log(`🗑️ Deleted ${deletedJoinCodes.deletedCount} JoinCodes for user ${userToDelete.email}`);
+        
+        // 3. Delete all TripItineraries for this user
+        const deletedTripItineraries = await TripItinerary.deleteMany({ userId }, { session });
+        console.log(`🗑️ Deleted ${deletedTripItineraries.deletedCount} TripItineraries for user ${userToDelete.email}`);
+        
+        // 4. Finally delete the user
+        const deletedUser = await TripWellUser.findByIdAndDelete(userId, { session });
+        console.log(`✅ Admin deleted user: ${deletedUser.email} (${userId})`);
+      });
+      
+      res.json({ 
+        message: "User and all associated data deleted successfully",
+        userEmail: userToDelete.email
+      });
+      
+    } finally {
+      await session.endSession();
+    }
+    
   } catch (error) {
     console.error("❌ Admin user delete error:", error);
     res.status(500).json({ error: "Failed to delete user" });
