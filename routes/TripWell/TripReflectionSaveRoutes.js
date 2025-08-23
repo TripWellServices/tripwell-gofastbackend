@@ -3,9 +3,9 @@ const router = express.Router();
 const TripReflection = require("../../models/TripWell/TripReflection");
 
 // 💾 Save or update a reflection for a specific trip day (frontend passes summary)
-router.post("/tripwell/reflection/:tripId/:dayIndex", async (req, res) => {
+router.post("/reflection/:tripId/:dayIndex", async (req, res) => {
   const { tripId, dayIndex } = req.params;
-  const { summary, moodTag, journalText } = req.body;
+  const { summary, moodTags, journalText } = req.body;
   const userId = req.user?.uid;
 
   if (!userId) return res.status(401).json({ error: "User not authenticated" });
@@ -13,7 +13,7 @@ router.post("/tripwell/reflection/:tripId/:dayIndex", async (req, res) => {
 
   try {
     const filter = { tripId, dayIndex: parseInt(dayIndex), userId };
-    const update = { summary, moodTag, journalText };
+    const update = { summary, moodTags, journalText };
     const options = { new: true, upsert: true, setDefaultsOnInsert: true };
 
     const reflection = await TripReflection.findOneAndUpdate(filter, update, options);
