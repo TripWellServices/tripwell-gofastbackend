@@ -6,8 +6,8 @@ const TripDay = require(path.resolve(__dirname, "../../models/TripWell/TripDay")
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
-// PATCH /tripwell/block/complete
-router.patch("/tripwell/block/complete", verifyFirebaseToken, async (req, res) => {
+// POST /tripwell/block/complete
+router.post("/tripwell/block/complete", verifyFirebaseToken, async (req, res) => {
   const { tripId, dayIndex, blockName } = req.body;
 
   if (!tripId || dayIndex === undefined || !blockName) {

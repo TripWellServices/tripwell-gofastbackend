@@ -22,7 +22,7 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET", "POST", "OPTIONS", "PUT"],
+  methods: ["GET", "POST", "OPTIONS", "PUT", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
