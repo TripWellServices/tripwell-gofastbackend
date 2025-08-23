@@ -98,6 +98,13 @@ app.use("/tripwell", require("./routes/TripWell/tripStatusRoute"));
 app.use("/tripwell", require("./routes/TripWell/validateJoinCodeRoute"));
 app.use("/tripwell", require("./routes/TripWell/hydrateRoute"));
 app.use("/tripwell/user", require("./routes/TripWell/TripWellUserRoute"));
+
+// === ADMIN ROUTES ===
+app.use("/tripwell/admin", require("./routes/TripWell/adminLoginRoute").router);
+app.use("/tripwell/admin", require("./routes/TripWell/adminUserModifyRoute"));
+app.use("/tripwell/admin", require("./routes/TripWell/adminTripModifyRoute"));
+app.use("/tripwell/admin", require("./routes/TripWell/adminAnalyticsRoute"));
+console.log("✅ Admin routes loaded");
 app.use("/tripwell/participant", require("./routes/TripWell/participantUserCreateRoute"));
 
 // ✅ Secure Auth-Protected Flow
