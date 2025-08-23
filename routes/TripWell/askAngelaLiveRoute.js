@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { verifyFirebaseToken } = require("../../middleware/verifyFirebaseToken");
+const path = require("path");
+const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
 const { askAngelaLiveService } = require("../../services/TripWell/askAngelaLiveService");
 
@@ -8,7 +9,7 @@ const { askAngelaLiveService } = require("../../services/TripWell/askAngelaLiveS
  * POST /tripwell/livedaygpt/ask
  * Handles real-time trip Q&A from the user
  */
-router.post("/tripwell/livedaygpt/ask", verifyFirebaseToken, async (req, res) => {
+router.post("/livedaygpt/ask", verifyFirebaseToken, async (req, res) => {
   const { tripId, dayIndex, blockName, question } = req.body;
 
   if (!tripId || typeof dayIndex !== "number" || !question) {

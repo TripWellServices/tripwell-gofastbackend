@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { verifyFirebaseToken } = require("../../middleware/verifyFirebaseToken");
+const path = require("path");
+const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
 const { tripDayGPTModifierService } = require("../../services/TripWell/tripDayGPTModifierService");
 const { parseBlockModifyService } = require("../../services/TripWell/parseBlockModifyService");
@@ -10,7 +11,7 @@ const { saveModifiedTripBlock } = require("../../services/TripWell/saveModifiedT
  * POST /tripwell/livedaygpt/block
  * Modifies a single itinerary block (morning, afternoon, evening) via GPT
  */
-router.post("/tripwell/livedaygpt/block", verifyFirebaseToken, async (req, res) => {
+router.post("/livedaygpt/block", verifyFirebaseToken, async (req, res) => {
   const { tripId, dayIndex, block, feedback } = req.body;
 
   if (!tripId || typeof dayIndex !== "number" || !block || !feedback) {
