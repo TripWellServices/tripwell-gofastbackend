@@ -63,9 +63,9 @@ TripWell is a Node.js/Express backend with MongoDB database, Firebase authentica
 
 ### **Architecture Overview:**
 - **Frontend**: React admin dashboard (`tripwell-admin`) on port 3001
-- **Backend**: Admin routes added to existing `gofastbackend` on port 5000
+- **Backend**: Admin routes added to existing `gofastbackend` on Render
 - **Auth**: Simple username/password (no Firebase complexity for admin)
-- **Proxy**: Vite proxy `/admin` → `http://localhost:5000/admin`
+- **Proxy**: Vite proxy `/tripwell/admin` → `https://gofastbackend.onrender.com/tripwell/admin`
 
 ### **Admin Routes:**
 ```javascript
@@ -98,9 +98,12 @@ const verifyAdminAuth = (req, res, next) => {
 
 ### **Environment Variables:**
 ```bash
-# .env file
+# Render Environment Variables
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=tripwell2024
+ADMIN_PASSWORD=tripwell2025
+
+# Backend URL
+BACKEND_URL=https://gofastbackend.onrender.com
 ```
 
 ### **Data Flow:**
