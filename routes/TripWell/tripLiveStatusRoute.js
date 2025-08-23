@@ -6,7 +6,9 @@ const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase
 const TripDay = require(path.resolve(__dirname, "../../models/TripWell/TripDay"));
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
-router.get("/tripwell/livestatus/:tripId", verifyFirebaseToken, async (req, res) => {
+console.log("🔧 Registering /livestatus/:tripId route");
+router.get("/livestatus/:tripId", verifyFirebaseToken, async (req, res) => {
+  console.log("🔧 /livestatus/:tripId route hit with tripId:", req.params.tripId);
   const { tripId } = req.params;
   const userId = req.user._id;
 

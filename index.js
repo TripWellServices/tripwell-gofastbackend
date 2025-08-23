@@ -83,7 +83,9 @@ app.use("/tripwell", require("./routes/TripWell/anchorgpttestRoute"));
 app.use("/tripwell", require("./routes/TripWell/itineraryRoutes")); // ✅ ADDED - Missing itinerary build route!
 app.use("/tripwell", require("./routes/TripWell/ItineraryUpdateRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripDayBuildPreviewRoute"));
+console.log("🔧 Loading tripLiveStatusRoute...");
 app.use("/tripwell", require("./routes/TripWell/tripLiveStatusRoute"));
+console.log("🔧 tripLiveStatusRoute loaded");
 app.use("/tripwell", require("./routes/TripWell/tripDayBlockSaveRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripDoAllCompleterRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripReflectionSaveRoutes"));
