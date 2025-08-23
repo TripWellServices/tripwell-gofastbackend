@@ -90,6 +90,8 @@ app.use("/tripwell", require("./routes/TripWell/tripDayBlockSaveRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripDoAllCompleterRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripReflectionSaveRoutes"));
 app.use("/tripwell", require("./routes/TripWell/lookbackRoute"));
+app.use("/tripwell", require("./routes/TripWell/askAngelaLiveRoute"));
+app.use("/tripwell", require("./routes/TripWell/livedayGPTModifyBlockRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripStartRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripStatusRoute"));
 app.use("/tripwell", require("./routes/TripWell/validateJoinCodeRoute"));
