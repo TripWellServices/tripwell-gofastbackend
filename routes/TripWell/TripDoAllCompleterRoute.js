@@ -6,8 +6,8 @@ const TripDay = require(path.resolve(__dirname, "../../models/TripWell/TripDay")
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
-// POST /tripwell/block/complete
-router.post("/tripwell/block/complete", verifyFirebaseToken, async (req, res) => {
+// POST /block/complete
+router.post("/block/complete", verifyFirebaseToken, async (req, res) => {
   const { tripId, dayIndex, blockName } = req.body;
 
   if (!tripId || dayIndex === undefined || !blockName) {
@@ -57,8 +57,8 @@ router.post("/tripwell/block/complete", verifyFirebaseToken, async (req, res) =>
   }
 });
 
-// POST /tripwell/doallcomplete (frontend compatibility)
-router.post("/tripwell/doallcomplete", verifyFirebaseToken, async (req, res) => {
+// POST /doallcomplete (frontend compatibility)
+router.post("/doallcomplete", verifyFirebaseToken, async (req, res) => {
   const { tripId, dayIndex, blockName } = req.body;
 
   if (!tripId || dayIndex === undefined || !blockName) {
