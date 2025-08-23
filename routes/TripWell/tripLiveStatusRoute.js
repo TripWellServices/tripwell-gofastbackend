@@ -17,32 +17,46 @@ router.get("/tripwell/livestatus/:tripId", verifyFirebaseToken, async (req, res)
     const tripDays = await TripDay.find({ tripId }).sort({ dayIndex: 1 });
     const totalDays = tripDays.length;
 
-    const currentDay = tripDays.find((day) => !day.complete);
-    const currentDayIndex = currentDay ? currentDay.dayIndex : totalDays;
-
+    // 🔴 Progressive navigation: Find first incomplete block
+    let currentDayIndex = 1;
     let currentBlock = "morning";
+    let tripComplete = false;
 
-    if (currentDay) {
-      const blocks = currentDay.blocks || {};
-      if (!blocks.morning?.complete) currentBlock = "morning";
-      else if (!blocks.afternoon?.complete) currentBlock = "afternoon";
-      else if (!blocks.evening?.complete) currentBlock = "evening";
-      else {
-        currentBlock = "done";
+    // Walk through days in order to find first incomplete block
+    for (let day of tripDays) {
+      const blocks = day.blocks || {};
+      
+      if (!blocks.morning?.complete) {
+        currentDayIndex = day.dayIndex;
+        currentBlock = "morning";
+        break;
+      } else if (!blocks.afternoon?.complete) {
+        currentDayIndex = day.dayIndex;
+        currentBlock = "afternoon";
+        break;
+      } else if (!blocks.evening?.complete) {
+        currentDayIndex = day.dayIndex;
+        currentBlock = "evening";
+        break;
       }
+      // If we get here, this day is complete, continue to next day
     }
 
-    // 🔒 Canonical: Trip is complete if final evening block is marked complete
-    const isLastDay = currentDayIndex === totalDays;
-    const finalDay = tripDays[totalDays - 1];
-    const finalEveningComplete = finalDay?.blocks?.evening?.complete === true;
+    // If we've walked through all days and found no incomplete blocks, trip is complete
+    if (currentDayIndex > totalDays) {
+      tripComplete = true;
+      currentDayIndex = totalDays;
+      currentBlock = "done";
+    }
 
-    if (!trip.tripComplete && isLastDay && finalEveningComplete) {
+    // 🔒 Update trip completion status if needed
+    if (tripComplete && !trip.tripComplete) {
       await TripBase.findByIdAndUpdate(tripId, { tripComplete: true });
     }
 
     // 📦 Add full day data for hydration
     let dayData = null;
+    const currentDay = tripDays.find(day => day.dayIndex === currentDayIndex);
     if (currentDay) {
       dayData = {
         city: currentDay.city || "",
@@ -57,7 +71,7 @@ router.get("/tripwell/livestatus/:tripId", verifyFirebaseToken, async (req, res)
       currentDayIndex,
       currentBlock,
       totalDays,
-      tripComplete: trip.tripComplete || (isLastDay && finalEveningComplete),
+      tripComplete,
       dayData
     });
   } catch (err) {
