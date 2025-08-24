@@ -17,6 +17,21 @@ const verifyAdminAuth = (req, res, next) => {
   }
 };
 
+// GET /tripwell/admin/test - Test route to verify TripWellUser model
+router.get("/test", async (req, res) => {
+  try {
+    const userCount = await TripWellUser.countDocuments();
+    res.json({ 
+      message: "TripWellUser model is accessible", 
+      userCount: userCount,
+      modelPath: "models/TripWellUser"
+    });
+  } catch (error) {
+    console.error("❌ Test route error:", error);
+    res.status(500).json({ error: "Test route failed", details: error.message });
+  }
+});
+
 // GET /tripwell/admin/users - Fetch all users for admin dashboard
 router.get("/users", verifyAdminAuth, async (req, res) => {
   try {
