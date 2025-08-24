@@ -3,28 +3,26 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const TripWellUser = require("../../models/TripWellUser");
 
-// Simple admin auth middleware
-const verifyAdminAuth = (req, res, next) => {
-  const { username, password } = req.headers;
-  
-  const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tripwell2025';
-  
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    next();
-  } else {
-    res.status(401).json({ error: "Invalid admin credentials" });
-  }
-};
+
 
 // GET /tripwell/admin/test - Test route to verify TripWellUser model
 router.get("/test", async (req, res) => {
   try {
+    console.log("🔍 Testing TripWellUser model access...");
+    console.log("🔍 Model path:", require.resolve("../../models/TripWellUser"));
+    
     const userCount = await TripWellUser.countDocuments();
+    console.log("✅ User count:", userCount);
+    
+    // Try to get one user to verify the model works
+    const sampleUser = await TripWellUser.findOne();
+    console.log("✅ Sample user:", sampleUser ? sampleUser.email : "No users found");
+    
     res.json({ 
       message: "TripWellUser model is accessible", 
       userCount: userCount,
-      modelPath: "models/TripWellUser"
+      modelPath: "models/TripWellUser",
+      sampleUser: sampleUser ? { email: sampleUser.email, id: sampleUser._id } : null
     });
   } catch (error) {
     console.error("❌ Test route error:", error);
@@ -33,7 +31,7 @@ router.get("/test", async (req, res) => {
 });
 
 // GET /tripwell/admin/users - Fetch all users for admin dashboard
-router.get("/users", verifyAdminAuth, async (req, res) => {
+router.get("/users", async (req, res) => {
   try {
     const users = await TripWellUser.find({}).sort({ createdAt: -1 });
     
@@ -60,7 +58,7 @@ router.get("/users", verifyAdminAuth, async (req, res) => {
 });
 
 // DELETE /tripwell/admin/users/:id - Delete a user and all associated data
-router.delete("/users/:id", verifyAdminAuth, async (req, res) => {
+router.delete("/users/:id", async (req, res) => {
   try {
     const userId = req.params.id;
     
@@ -113,7 +111,7 @@ router.delete("/users/:id", verifyAdminAuth, async (req, res) => {
 });
 
 // PUT /tripwell/admin/users/:id - Update user (for future use)
-router.put("/users/:id", verifyAdminAuth, async (req, res) => {
+router.put("/users/:id", async (req, res) => {
   try {
     const userId = req.params.id;
     const updates = req.body;
