@@ -14,25 +14,43 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     const uid = req.user?.uid;
     if (!uid) return res.status(401).json({ ok: false, error: "Unauthorized" });
 
-    const { tripName, purpose, startDate, endDate, city, partyCount, whoWith = [], joinCode } = req.body || {};
-    if (!tripName || !purpose || !city || !startDate || !endDate || !joinCode) {
-      return res.status(400).json({ ok:false, error:"Missing required fields" });
+    const { tripName, purpose, startDate, endDate, city, partyCount, whoWith = [], joinCode, demoMode = false } = req.body || {};
+    
+    // For demo mode, some fields can be null/optional
+    if (demoMode) {
+      if (!city) {
+        return res.status(400).json({ ok:false, error:"Missing required field: city" });
+      }
+    } else {
+      // Full mode requires all fields
+      if (!tripName || !purpose || !city || !startDate || !endDate || !joinCode) {
+        return res.status(400).json({ ok:false, error:"Missing required fields" });
+      }
     }
 
-    const sd = new Date(startDate), ed = new Date(endDate);
-    if (Number.isNaN(sd.getTime()) || Number.isNaN(ed.getTime())) {
-      return res.status(400).json({ ok:false, error:"Invalid start/end date" });
+    // Only validate dates if they're provided (demo mode might not have dates)
+    let sd, ed;
+    if (startDate && endDate) {
+      sd = new Date(startDate);
+      ed = new Date(endDate);
+      if (Number.isNaN(sd.getTime()) || Number.isNaN(ed.getTime())) {
+        return res.status(400).json({ ok:false, error:"Invalid start/end date" });
+      }
     }
 
     const payload = {
-      tripName: String(tripName).trim(),
-      purpose:  String(purpose).trim(),
-      city:     String(city).trim(),
-      startDate: sd,
-      endDate:   ed,
-      joinCode:  String(joinCode).trim(),
+      city: String(city).trim(),
       whoWith: Array.isArray(whoWith) ? whoWith : [],
     };
+    
+    // Add optional fields for demo mode
+    if (tripName) payload.tripName = String(tripName).trim();
+    if (purpose) payload.purpose = String(purpose).trim();
+    if (startDate && endDate) {
+      payload.startDate = sd;
+      payload.endDate = ed;
+    }
+    if (joinCode) payload.joinCode = String(joinCode).trim();
     if (partyCount !== undefined && partyCount !== "") {
       const pc = Number(partyCount);
       if (Number.isFinite(pc) && pc >= 1) payload.partyCount = pc;
@@ -109,6 +127,99 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       return res.status(400).json({ ok:false, error: msg || "Validation error" });
     }
     return res.status(500).json({ ok:false, error: err.message || "Server error" });
+  }
+});
+
+// Demo route for generating itinerary without auth
+router.post("/demo", async (req, res) => {
+  try {
+    const { destination, season, numDays, tripGoals } = req.body;
+
+    // Validate required fields
+    if (!destination || !season || !numDays) {
+      return res.status(400).json({ 
+        error: "Missing required fields: destination, season, numDays" 
+      });
+    }
+
+    // Validate numDays
+    if (numDays < 1 || numDays > 30) {
+      return res.status(400).json({ 
+        error: "numDays must be between 1 and 30" 
+      });
+    }
+
+    // Call GPT Demo Build Service
+    const { gptDemoBuildService } = require("../../services/TripWell/gptDemoBuildService");
+    const result = await gptDemoBuildService(destination, season, numDays, tripGoals || []);
+
+    res.json({ itineraryDataDemo: result.itineraryDataDemo });
+
+  } catch (error) {
+    console.error("❌ Error in demo itinerary generation:", error);
+    res.status(500).json({ error: "Failed to generate demo itinerary" });
+  }
+});
+
+// Save demo itinerary after authentication
+router.post("/demo/save", verifyFirebaseToken, async (req, res) => {
+  try {
+    const { itineraryDataDemo } = req.body;
+    const firebaseId = req.user.uid;
+
+    if (!itineraryDataDemo) {
+      return res.status(400).json({ 
+        error: "Missing itineraryDataDemo" 
+      });
+    }
+
+    // Find the user
+    const user = await TripWellUser.findOne({ firebaseId });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Create a demo trip using the universal tripSetupRoute approach
+    const demoTripData = {
+      city: itineraryDataDemo.destination,
+      demoMode: true,
+      tripName: `Demo Trip to ${itineraryDataDemo.destination}`,
+      purpose: 'Demo exploration',
+      partyCount: 1,
+      whoWith: ['solo']
+    };
+
+    // Create the trip
+    const doc = await TripBase.create(demoTripData);
+    console.log("✅ Demo trip saved successfully:", doc._id.toString());
+
+    // Update user's funnel stage
+    await TripWellUser.findOneAndUpdate(
+      { firebaseId },
+      { funnelStage: "itinerary_demo" },
+      { new: true }
+    );
+
+    // Store the demo itinerary data in the trip (we can add a field for this)
+    await TripBase.updateOne(
+      { _id: doc._id },
+      { 
+        $set: { 
+          demoItineraryData: itineraryDataDemo,
+          isDemo: true
+        } 
+      }
+    );
+
+    res.json({
+      success: true,
+      tripId: doc._id,
+      message: "Demo trip saved successfully"
+    });
+
+  } catch (error) {
+    console.error("❌ Error saving demo trip:", error);
+    res.status(500).json({ error: "Failed to save demo trip" });
   }
 });
 

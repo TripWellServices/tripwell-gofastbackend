@@ -6,7 +6,7 @@ const TripWellUser = require("../../models/TripWellUser");
 
 router.post("/createOrFind", async (req, res) => {
   try {
-    const { firebaseId, email } = req.body;
+    const { firebaseId, email, funnelStage } = req.body;
 
     if (!firebaseId || !email) {
       return res.status(400).json({ error: "Missing firebaseId or email" });
@@ -27,8 +27,13 @@ router.post("/createOrFind", async (req, res) => {
         tripVibe: [],         // ✅ Profile field
         tripId: null,
         role: "noroleset",    // Will be assigned later
+        funnelStage: funnelStage || "none"  // Set funnel stage if provided
       });
 
+      await user.save();
+    } else if (funnelStage && user.funnelStage !== funnelStage) {
+      // Update funnel stage if user is progressing
+      user.funnelStage = funnelStage;
       await user.save();
     }
 

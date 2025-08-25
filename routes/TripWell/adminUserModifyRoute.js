@@ -42,7 +42,7 @@ router.get("/users", async (req, res) => {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       createdAt: user.createdAt,
-      lastActiveAt: user.updatedAt, // Using updatedAt as proxy for last active
+      lastActiveAt: user.updatedAt, // Using updatedAt as proxy for last activity (will be renamed in MVP2)
       tripId: user.tripId,
       tripCreatedAt: user.tripId ? user.createdAt : null, // If they have a trip, use creation date
       tripCompletedAt: null, // This field doesn't exist in the model yet

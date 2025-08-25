@@ -36,7 +36,12 @@ const tripWellUserSchema = new mongoose.Schema(
       type: String, 
       default: "noroleset",
       enum: ["noroleset", "originator", "participant"]
-    } // set post trip creation
+    }, // set post trip creation
+    funnelStage: {
+      type: String,
+      default: "none",
+      enum: ["none", "itinerary_demo", "spots_demo", "updates_only", "full_app"]
+    } // tracks user's funnel progression
   },
   { timestamps: true }
 );
