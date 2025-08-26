@@ -44,4 +44,92 @@ router.post("/createOrFind", async (req, res) => {
   }
 });
 
+// Update user's funnel stage
+router.put("/updateFunnelStage", async (req, res) => {
+  try {
+    const { firebaseId, funnelStage } = req.body;
+    
+    if (!firebaseId || !funnelStage) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "firebaseId and funnelStage are required" 
+      });
+    }
+
+    const validStages = ["none", "itinerary_demo", "spots_demo", "updates_only", "full_app"];
+    if (!validStages.includes(funnelStage)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid funnel stage" 
+      });
+    }
+
+    const updatedUser = await TripWellUser.findOneAndUpdate(
+      { firebaseId },
+      { funnelStage },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "Funnel stage updated successfully",
+      user: updatedUser 
+    });
+
+  } catch (error) {
+    console.error("Error updating funnel stage:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to update funnel stage" 
+    });
+  }
+});
+
+// Exit funnel - upgrade user to full_app (for "Take me to the app" button)
+router.put("/exitFunnel", async (req, res) => {
+  try {
+    const { firebaseId } = req.body;
+    
+    if (!firebaseId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "firebaseId is required" 
+      });
+    }
+
+    const updatedUser = await TripWellUser.findOneAndUpdate(
+      { firebaseId },
+      { funnelStage: 'full_app' },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "User exited funnel successfully",
+      user: updatedUser 
+    });
+
+  } catch (error) {
+    console.error("Error exiting funnel:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to exit funnel" 
+    });
+  }
+});
+
 module.exports = router;

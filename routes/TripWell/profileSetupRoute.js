@@ -17,6 +17,10 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
   } = req.body;
 
   try {
+    // First get the current user to check their funnel stage
+    const currentUser = await TripWellUser.findOne({ firebaseId });
+    
+    // Update profile and potentially exit funnel
     const user = await TripWellUser.findOneAndUpdate(
       { firebaseId },
       {
@@ -27,7 +31,11 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           state,
           travelStyle,
           tripVibe,
-          profileComplete: true
+          profileComplete: true,
+          // If user was in funnel, upgrade them to full_app
+          ...(currentUser?.funnelStage && currentUser.funnelStage !== 'full_app' && {
+            funnelStage: 'full_app'
+          })
         }
       },
       { new: true }

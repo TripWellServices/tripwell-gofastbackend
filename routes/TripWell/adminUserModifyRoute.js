@@ -47,7 +47,8 @@ router.get("/users", async (req, res) => {
       tripCreatedAt: user.tripId ? user.createdAt : null, // If they have a trip, use creation date
       tripCompletedAt: null, // This field doesn't exist in the model yet
       role: user.role || 'noroleset',
-      profileComplete: user.profileComplete || false
+      profileComplete: user.profileComplete || false,
+      funnelStage: user.funnelStage || 'none' // Add funnel stage tracking
     }));
     
     res.json(adminUsers);
