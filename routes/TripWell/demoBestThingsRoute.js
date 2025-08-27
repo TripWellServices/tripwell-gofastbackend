@@ -2,8 +2,8 @@
 const express = require("express");
 const router = express.Router();
 const { generateDemoBestThings } = require("../../services/TripWell/gptDemoBestThingsService");
-const TripWellUser = require("../../models/TripWell/TripWellUser");
-const TripSetup = require("../../models/TripWell/TripSetup");
+const TripWellUser = require("../../models/TripWellUser");
+const TripBase = require("../../models/TripWell/TripBase");
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 
 /**
@@ -83,7 +83,7 @@ router.post("/bestthings/save", verifyFirebaseToken, async (req, res) => {
     await user.save();
 
     // Create a demo trip setup with best things data
-    const tripSetup = new TripSetup({
+    const tripSetup = new TripBase({
       tripName: `Best of ${destination}`,
       purpose: "Demo - Best things to do",
       city: destination,
@@ -91,17 +91,8 @@ router.post("/bestthings/save", verifyFirebaseToken, async (req, res) => {
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
       joinCode: `BEST_${Date.now()}`,
       partyCount: 1,
-      whoWith: ["solo"],
-      createdBy: firebaseId,
-      funnelStage: "spots_demo",
-      // Store best things data in a custom field
-      bestThingsData: {
-        destination,
-        category,
-        budget,
-        recommendations: bestThingsData.bestThings,
-        generatedAt: bestThingsData.generatedAt
-      }
+      whoWith: ["solo"]
+      // Note: bestThingsData field removed as TripBase doesn't support it
     });
 
     await tripSetup.save();

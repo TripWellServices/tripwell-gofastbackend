@@ -3,8 +3,23 @@ const router = express.Router();
 const TripWellUser = require("../../models/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 
+// Simple admin auth middleware
+const verifyAdminAuth = (req, res, next) => {
+  const { username, password } = req.headers;
+  
+  // Simple admin credentials - in production, use environment variables
+  const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tripwell2025';
+  
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    next();
+  } else {
+    res.status(401).json({ error: "Invalid admin credentials" });
+  }
+};
+
 // GET /tripwell/admin/analytics - Get basic analytics
-router.get("/analytics", async (req, res) => {
+router.get("/analytics", verifyAdminAuth, async (req, res) => {
   try {
     // Get user counts
     const totalUsers = await TripWellUser.countDocuments();

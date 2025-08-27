@@ -3,10 +3,25 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const TripWellUser = require("../../models/TripWellUser");
 
+// Simple admin auth middleware
+const verifyAdminAuth = (req, res, next) => {
+  const { username, password } = req.headers;
+  
+  // Simple admin credentials - in production, use environment variables
+  const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tripwell2025';
+  
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    next();
+  } else {
+    res.status(401).json({ error: "Invalid admin credentials" });
+  }
+};
+
 
 
 // GET /tripwell/admin/test - Test route to verify TripWellUser model
-router.get("/test", async (req, res) => {
+router.get("/test", verifyAdminAuth, async (req, res) => {
   try {
     console.log("🔍 Testing TripWellUser model access...");
     console.log("🔍 Model path:", require.resolve("../../models/TripWellUser"));
@@ -31,7 +46,7 @@ router.get("/test", async (req, res) => {
 });
 
 // GET /tripwell/admin/users - Fetch all users for admin dashboard
-router.get("/users", async (req, res) => {
+router.get("/users", verifyAdminAuth, async (req, res) => {
   try {
     const users = await TripWellUser.find({}).sort({ createdAt: -1 });
     
@@ -59,7 +74,7 @@ router.get("/users", async (req, res) => {
 });
 
 // DELETE /tripwell/admin/users/:id - Delete a user and all associated data
-router.delete("/users/:id", async (req, res) => {
+router.delete("/users/:id", verifyAdminAuth, async (req, res) => {
   try {
     const userId = req.params.id;
     
@@ -132,6 +147,34 @@ router.put("/users/:id", async (req, res) => {
   } catch (error) {
     console.error("❌ Admin user update error:", error);
     res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+// GET /tripwell/admin/hydrate - Get all users for admin dashboard (admin version of hydrate)
+router.get("/hydrate", verifyAdminAuth, async (req, res) => {
+  try {
+    const users = await TripWellUser.find({}).sort({ createdAt: -1 });
+    
+    // Transform data for admin dashboard - only use fields that exist in the model
+    const adminUsers = users.map(user => ({
+      userId: user._id,
+      email: user.email,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      createdAt: user.createdAt,
+      lastActiveAt: user.updatedAt, // Using updatedAt as proxy for last activity (will be renamed in MVP2)
+      tripId: user.tripId,
+      tripCreatedAt: user.tripId ? user.createdAt : null, // If they have a trip, use creation date
+      tripCompletedAt: null, // This field doesn't exist in the model yet
+      role: user.role || 'noroleset',
+      profileComplete: user.profileComplete || false,
+      funnelStage: user.funnelStage || 'none' // Add funnel stage tracking
+    }));
+    
+    res.json(adminUsers);
+  } catch (error) {
+    console.error("❌ Admin hydrate error:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 
