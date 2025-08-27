@@ -135,4 +135,40 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
+// Add this new route to fix profileComplete
+router.put("/fixProfileComplete", async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const user = await TripWellUser.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Update profileComplete to true
+    const updatedUser = await TripWellUser.findByIdAndUpdate(
+      user._id,
+      { profileComplete: true },
+      { new: true }
+    );
+
+    console.log(`✅ Fixed profileComplete for user: ${email}`);
+    
+    res.json({ 
+      success: true, 
+      message: `Profile complete flag set to true for ${email}`,
+      user: updatedUser 
+    });
+    
+  } catch (error) {
+    console.error("❌ Error fixing profileComplete:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
