@@ -110,6 +110,7 @@ app.use("/tripwell/admin", require("./routes/TripWell/adminLoginRoute"));
 app.use("/tripwell/admin", require("./routes/TripWell/adminUserModifyRoute"));
 app.use("/tripwell/admin", require("./routes/TripWell/adminTripModifyRoute"));
 app.use("/tripwell/admin", require("./routes/TripWell/adminAnalyticsRoute"));
+app.use("/tripwell/admin/delete", require("./routes/TripWell/adminDeleteRoute"));
 console.log("✅ Admin routes loaded");
 app.use("/tripwell/participant", require("./routes/TripWell/participantUserCreateRoute"));
 

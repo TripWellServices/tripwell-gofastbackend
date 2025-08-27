@@ -5,18 +5,28 @@ const TripWellUser = require("../../models/TripWellUser");
 
 // Simple admin auth middleware
 const verifyAdminAuth = (req, res, next) => {
+  console.log("🔐 Admin auth middleware hit");
   const { username, password } = req.headers;
+  console.log("🔐 Headers received:", { username, password: password ? '***' : 'undefined' });
   
   // Simple admin credentials - in production, use environment variables
   const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tripwell2025';
   
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    console.log("✅ Admin auth successful");
     next();
   } else {
+    console.log("❌ Admin auth failed");
     res.status(401).json({ error: "Invalid admin credentials" });
   }
 };
+
+// Simple test route without auth to verify route mounting
+router.get("/ping", (req, res) => {
+  console.log("🏓 Ping route hit!");
+  res.json({ message: "Admin route is working!", timestamp: new Date().toISOString() });
+});
 
 
 
@@ -75,12 +85,15 @@ router.get("/users", verifyAdminAuth, async (req, res) => {
 
 // DELETE /tripwell/admin/users/:id - Delete a user and all associated data
 router.delete("/users/:id", verifyAdminAuth, async (req, res) => {
+  console.log("🎯 DELETE /tripwell/admin/users/:id route hit!");
   try {
     const userId = req.params.id;
+    console.log(`🗑️ Admin attempting to delete user: ${userId}`);
     
     // Find the user first to get their email for logging
     const userToDelete = await TripWellUser.findById(userId);
     if (!userToDelete) {
+      console.log(`❌ User not found in database: ${userId}`);
       return res.status(404).json({ error: "User not found" });
     }
     
@@ -154,6 +167,7 @@ router.put("/users/:id", async (req, res) => {
 router.get("/hydrate", verifyAdminAuth, async (req, res) => {
   try {
     const users = await TripWellUser.find({}).sort({ createdAt: -1 });
+    console.log(`📊 Admin hydrate: Found ${users.length} users in database`);
     
     // Transform data for admin dashboard - only use fields that exist in the model
     const adminUsers = users.map(user => ({
@@ -171,6 +185,7 @@ router.get("/hydrate", verifyAdminAuth, async (req, res) => {
       funnelStage: user.funnelStage || 'none' // Add funnel stage tracking
     }));
     
+    console.log(`📊 Admin hydrate: Returning ${adminUsers.length} users to frontend`);
     res.json(adminUsers);
   } catch (error) {
     console.error("❌ Admin hydrate error:", error);
