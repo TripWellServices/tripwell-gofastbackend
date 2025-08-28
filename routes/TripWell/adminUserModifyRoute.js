@@ -55,33 +55,7 @@ router.get("/test", verifyAdminAuth, async (req, res) => {
   }
 });
 
-// GET /tripwell/admin/users - Fetch all users for admin dashboard
-router.get("/users", verifyAdminAuth, async (req, res) => {
-  try {
-    const users = await TripWellUser.find({}).sort({ createdAt: -1 });
-    
-    // Transform data for admin dashboard - only use fields that exist in the model
-    const adminUsers = users.map(user => ({
-      userId: user._id,
-      email: user.email,
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      createdAt: user.createdAt,
-      lastActiveAt: user.updatedAt, // Using updatedAt as proxy for last activity (will be renamed in MVP2)
-      tripId: user.tripId,
-      tripCreatedAt: user.tripId ? user.createdAt : null, // If they have a trip, use creation date
-      tripCompletedAt: null, // This field doesn't exist in the model yet
-      role: user.role || 'noroleset',
-      profileComplete: user.profileComplete || false,
-      funnelStage: user.funnelStage || 'none' // Add funnel stage tracking
-    }));
-    
-    res.json(adminUsers);
-  } catch (error) {
-    console.error("❌ Admin users fetch error:", error);
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-});
+// GET /tripwell/admin/users route moved to adminUserFetchRoute.js
 
 // DELETE /tripwell/admin/users/:id - Delete a user and all associated data
 router.delete("/users/:id", verifyAdminAuth, async (req, res) => {

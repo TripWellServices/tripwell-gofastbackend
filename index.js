@@ -107,6 +107,7 @@ app.use("/tripwell/demo", require("./routes/TripWell/demoBestThingsRoute"));
 
 // === ADMIN ROUTES ===
 app.use("/tripwell/admin", require("./routes/TripWell/adminLoginRoute"));
+app.use("/tripwell/admin", require("./routes/TripWell/adminUserFetchRoute"));
 app.use("/tripwell/admin", require("./routes/TripWell/adminUserModifyRoute"));
 app.use("/tripwell/admin", require("./routes/TripWell/adminTripModifyRoute"));
 app.use("/tripwell/admin", require("./routes/TripWell/adminAnalyticsRoute"));
