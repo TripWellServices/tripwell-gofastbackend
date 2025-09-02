@@ -104,6 +104,7 @@ app.use("/tripwell/user", require("./routes/TripWell/TripWellUserRoute"));
 // === DEMO FUNNEL ROUTES ===
 app.use("/tripwell/demo", require("./routes/TripWell/ItineraryDemoRoute"));
 app.use("/tripwell/demo", require("./routes/TripWell/demoBestThingsRoute"));
+app.use("/tripwell/demo", require("./routes/TripWell/vacationLocationPlannerRoute"));
 
 // === ADMIN ROUTES ===
 app.use("/tripwell/admin", require("./routes/TripWell/adminLoginRoute"));
