@@ -3,6 +3,11 @@
 const express = require("express");
 const router = express.Router();
 const TripWellUser = require("../../models/TripWellUser");
+const axios = require("axios");
+
+// Environment variables
+const EMAIL_SERVICE_URL = process.env.EMAIL_SERVICE_URL || "http://localhost:8000";
+const MAIN_SERVICE_URL = process.env.MAIN_SERVICE_URL || "http://localhost:8000";
 
 router.post("/createOrFind", async (req, res) => {
   try {
@@ -13,8 +18,10 @@ router.post("/createOrFind", async (req, res) => {
     }
 
     let user = await TripWellUser.findOne({ firebaseId });
+    let isNewUser = false;
 
     if (!user) {
+      // Create new user
       user = new TripWellUser({
         firebaseId,
         email,
@@ -31,10 +38,70 @@ router.post("/createOrFind", async (req, res) => {
       });
 
       await user.save();
+      isNewUser = true;
+      console.log(`✅ Created new user: ${email} (${firebaseId}) with funnelStage: ${user.funnelStage}`);
     } else if (funnelStage && user.funnelStage !== funnelStage) {
       // Update funnel stage if user is progressing
       user.funnelStage = funnelStage;
       await user.save();
+    }
+
+    // 🎯 NEW: Call Python Main Service for clean architecture analysis
+    if (isNewUser) {
+      try {
+        console.log(`🎯 Calling Python Main Service for new user: ${email}`);
+        
+        const mainServiceResponse = await axios.post(`${MAIN_SERVICE_URL}/analyze-user`, {
+          firebase_id: firebaseId,
+          email: email
+        }, {
+          timeout: 15000, // Give Python more time to analyze
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (mainServiceResponse.data.success) {
+          console.log(`✅ Main Service analysis complete for ${email}:`, {
+            actions_taken: mainServiceResponse.data.actions_taken.length,
+            user_state: mainServiceResponse.data.user_state
+          });
+          
+          // Log each action taken
+          mainServiceResponse.data.actions_taken.forEach(action => {
+            console.log(`  📧 ${action.campaign}: ${action.status} - ${action.reason}`);
+          });
+        } else {
+          console.error(`❌ Main Service analysis failed for ${email}`);
+        }
+      } catch (mainServiceError) {
+        // Don't fail user creation if Python service fails
+        console.error(`❌ Failed to call Main Service for ${email}:`, mainServiceError.message);
+        
+        // Fallback to old email service for welcome emails only
+        if (!funnelStage || funnelStage === "none") {
+          try {
+            const name = email.split('@')[0];
+            console.log(`📧 Fallback: Sending welcome email to new user: ${email}`);
+            
+            const emailResponse = await axios.post(`${EMAIL_SERVICE_URL}/emails/welcome`, {
+              email: email,
+              name: name
+            }, {
+              timeout: 10000,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (emailResponse.data.status === "sent") {
+              console.log(`✅ Fallback welcome email sent successfully to ${email}`);
+            }
+          } catch (fallbackError) {
+            console.error(`❌ Fallback email also failed for ${email}:`, fallbackError.message);
+          }
+        }
+      }
     }
 
     return res.status(200).json(user);
@@ -128,6 +195,56 @@ router.put("/exitFunnel", async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: "Failed to exit funnel" 
+    });
+  }
+});
+
+// Complete onboarding - upgrade user from "none" to "full_app" (for profile completion)
+router.put("/completeOnboarding", async (req, res) => {
+  try {
+    const { firebaseId } = req.body;
+    
+    if (!firebaseId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "firebaseId is required" 
+      });
+    }
+
+    const user = await TripWellUser.findOne({ firebaseId });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    // Only upgrade users who are in "none" stage (brand new users)
+    if (user.funnelStage === "none") {
+      user.funnelStage = "full_app";
+      await user.save();
+      
+      console.log(`✅ User ${user.email} completed onboarding: none → full_app`);
+      
+      res.json({ 
+        success: true, 
+        message: "Onboarding completed successfully",
+        user: user 
+      });
+    } else {
+      res.json({ 
+        success: true, 
+        message: "User already completed onboarding or is in demo funnel",
+        user: user 
+      });
+    }
+
+  } catch (error) {
+    console.error("Error completing onboarding:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to complete onboarding" 
     });
   }
 });

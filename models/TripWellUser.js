@@ -41,7 +41,7 @@ const tripWellUserSchema = new mongoose.Schema(
       type: String,
       default: "none",
       enum: ["none", "itinerary_demo", "spots_demo", "updates_only", "full_app"]
-    } // tracks user's funnel progression
+    } // tracks user's funnel progression and engagement level
   },
   { timestamps: true }
 );
