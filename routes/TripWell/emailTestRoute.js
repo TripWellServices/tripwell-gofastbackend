@@ -6,7 +6,7 @@ const router = express.Router();
 const axios = require("axios");
 
 // Environment variables
-const MAIN_SERVICE_URL = process.env.MAIN_SERVICE_URL || "http://localhost:8000";
+const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "http://localhost:8000";
 
 /**
  * Test email endpoint
@@ -26,7 +26,7 @@ router.post("/", async (req, res) => {
     console.log(`🧪 Testing email flow for ${email} (${name})`);
 
     // Call Python Smart Service with context and hints
-    const testResponse = await axios.post(`${MAIN_SERVICE_URL}/analyze-user`, {
+    const testResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/analyze-user`, {
       firebase_id: `test_${Date.now()}`,
       email: email,
       firstName: name.split(' ')[0] || name,

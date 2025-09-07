@@ -7,7 +7,7 @@ const axios = require("axios");
 
 // Environment variables
 const EMAIL_SERVICE_URL = process.env.EMAIL_SERVICE_URL || "http://localhost:8000";
-const MAIN_SERVICE_URL = process.env.MAIN_SERVICE_URL || "http://localhost:8000";
+const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "http://localhost:8000";
 
 router.post("/createOrFind", async (req, res) => {
   try {
@@ -51,7 +51,7 @@ router.post("/createOrFind", async (req, res) => {
       try {
         console.log(`🎯 Calling Python Main Service for new user: ${email}`);
         
-        const mainServiceResponse = await axios.post(`${MAIN_SERVICE_URL}/analyze-user`, {
+        const mainServiceResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/analyze-user`, {
           firebase_id: firebaseId,
           email: email
         }, {
