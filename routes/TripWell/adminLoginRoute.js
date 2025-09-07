@@ -18,10 +18,22 @@ const verifyAdminAuth = (req, res, next) => {
 
 // POST /tripwell/admin/login - Validate admin credentials
 router.post("/login", (req, res) => {
+  console.log("🚨 ADMIN LOGIN ROUTE HIT!");
   const { username, password } = req.body;
   
   const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tripwell2025';
+  
+  // Debug logging
+  console.log("🔐 Admin login attempt:");
+  console.log("  Received username:", username);
+  console.log("  Expected username:", ADMIN_USERNAME);
+  console.log("  Username match:", username === ADMIN_USERNAME);
+  console.log("  Password match:", password === ADMIN_PASSWORD);
+  console.log("  Environment variables set:", {
+    ADMIN_USERNAME: !!process.env.ADMIN_USERNAME,
+    ADMIN_PASSWORD: !!process.env.ADMIN_PASSWORD
+  });
   
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     res.json({ 

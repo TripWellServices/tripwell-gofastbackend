@@ -92,7 +92,21 @@ const metrics = {
 
 ## 🎯 **USER JOURNEY STATES**
 
-### **User Status Categories (from DEV_GUIDE.md)**
+### **Python-Managed User States (from user_interpretive_service.py)**
+- **demo_only** - User only uses demos, no profile/trip
+- **active** - User has profile and/or trip, engaged
+- **abandoned** - User signed up but never completed profile (>15 days)
+- **inactive** - User completed profile but no trip activity, or trip created but never activated and date passed
+
+### **Python-Managed Journey Stages**
+- **new_user** - Pre profile complete
+- **profile_complete** - Profile done, no trip yet
+- **trip_set_done** - Trip created, itinerary not complete
+- **itinerary_complete** - Itinerary done, trip not started
+- **trip_active** - Trip is happening now
+- **trip_complete** - Trip finished
+
+### **Legacy User Status Categories (Admin Dashboard)**
 - **Active User** - Has active trip (do not delete)
 - **New User** - Account <15 days old with profile (give them time)
 - **Incomplete Profile** - New account (give them time to complete profile)
@@ -103,19 +117,23 @@ const metrics = {
 ```
 1. New User Signup
    ↓
-2. funnelStage: "none" (brand new)
+2. funnelStage: "none" (brand new) → journeyStage: "new_user" → userState: "demo_only"
    ↓
 3. Try Demo OR Go Full App
    ↓
-4a. Demo Path: funnelStage: "spots_demo" | "itinerary_demo"
+4a. Demo Path: funnelStage: "spots_demo" | "itinerary_demo" → userState: "demo_only"
    ↓
-4b. Full App Path: funnelStage: "full_app"
+4b. Full App Path: funnelStage: "full_app" → userState: "active"
    ↓
-5. Profile Setup: profileComplete: true
+5. Profile Setup: profileComplete: true → journeyStage: "profile_complete" → userState: "active"
    ↓
-6. Trip Creation: role: "originator", tripId: assigned
+6. Trip Creation: role: "originator", tripId: assigned → journeyStage: "trip_set_done"
    ↓
-7. Trip Completion: tripCompletedAt: date (future)
+7. Itinerary Complete: → journeyStage: "itinerary_complete"
+   ↓
+8. Trip Active: → journeyStage: "trip_active"
+   ↓
+9. Trip Completion: → journeyStage: "trip_complete"
 ```
 
 ## 🔍 **ADMIN DASHBOARD FILTERING LOGIC**
@@ -237,6 +255,12 @@ The admin dashboard is already tracking:
 - **Trip creation** and role assignment
 - **User activity** and account age
 
-**For email service**: We need **separate email-specific flags** for CRM engagement strategy, while the existing user status is for app usage tracking.
+**NEW: Python Integration** provides:
+- **journeyStage** - Where user is in their trip planning journey
+- **userState** - Simplified state (demo_only, active, abandoned, inactive)
+- **engagement_level** - brand_new, new, recent, engaged, dormant
+- **trip_status** - no_trip, planning, planned, upcoming, active, completed
 
-**Recommendation**: Add email engagement flags to TripWellUser model for proper email campaign management! 📧
+**For email service**: Python conditions_logic.py determines email actions based on these states, while the existing user status is for app usage tracking.
+
+**Recommendation**: Use Python analysis results in admin dashboard to show both legacy status and new Python-managed states! 🧠📧

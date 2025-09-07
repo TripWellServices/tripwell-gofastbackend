@@ -47,10 +47,10 @@ The TripWellUser model tracks users through their journey from signup to trip co
 }
 ```
 
-## Journey Stage (Where they are in the flow)
+## Journey Stage (Python-managed - Where they are in the flow)
 ```javascript
 {
-  journeyStage: String,    // Where user is in their journey
+  journeyStage: String,    // Where user is in their journey (Python-managed)
   // Values:
   // - "new_user" - Pre profile complete
   // - "profile_complete" - Profile done, no trip yet
@@ -61,14 +61,14 @@ The TripWellUser model tracks users through their journey from signup to trip co
 }
 ```
 
-## User State (Simplified)
+## User State (Python-managed - Simplified)
 ```javascript
 {
-  userState: String,               // Simple user state
+  userState: String,               // Simple user state (Python-managed)
   // Values:
   // - "demo_only" - User only uses demos, no profile/trip
   // - "active" - User has profile and/or trip, engaged
-  // - "abandoned" - User signed up but never completed profile
+  // - "abandoned" - User signed up but never completed profile (>15 days)
   // - "inactive" - User completed profile but no trip activity, or trip created but never activated and date passed
 }
 ```
