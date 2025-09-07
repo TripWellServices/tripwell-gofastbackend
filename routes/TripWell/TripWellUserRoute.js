@@ -7,7 +7,7 @@ const axios = require("axios");
 
 // Environment variables
 const EMAIL_SERVICE_URL = process.env.EMAIL_SERVICE_URL || "http://localhost:8000";
-const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "http://localhost:8000";
+const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "https://tripwell-ai.onrender.com";
 
 router.post("/createOrFind", async (req, res) => {
   try {

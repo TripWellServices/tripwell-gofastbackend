@@ -6,7 +6,7 @@ const router = express.Router();
 const axios = require("axios");
 
 // Environment variables
-const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "http://localhost:8000";
+const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "https://tripwell-ai.onrender.com";
 
 /**
  * Test email endpoint
