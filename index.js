@@ -13,11 +13,33 @@ const allowedOrigins = [
   "https://tripwell-frontend.vercel.app",
   "https://tripwell-admin.vercel.app",
   "https://tripwell.app",
+  // Allow Vercel preview URLs
+  /^https:\/\/tripwell-admin-.*\.vercel\.app$/,
+  /^https:\/\/tripwell-frontend-.*\.vercel\.app$/,
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    
+    // Check exact matches
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+    
+    // Check regex patterns
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
       console.warn("❌ Blocked by CORS:", origin);

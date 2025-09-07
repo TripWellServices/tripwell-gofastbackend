@@ -40,8 +40,26 @@ const tripWellUserSchema = new mongoose.Schema(
     funnelStage: {
       type: String,
       default: "none",
-      enum: ["none", "itinerary_demo", "spots_demo", "updates_only", "full_app"]
-    } // tracks user's funnel progression and engagement level
+      enum: ["none", "spots_demo", "itinerary_demo", "vacation_planner_demo", "updates_only", "full_app"]
+    }, // tracks user's funnel progression
+    
+    // New fields for Python analysis
+    journeyStage: {
+      type: String,
+      default: "new_user",
+      enum: ["new_user", "profile_complete", "trip_set_done", "itinerary_complete", "trip_active", "trip_complete"]
+    }, // where user is in the journey flow
+    
+    userState: {
+      type: String,
+      default: "demo_only",
+      enum: ["demo_only", "active", "abandoned", "inactive"]
+    }, // simplified user state
+    
+    lastAnalyzedAt: {
+      type: Date,
+      default: null
+    } // when Python last analyzed this user
   },
   { timestamps: true }
 );

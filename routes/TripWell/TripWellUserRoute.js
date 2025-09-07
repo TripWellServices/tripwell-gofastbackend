@@ -52,8 +52,15 @@ router.post("/createOrFind", async (req, res) => {
         console.log(`🎯 Calling Python Main Service for new user: ${email}`);
         
         const mainServiceResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/analyze-user`, {
+          user_id: user._id.toString(), // Send the MongoDB _id
           firebase_id: firebaseId,
-          email: email
+          email: email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          profileComplete: user.profileComplete,
+          tripId: user.tripId,
+          funnelStage: user.funnelStage,
+          createdAt: user.createdAt
         }, {
           timeout: 15000, // Give Python more time to analyze
           headers: {
