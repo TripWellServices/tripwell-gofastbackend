@@ -100,6 +100,7 @@ app.use("/tripwell", require("./routes/TripWell/tripStatusRoute"));
 app.use("/tripwell", require("./routes/TripWell/validateJoinCodeRoute"));
 app.use("/tripwell", require("./routes/TripWell/hydrateRoute"));
 app.use("/tripwell/user", require("./routes/TripWell/TripWellUserRoute"));
+app.use("/tripwell/email-test", require("./routes/TripWell/emailTestRoute"));
 
 // === DEMO FUNNEL ROUTES ===
 app.use("/tripwell/demo", require("./routes/TripWell/ItineraryDemoRoute"));
