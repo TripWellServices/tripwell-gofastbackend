@@ -38,7 +38,7 @@ function parseAngelaItinerary(itineraryString) {
       if (entries.length > 0) {
         formattedBlocks[blockKey] = {
           title: entries[0],
-          description: entries.slice(1).join(" ")
+          desc: entries.slice(1).join(" ")
         };
       }
     });

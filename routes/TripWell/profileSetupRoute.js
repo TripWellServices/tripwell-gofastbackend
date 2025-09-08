@@ -55,14 +55,6 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
       
       const pythonResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/analyze-user`, {
         user_id: user._id.toString(),
-        firebase_id: user.firebaseId,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileComplete: user.profileComplete,
-        tripId: user.tripId,
-        funnelStage: user.funnelStage,
-        createdAt: user.createdAt,
         context: "profile_completed"
       }, {
         timeout: 15000,
