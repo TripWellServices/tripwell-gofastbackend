@@ -8,14 +8,29 @@ const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || 'https://tripwell-ai.
 // POST /tripwell/admin/analyze-user - Analyze user with Python service
 router.post("/analyze-user", async (req, res) => {
   try {
-    const { userId, email, firstName, lastName, profileComplete, tripId, funnelStage, createdAt } = req.body;
+    console.log('🎯 ADMIN USER ANALYZE ROUTE HIT!');
+    console.log('📥 Request body:', req.body);
     
-    console.log(`🧠 Admin: Analyzing user ${email || userId} with Python service`);
+    const { user_id, userId, email, firstName, lastName, profileComplete, tripId, funnelStage, createdAt } = req.body;
+    
+    // Use user_id from frontend, fallback to userId for backward compatibility
+    const actualUserId = user_id || userId;
+    
+    if (!actualUserId) {
+      console.error('❌ No user_id provided in request');
+      return res.status(400).json({
+        success: false,
+        error: "Missing user_id",
+        message: "user_id is required for analysis"
+      });
+    }
+    
+    console.log(`🧠 Admin: Analyzing user ${email || actualUserId} with Python service`);
     
     // Prepare the request for Python service
     const analysisRequest = {
-      user_id: userId,
-      firebase_id: userId, // Use userId as firebase_id for admin testing
+      user_id: actualUserId, // This is the MongoDB _id (ObjectId)
+      firebase_id: actualUserId, // Use actualUserId as firebase_id for admin testing
       email: email,
       firstName: firstName,
       lastName: lastName,
@@ -87,6 +102,57 @@ router.post("/analyze-user", async (req, res) => {
       res.status(500).json({
         success: false,
         error: "Internal server error",
+        message: error.message
+      });
+    }
+  }
+});
+
+// GET /tripwell/get-user/:userId - Get updated user data via Python service
+router.get("/get-user/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log('🔍 Fetching updated user data for:', userId);
+    
+    // Call Python service to get user data from MongoDB
+    const pythonResponse = await axios.get(`${TRIPWELL_AI_BRAIN}/get-user/${userId}`, {
+      timeout: 10000
+    });
+    
+    if (pythonResponse.data.success) {
+      console.log('✅ Found user via Python service:', pythonResponse.data.user.email);
+      console.log('📊 User state fields:', {
+        journeyStage: pythonResponse.data.user.journeyStage,
+        userState: pythonResponse.data.user.userState,
+        engagementLevel: pythonResponse.data.user.engagementLevel,
+        lastAnalyzedAt: pythonResponse.data.user.lastAnalyzedAt
+      });
+      
+      res.json({
+        success: true,
+        user: pythonResponse.data.user
+      });
+    } else {
+      console.log('❌ User not found via Python service:', userId);
+      res.status(404).json({
+        success: false,
+        error: "User not found"
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Error fetching user:', error.message);
+    
+    if (error.response) {
+      res.status(error.response.status).json({
+        success: false,
+        error: "Python service error",
+        message: error.response.data?.message || error.response.statusText
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch user data",
         message: error.message
       });
     }
