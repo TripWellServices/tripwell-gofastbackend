@@ -1,5 +1,5 @@
 const TripDay = require("../../models/TripWell/TripDay");
-const { parseAngelaItinerary } = require("./gptItineraryParserService");
+const { parseAngelaItinerary } = require("./gptItineraryparserService");
 
 /**
  * Save parsed GPT itinerary into the TripDay collection.
