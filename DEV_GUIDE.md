@@ -218,6 +218,59 @@ return "active"
 
 **Result**: Admin dashboard now uses MongoDB as source of truth, showing Python-interpreted user states!
 
+## 🚨 **USER JOURNEY PAGE ISSUE** (FIXED!)
+
+**Problem**: UserJourney page was showing old cached data instead of fresh Python user states.
+
+**Root Cause**: UserJourney page was loading from `localStorage.getItem('hydratedUsers')` instead of backend.
+
+**What Was Happening**:
+1. ✅ AdminUsers page updated to use fresh backend data
+2. ❌ UserJourney page still using old cached data from localStorage
+3. ❌ Result: Adam showed as "new_user" instead of "profile_complete"
+
+**Fix Applied**: ✅ Updated UserJourney page to use fresh backend data.
+
+**The Fix**:
+- Updated `UserJourney.jsx` to call backend API instead of localStorage
+- Updated `getUserStatus()` to use Python user states
+- Added journey stage display in user list
+- Now UserJourney page shows fresh data: "Active", "Demo", "Inactive", "Abandoned"
+- Journey stages show: "new_user", "profile_complete", "trip_set_done", etc.
+
+**Result**: Both AdminUsers and UserJourney pages now use MongoDB as source of truth!
+
+## 🚨 **ADMIN USERS PAGE CLEANUP** (FIXED!)
+
+**Problem**: AdminUsers page was cluttered with too much information.
+
+**Root Cause**: Page was showing journey stages, trip status, and other details that belong on UserJourney page.
+
+**What Was Happening**:
+1. ❌ AdminUsers page showing journey stages (clutter)
+2. ❌ AdminUsers page showing trip status (clutter)
+3. ❌ Multiple badges and extra info making it confusing
+4. ❌ Not focused on its core purpose: user management and deletion
+
+**Fix Applied**: ✅ Cleaned up AdminUsers page to focus on core functionality.
+
+**The Fix**:
+- Removed journey stage display from AdminUsers page
+- Removed trip status display from AdminUsers page
+- Kept only essential info: user state, name, email, creation date
+- Page now focused on: user state + delete capability
+
+**AdminUsers Page Now Shows**:
+- **User State**: "Active", "Demo", "Inactive", "Abandoned" (from Python)
+- **Basic Info**: Name, email, creation date
+- **Delete Capability**: Delete buttons for safe-to-delete users
+
+**UserJourney Page Shows**:
+- **Detailed Journey Tracking**: Journey stages, trip status, metrics
+- **Funnel Analysis**: User progression through TripWell experience
+
+**Result**: Clean separation of concerns - AdminUsers for management, UserJourney for analysis!
+
 ## 🔐 **FIREBASE AUTHENTICATION PATTERN** (CRITICAL!)
 
 ## 🛡️ **ADMIN DASHBOARD ARCHITECTURE** (NEW!)
