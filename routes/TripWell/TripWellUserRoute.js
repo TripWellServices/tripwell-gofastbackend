@@ -60,7 +60,15 @@ router.post("/createOrFind", async (req, res) => {
           profileComplete: user.profileComplete,
           tripId: user.tripId,
           funnelStage: user.funnelStage,
-          createdAt: user.createdAt
+          createdAt: user.createdAt,
+          context: "new_user_signup", // ✅ Tell Python this is a new user
+          hints: {
+            user_type: "new_user",
+            entry_point: funnelStage === "none" ? "signup" : "demo",
+            days_since_signup: 0,
+            has_profile: false,
+            has_trip: false
+          }
         }, {
           timeout: 15000, // Give Python more time to analyze
           headers: {

@@ -10,7 +10,7 @@ router.get("/users", async (req, res) => {
     
     console.log(`📊 Found ${users.length} users in database`);
     
-    // Transform data for admin dashboard
+    // Transform data for admin dashboard with Python user state
     const adminUsers = users.map(user => ({
       userId: user._id,
       email: user.email,
@@ -23,7 +23,12 @@ router.get("/users", async (req, res) => {
       tripCompletedAt: null,
       role: user.role || 'noroleset',
       profileComplete: user.profileComplete || false,
-      funnelStage: user.funnelStage || 'none'
+      funnelStage: user.funnelStage || 'none',
+      // ✅ Python-interpreted user state
+      userState: user.userState || 'active', // Default to active
+      journeyStage: user.journeyStage || 'new_user', // Default to new_user
+      engagementLevel: user.engagementLevel || 'onboarding',
+      lastAnalyzedAt: user.lastAnalyzedAt
     }));
     
     console.log(`📊 Returning ${adminUsers.length} users to frontend`);

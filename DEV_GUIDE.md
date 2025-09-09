@@ -90,6 +90,134 @@ INFO:conditions_logic:🎯 Actions determined: 0
 - Sends welcome email template with profile completion context
 - Prevents duplicate emails with `profileCompleteEmailSent` flag
 
+## 🚨 **NEW USER WELCOME EMAIL ISSUE** (FIXED!)
+
+**Problem**: New users were not receiving welcome emails on signup.
+
+**Root Cause**: Node.js was calling Python for new users but NOT sending the required hints for welcome email logic.
+
+**What Was Happening**:
+1. ✅ User signs up → Node.js creates user in MongoDB
+2. ✅ Node.js calls Python with `user_id` and basic data
+3. ❌ **Node.js was NOT sending `context: "new_user_signup"` or `hints`**
+4. ❌ Python welcome email condition required specific hints
+5. ❌ Result: `❌ Welcome email condition not met` (no email sent)
+
+**Python Welcome Email Logic Required**:
+```python
+if user_type == 'new_user' and days_since_signup <= 7:
+    if context in ['new_user_test', 'new_user_signup']:
+        return True  # Send welcome email
+```
+
+**Fix Applied**: ✅ Updated Node.js to send proper hints to Python.
+
+**The Fix**:
+- Updated `TripWellUserRoute.js` to send `context: "new_user_signup"`
+- Added required hints: `user_type: "new_user"`, `entry_point`, `days_since_signup: 0`
+- Updated Python to recognize `new_user_signup` context
+- Now new users get welcome emails immediately on signup!
+
+## 🚨 **USER STATE CONFUSION ISSUE** (FIXED!)
+
+**Problem**: New users were showing as "new user" instead of "active" or "inactive".
+
+**Root Cause**: Python logic was treating brand new users as "demo_only" instead of "active".
+
+**What Was Happening**:
+1. ✅ User signs up → `funnelStage: "none"`, no profile, no trip
+2. ❌ Python logic: `if funnel_stage == "none" and not has_profile and not has_trip: return "demo_only"`
+3. ❌ Result: New users showed as "demo_only" instead of "active"
+
+**Fix Applied**: ✅ Updated Python logic to treat new users as "active".
+
+**The Fix**:
+- Changed `user_interpretive_service.py` logic for brand new users
+- New users with `funnelStage: "none"` now return `"active"` instead of `"demo_only"`
+- Makes sense: if they just signed up, they're actively using the app!
+- Now user states are clear: "active" or "inactive" (not confusing "new user")
+
+## 🚨 **BINARY USER STATE LOGIC** (FIXED!)
+
+**Problem**: User states were confusing with multiple categories like "demo_only", "new_user", etc.
+
+**Root Cause**: Complex logic with too many user state categories.
+
+**What Was Happening**:
+1. ❌ Multiple confusing states: "new_user", "demo_only", "active", "inactive", "abandoned"
+2. ❌ Hard to understand what each state meant
+3. ❌ Not binary enough for clear decision making
+
+**Fix Applied**: ✅ Simplified to binary logic with clear rules.
+
+**The New Binary Logic**:
+```python
+# Check for demo users first (most specific)
+if is_demo_mode and not has_profile and not has_trip:
+    return "demo"
+
+# Check for abandoned users
+if not has_profile and days_since_signup > 15:
+    return "abandoned"
+
+# Check for inactive users (specific conditions)
+if has_trip and trip_date_passed_but_not_activated:
+    return "inactive"
+if has_profile and not has_trip and days_since_signup > 15:
+    return "inactive"
+
+# DEFAULT: Everyone else is ACTIVE
+return "active"
+```
+
+**The Four States**:
+1. **"active"** - Default for anyone not demo, abandoned, or inactive
+   - New users (just signed up)
+   - Users with profiles
+   - Users with trips
+   - Anyone engaging with the app
+
+2. **"demo"** - Demo-only users
+   - Users with demo funnel stages (spots_demo, itinerary_demo, vacation_planner_demo)
+   - No profile, no trip
+
+3. **"inactive"** - Specific conditions only
+   - Profile complete but no trip after 15 days
+   - Trip date passed but never activated
+
+4. **"abandoned"** - No profile after 15 days
+   - Signed up but never completed profile
+
+**Result**: Clear, binary logic that's easy to understand and act on!
+
+## 🚨 **ADMIN DASHBOARD USER STATE ISSUE** (FIXED!)
+
+**Problem**: Admin dashboard was using its own user state logic instead of Python-interpreted states.
+
+**Root Cause**: Admin dashboard had custom `getUserStatus()` function instead of using MongoDB as source of truth.
+
+**What Was Happening**:
+1. ✅ Python analyzes users → updates MongoDB with `userState`, `journeyStage`, `engagementLevel`
+2. ❌ Admin dashboard ignored MongoDB fields → used custom logic
+3. ❌ Result: Admin saw confusing states like "New User" instead of Python's "active"
+4. ❌ Journey stage showed "new_user" instead of correct stage like "profile_complete"
+
+**Fix Applied**: ✅ Updated admin dashboard to use MongoDB as source of truth.
+
+**The Fix**:
+- Updated `adminUserFetchRoute.js` to include Python fields: `userState`, `journeyStage`, `engagementLevel`
+- Updated `AdminUsers.jsx` to use Python user state instead of custom logic
+- Added journey stage display in admin dashboard
+- Now admin sees: "Active", "Demo", "Inactive", "Abandoned" (from Python)
+- Journey stage shows correct stage: "profile_complete", "trip_set_done", etc.
+
+**Admin Dashboard Now Shows**:
+- **User State**: "Active", "Demo", "Inactive", "Abandoned" (from Python)
+- **Journey Stage**: "new_user", "profile_complete", "trip_set_done", etc. (from Python)
+- **Trip Status**: "No Trip", "Active Trip", "Trip Complete" (from MongoDB)
+
+**Result**: Admin dashboard now uses MongoDB as source of truth, showing Python-interpreted user states!
+
 ## 🔐 **FIREBASE AUTHENTICATION PATTERN** (CRITICAL!)
 
 ## 🛡️ **ADMIN DASHBOARD ARCHITECTURE** (NEW!)
