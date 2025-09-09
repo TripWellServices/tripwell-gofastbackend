@@ -52,10 +52,28 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     // 🎯 TRIGGER: Call Python for profile completion analysis
     try {
       console.log(`🎯 Profile completed - calling Python for user: ${user.email}`);
+      console.log(`🔍 Python service URL: ${TRIPWELL_AI_BRAIN}`);
+      console.log(`🔍 User ID being sent: ${user._id.toString()}`);
       
       const pythonResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/analyze-user`, {
         user_id: user._id.toString(),
-        context: "profile_completed"
+        firebase_id: user.firebaseId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileComplete: user.profileComplete,
+        tripId: user.tripId,
+        funnelStage: user.funnelStage,
+        createdAt: user.createdAt,
+        context: "profile_completed",
+        hints: {
+          user_type: "new_user",
+          entry_point: "app",
+          has_profile: true,  // ✅ EXPLICIT - we just completed it!
+          has_trip: !!user.tripId,  // ✅ EXPLICIT
+          days_since_signup: user.createdAt ? 
+            Math.floor((new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24)) : 0
+        }
       }, {
         timeout: 15000,
         headers: {
@@ -73,10 +91,22 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
         });
       } else {
         console.error(`❌ Python analysis failed for profile completion: ${user.email}`);
+        console.error(`❌ Python response:`, pythonResponse.data);
       }
     } catch (pythonError) {
       // Don't fail profile update if Python service fails
-      console.error(`❌ Failed to call Python for profile completion: ${user.email}:`, pythonError.message);
+      console.error(`❌ Failed to call Python for profile completion: ${user.email}`);
+      console.error(`❌ Error details:`, {
+        message: pythonError.message,
+        code: pythonError.code,
+        status: pythonError.response?.status,
+        data: pythonError.response?.data
+      });
+      
+      if (pythonError.code === 'ECONNREFUSED' || pythonError.code === 'ENOTFOUND') {
+        console.error(`🚨 CRITICAL: Python service is not accessible at ${TRIPWELL_AI_BRAIN}`);
+        console.error(`🔧 Check if Python service is running on Render`);
+      }
     }
 
     res.status(200).json(user);
