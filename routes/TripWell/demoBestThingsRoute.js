@@ -73,11 +73,16 @@ router.post("/bestthings/save", verifyFirebaseToken, async (req, res) => {
         firebaseId,
         email,
         funnelStage: "spots_demo",
-        profileComplete: false
+        profileComplete: false,
+        // 🎯 NODE.JS MUTATES: Set demo user state
+        journeyStage: "new_user",
+        userState: "demo_only"
       });
     } else {
-      // Update existing user's funnel stage
+      // Update existing user's funnel stage and state
       user.funnelStage = "spots_demo";
+      user.journeyStage = "new_user";
+      user.userState = "demo_only";
     }
 
     await user.save();

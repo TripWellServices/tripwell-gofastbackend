@@ -1,6 +1,7 @@
 // routes/TripWell/tripSetupRoute.js
 const express = require("express");
 const router = express.Router();
+const axios = require("axios");
 
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const TripWellUser = require("../../models/TripWellUser");
@@ -96,10 +97,19 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       // Continue anyway - trip base update is not critical
     }
 
-    // 3b) Update user (link user to trip)
+    // 3b) Update user (link user to trip and set journey stage)
     try {
       await setUserTrip(user._id, doc._id);
       console.log("✅ Updated user with trip link");
+      
+      // 🎯 NODE.JS MUTATES: Set journey stage when trip is created
+      await TripWellUser.findByIdAndUpdate(user._id, {
+        $set: {
+          journeyStage: 'trip_set_done',
+          userState: 'active'
+        }
+      });
+      console.log("✅ Updated user journey stage to trip_set_done");
     } catch (e) {
       console.warn("trip-setup: setUserTrip failed:", e.message);
       // Continue anyway - user update is not critical
@@ -112,6 +122,29 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     } catch (e) {
       console.warn("trip-setup: join code registry push failed:", e.message);
       // Continue anyway - join code registry is not critical
+    }
+
+    // 🎯 TRIGGER: Call Python for trip creation analysis
+    try {
+      console.log(`🎯 Trip created - calling Python for user: ${user.email}`);
+      const pythonResponse = await axios.post(`${process.env.TRIPWELL_AI_BRAIN}/handle-user-action`, {
+        user_id: user._id.toString(),
+        firebase_id: user.firebaseId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileComplete: user.profileComplete,
+        tripId: user.tripId,
+        funnelStage: user.funnelStage,
+        createdAt: user.createdAt,
+        context: "trip_created"
+      }, {
+        timeout: 15000
+      });
+      console.log("✅ Python trip creation analysis complete:", pythonResponse.data);
+    } catch (err) {
+      console.warn("⚠️ Python trip creation analysis failed (non-critical):", err.message);
+      // Don't block trip creation if Python fails
     }
 
     // Return tripId and computed trip data for frontend
@@ -193,10 +226,15 @@ router.post("/demo/save", verifyFirebaseToken, async (req, res) => {
     const doc = await TripBase.create(demoTripData);
     console.log("✅ Demo trip saved successfully:", doc._id.toString());
 
-    // Update user's funnel stage
+    // Update user's funnel stage and journey state
     await TripWellUser.findOneAndUpdate(
       { firebaseId },
-      { funnelStage: "itinerary_demo" },
+      { 
+        funnelStage: "itinerary_demo",
+        // 🎯 NODE.JS MUTATES: Set demo user state
+        journeyStage: "trip_set_done",
+        userState: "demo_only"
+      },
       { new: true }
     );
 

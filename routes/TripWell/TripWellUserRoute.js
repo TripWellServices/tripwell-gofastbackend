@@ -34,7 +34,10 @@ router.post("/createOrFind", async (req, res) => {
         tripVibe: [],         // ✅ Profile field
         tripId: null,
         role: "noroleset",    // Will be assigned later
-        funnelStage: funnelStage || "none"  // Set funnel stage if provided
+        funnelStage: funnelStage || "none",  // Set funnel stage if provided
+        // 🎯 NODE.JS MUTATES: Set initial state flags
+        journeyStage: "new_user",
+        userState: funnelStage && funnelStage !== "none" ? "demo_only" : "active"
       });
 
       await user.save();
@@ -51,7 +54,7 @@ router.post("/createOrFind", async (req, res) => {
       try {
         console.log(`🎯 Calling Python Main Service for new user: ${email}`);
         
-        const mainServiceResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/analyze-user`, {
+        const mainServiceResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/handle-user-action`, {
           user_id: user._id.toString(), // Send the MongoDB _id
           firebase_id: firebaseId,
           email: email,
@@ -61,14 +64,7 @@ router.post("/createOrFind", async (req, res) => {
           tripId: user.tripId,
           funnelStage: user.funnelStage,
           createdAt: user.createdAt,
-          context: "new_user_signup", // ✅ Tell Python this is a new user
-          hints: {
-            user_type: "new_user",
-            entry_point: funnelStage === "none" ? "signup" : "demo",
-            days_since_signup: 0,
-            has_profile: false,
-            has_trip: false
-          }
+          context: "new_user_signup" // ✅ Tell Python this is a new user
         }, {
           timeout: 15000, // Give Python more time to analyze
           headers: {

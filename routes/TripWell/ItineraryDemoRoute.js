@@ -69,15 +69,23 @@ router.post("/save", async (req, res) => {
       user = await TripWellUser.create({
         firebaseId,
         email: email || "",
-        funnelStage: "itinerary_demo"
+        funnelStage: "itinerary_demo",
+        // 🎯 NODE.JS MUTATES: Set demo user state
+        journeyStage: "trip_set_done",
+        userState: "demo_only"
       });
       console.log("✅ Created new user with funnelStage: itinerary_demo");
     } else {
-      // Update existing user's funnel stage if needed
+      // Update existing user's funnel stage and state if needed
       if (user.funnelStage !== "itinerary_demo") {
         await TripWellUser.findOneAndUpdate(
           { firebaseId },
-          { funnelStage: "itinerary_demo" },
+          { 
+            funnelStage: "itinerary_demo",
+            // 🎯 NODE.JS MUTATES: Set demo user state
+            journeyStage: "trip_set_done",
+            userState: "demo_only"
+          },
           { new: true }
         );
         console.log("✅ Updated user funnelStage to: itinerary_demo");
