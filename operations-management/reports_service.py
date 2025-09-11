@@ -128,3 +128,4 @@ class ReportsService:
             },
             "message": "Management dashboard data generated successfully"
         }
+

@@ -190,3 +190,4 @@ class ActiveTripReports:
             "recommendations": [],
             "message": "Trip health dashboard generated successfully"
         }
+
