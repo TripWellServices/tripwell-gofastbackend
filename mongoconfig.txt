@@ -1,0 +1,3 @@
+# 🔗 MongoDB Connection
+# This connects to the primary GoFastFamily database — required for all TripWell data ops
+MONGO_URI=mongodb+srv://adamgofast:GoFast00!@gofast-matching.khwb4ig.mongodb.net/GoFastFamily?retryWrites=true&w=majority&appName=GoFast-Matching

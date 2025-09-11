@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+require('dotenv').config({ path: 'mongo-config.txt' });
 require('dotenv').config();
 
 // Import models
@@ -11,8 +12,13 @@ async function cleanupOrphanedData() {
   try {
     console.log('🚀 Starting orphaned data cleanup...');
     
-    // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI);
+    // Connect to MongoDB using Render environment
+    const mongoUri = process.env.MONGO_URI;
+    if (!mongoUri) {
+      throw new Error('❌ MONGO_URI environment variable not set. Make sure you\'re running this on Render or have the correct .env file.');
+    }
+    console.log('🔗 Connecting to MongoDB...');
+    await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB');
 
     // Get all existing user IDs
