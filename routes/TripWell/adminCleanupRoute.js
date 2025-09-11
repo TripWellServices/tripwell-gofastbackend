@@ -7,6 +7,9 @@ const TripWellUser = require('../../models/TripWellUser');
 const JoinCode = require('../../models/TripWell/JoinCode');
 const TripIntent = require('../../models/TripWell/TripIntent');
 const TripDay = require('../../models/TripWell/TripDay');
+const TripBase = require('../../models/TripWell/TripBase');
+const AnchorLogic = require('../../models/TripWell/AnchorLogic');
+const TripReflection = require('../../models/TripWell/TripReflection');
 
 // Admin cleanup endpoint
 router.post('/cleanup-orphaned-data', async (req, res) => {
@@ -78,6 +81,57 @@ router.post('/cleanup-orphaned-data', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Cleanup failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Nuke everything endpoint - DANGEROUS!
+router.post('/nuke-everything', async (req, res) => {
+  try {
+    console.log('💥 NUCLEAR OPTION: Starting complete database wipe...');
+    
+    let totalDeleted = 0;
+    const results = {};
+
+    // Delete all collections
+    const collections = [
+      { name: 'TripWellUser', model: TripWellUser },
+      { name: 'TripBase', model: TripBase },
+      { name: 'JoinCode', model: JoinCode },
+      { name: 'TripIntent', model: TripIntent },
+      { name: 'TripDay', model: TripDay },
+      { name: 'AnchorLogic', model: AnchorLogic },
+      { name: 'TripReflection', model: TripReflection }
+    ];
+
+    for (const collection of collections) {
+      try {
+        const result = await collection.model.deleteMany({});
+        results[collection.name] = result.deletedCount;
+        totalDeleted += result.deletedCount;
+        console.log(`💥 Deleted ${result.deletedCount} records from ${collection.name}`);
+      } catch (error) {
+        console.error(`❌ Error deleting ${collection.name}:`, error);
+        results[collection.name] = `Error: ${error.message}`;
+      }
+    }
+
+    console.log(`💥 NUKE COMPLETE! Total deleted: ${totalDeleted} records`);
+
+    res.json({
+      success: true,
+      message: `💥 NUKE COMPLETE! Deleted ${totalDeleted} records from all collections`,
+      details: {
+        totalDeleted,
+        collections: results
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Nuke failed:', error);
     res.status(500).json({
       success: false,
       error: error.message
