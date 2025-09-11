@@ -19,7 +19,7 @@ const verifyAdminAuth = (req, res, next) => {
 };
 
 // GET /tripwell/admin/analytics - Get basic analytics
-router.get("/analytics", verifyAdminAuth, async (req, res) => {
+router.get("/analytics", async (req, res) => {
   try {
     // Get user counts
     const totalUsers = await TripWellUser.countDocuments();

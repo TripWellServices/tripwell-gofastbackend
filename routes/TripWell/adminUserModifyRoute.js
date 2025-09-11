@@ -58,7 +58,7 @@ router.get("/test", verifyAdminAuth, async (req, res) => {
 // GET /tripwell/admin/users route moved to adminUserFetchRoute.js
 
 // DELETE /tripwell/admin/users/:id - Delete a user and all associated data
-router.delete("/users/:id", verifyAdminAuth, async (req, res) => {
+router.delete("/users/:id", async (req, res) => {
   console.log("🎯 DELETE /tripwell/admin/users/:id route hit!");
   try {
     const userId = req.params.id;
@@ -138,7 +138,7 @@ router.put("/users/:id", async (req, res) => {
 });
 
 // GET /tripwell/admin/hydrate - Get all users for admin dashboard (admin version of hydrate)
-router.get("/hydrate", verifyAdminAuth, async (req, res) => {
+router.get("/hydrate", async (req, res) => {
   try {
     const users = await TripWellUser.find({}).sort({ createdAt: -1 });
     console.log(`📊 Admin hydrate: Found ${users.length} users in database`);
