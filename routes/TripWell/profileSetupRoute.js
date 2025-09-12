@@ -58,7 +58,7 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
       console.log(`🔍 Python service URL: ${TRIPWELL_AI_BRAIN}`);
       console.log(`🔍 User ID being sent: ${user._id.toString()}`);
       
-      const pythonResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/handle-user-action`, {
+      const pythonResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/profile-completed`, {
         user_id: user._id.toString(),
         firebase_id: user.firebaseId,
         email: user.email,

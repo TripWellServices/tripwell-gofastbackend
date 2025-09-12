@@ -54,7 +54,7 @@ router.post("/createOrFind", async (req, res) => {
       try {
         console.log(`🎯 Calling Python Main Service for new user: ${email}`);
         
-        const mainServiceResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/handle-user-action`, {
+        const mainServiceResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/new-user-signup`, {
           user_id: user._id.toString(), // Send the MongoDB _id
           firebase_id: firebaseId,
           email: email,
