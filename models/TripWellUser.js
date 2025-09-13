@@ -29,7 +29,7 @@ const tripWellUserSchema = new mongoose.Schema(
     hometownCity: { type: String, default: "" },
     state: { type: String, default: "" },
     planningVibe: { type: String, default: "" }, // Planning approach: "Spontaneity", "Rigid", or "Like mix"
-    travelVibes: { type: [String], default: [] }, // Travel style: ["Go with flow", "Spontaneity", "Stick to schedule", "Want to just enjoy the moment"]
+    travelVibe: { type: String, default: "" }, // Travel style: "Go with flow", "Spontaneity", "Stick to schedule", or "Want to just enjoy the moment"
     dreamDestination: { type: String, default: "" }, // Dream destination from ProfileSetup
     profileComplete: { type: Boolean, default: false }, // tracks if profile setup is complete
     tripId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set post trip creation
