@@ -24,6 +24,8 @@ TripWell is a Node.js/Express backend with MongoDB database, Firebase authentica
   state: { type: String, default: "" },                           // Dropdown selection
   travelStyle: { type: [String], default: [] },                   // ["Luxury", "Budget", "Spontaneous", "Planned"]
   tripVibe: { type: [String], default: [] },                      // ["Chill", "Adventure", "Party", "Culture"]
+  budgetTime: { type: String, default: "" },                      // "money-no-time", "time-no-money", "money-and-time"
+  dreamDestination: { type: String, default: "" },                // User's dream travel destination
   profileComplete: { type: Boolean, default: false },             // Tracks profile setup completion
   tripId: { type: ObjectId, default: null },                      // Set post trip creation
   role: { 
