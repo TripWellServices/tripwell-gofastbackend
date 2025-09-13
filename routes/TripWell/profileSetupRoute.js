@@ -16,7 +16,7 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     lastName,
     hometownCity,
     state,
-    planningVibes,
+    planningVibe,
     travelVibes,
     dreamDestination
   } = req.body;
@@ -34,7 +34,7 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           lastName,
           hometownCity,
           state,
-          planningVibes,
+          planningVibe,
           travelVibes,
           dreamDestination,
           profileComplete: true,
