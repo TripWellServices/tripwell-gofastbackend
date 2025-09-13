@@ -30,6 +30,8 @@ const tripWellUserSchema = new mongoose.Schema(
     state: { type: String, default: "" },
     travelStyle: { type: [String], default: [] },
     tripVibe: { type: [String], default: [] },
+    budgetTime: { type: String, default: "" }, // New field from ProfileSetup UX
+    dreamDestination: { type: String, default: "" }, // New field from ProfileSetup UX
     profileComplete: { type: Boolean, default: false }, // tracks if profile setup is complete
     tripId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set post trip creation
     role: { 

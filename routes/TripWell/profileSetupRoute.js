@@ -17,7 +17,9 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     hometownCity,
     state,
     travelStyle,
-    tripVibe
+    tripVibe,
+    budgetTime,
+    dreamDestination
   } = req.body;
 
   try {
@@ -35,6 +37,8 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           state,
           travelStyle,
           tripVibe,
+          budgetTime,
+          dreamDestination,
           profileComplete: true,
           // If user was in funnel, upgrade them to full_app
           ...(currentUser?.funnelStage && currentUser.funnelStage !== 'full_app' && {

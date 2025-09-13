@@ -6,6 +6,10 @@ const TripBase = require("../../models/TripWell/TripBase");
 const TripIntent = require("../../models/TripWell/TripIntent");
 const AnchorLogic = require("../../models/TripWell/AnchorLogic");
 const TripDay = require("../../models/TripWell/TripDay");
+const axios = require("axios");
+
+// Environment variables
+const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "https://tripwell-ai.onrender.com";
 
 // 🔐 GET /tripwell/hydrate
 // Description: Returns all localStorage data for the authenticated user
@@ -32,6 +36,15 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       profileComplete: user.profileComplete || false,
       role: user.role || "noroleset"
     };
+
+    // 🔍 DEBUG: Log the actual profileComplete value from database
+    console.log("🔍 DEBUG - ProfileComplete from DB:", {
+      rawValue: user.profileComplete,
+      type: typeof user.profileComplete,
+      finalValue: userData.profileComplete,
+      hasFirstName: !!user.firstName,
+      hasLastName: !!user.lastName
+    });
 
     console.log("🔍 User data:", { 
       firebaseId: user.firebaseId, 
@@ -206,6 +219,49 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       tripDaysTotal: tripData.daysTotal,
       userRole: userData.role
     });
+
+    // 🎯 Call Python Main Service for new user signup (after full hydration)
+    // Check if this is a new user (created recently)
+    const isNewUser = user.createdAt && (Date.now() - new Date(user.createdAt).getTime()) < 300000; // 5 minutes
+    if (isNewUser) {
+      try {
+        console.log(`🎯 Calling Python Main Service for new user after hydration: ${user.email}`);
+        
+        const mainServiceResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/useactionendpoint`, {
+          user_id: user._id.toString(),
+          firebase_id: user.firebaseId,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          profileComplete: user.profileComplete,
+          tripId: user.tripId,
+          funnelStage: user.funnelStage,
+          createdAt: user.createdAt,
+          context: "new_user_signup"
+        }, {
+          timeout: 15000,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (mainServiceResponse.data.success) {
+          console.log(`✅ Main Service analysis complete for ${user.email}:`, {
+            actions_taken: mainServiceResponse.data.actions_taken.length,
+            user_state: mainServiceResponse.data.user_state
+          });
+          
+          // Log each action taken
+          mainServiceResponse.data.actions_taken.forEach(action => {
+            console.log(`  📧 ${action.campaign}: ${action.status} - ${action.reason}`);
+          });
+        } else {
+          console.error(`❌ Main Service analysis failed for ${user.email}`);
+        }
+      } catch (mainServiceError) {
+        console.error(`❌ Failed to call Main Service for ${user.email}:`, mainServiceError.message);
+      }
+    }
 
     res.set("Cache-Control", "no-store");
     return res.json(response);

@@ -32,6 +32,7 @@ router.post("/createOrFind", async (req, res) => {
         state: null,          // ✅ Profile field
         travelStyle: [],      // ✅ Profile field
         tripVibe: [],         // ✅ Profile field
+        profileComplete: false, // ✅ Explicitly set to false for new users
         tripId: null,
         role: "noroleset",    // Will be assigned later
         funnelStage: funnelStage || "none",  // Set funnel stage if provided
@@ -49,71 +50,7 @@ router.post("/createOrFind", async (req, res) => {
       await user.save();
     }
 
-    // 🎯 NEW: Call Python Main Service for clean architecture analysis
-    if (isNewUser) {
-      try {
-        console.log(`🎯 Calling Python Main Service for new user: ${email}`);
-        
-        const mainServiceResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/useactionendpoint`, {
-          user_id: user._id.toString(), // Send the MongoDB _id
-          firebase_id: firebaseId,
-          email: email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          profileComplete: user.profileComplete,
-          tripId: user.tripId,
-          funnelStage: user.funnelStage,
-          createdAt: user.createdAt,
-          context: "new_user_signup" // ✅ Tell Python this is a new user
-        }, {
-          timeout: 15000, // Give Python more time to analyze
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (mainServiceResponse.data.success) {
-          console.log(`✅ Main Service analysis complete for ${email}:`, {
-            actions_taken: mainServiceResponse.data.actions_taken.length,
-            user_state: mainServiceResponse.data.user_state
-          });
-          
-          // Log each action taken
-          mainServiceResponse.data.actions_taken.forEach(action => {
-            console.log(`  📧 ${action.campaign}: ${action.status} - ${action.reason}`);
-          });
-        } else {
-          console.error(`❌ Main Service analysis failed for ${email}`);
-        }
-      } catch (mainServiceError) {
-        // Don't fail user creation if Python service fails
-        console.error(`❌ Failed to call Main Service for ${email}:`, mainServiceError.message);
-        
-        // Fallback to old email service for welcome emails only
-        if (!funnelStage || funnelStage === "none") {
-          try {
-            const name = email.split('@')[0];
-            console.log(`📧 Fallback: Sending welcome email to new user: ${email}`);
-            
-            const emailResponse = await axios.post(`${EMAIL_SERVICE_URL}/emails/welcome`, {
-              email: email,
-              name: name
-            }, {
-              timeout: 10000,
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-
-            if (emailResponse.data.status === "sent") {
-              console.log(`✅ Fallback welcome email sent successfully to ${email}`);
-            }
-          } catch (fallbackError) {
-            console.error(`❌ Fallback email also failed for ${email}:`, fallbackError.message);
-          }
-        }
-      }
-    }
+    // Note: Python service will be called after hydration in hydrateRoute.js
 
     return res.status(200).json(user);
   } catch (err) {
