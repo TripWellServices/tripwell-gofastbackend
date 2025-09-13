@@ -52,7 +52,10 @@ router.post("/createOrFind", async (req, res) => {
 
     // Note: Python service will be called after hydration in hydrateRoute.js
 
-    return res.status(200).json(user);
+    return res.status(200).json({
+      ...user.toObject(),
+      isNewUser: isNewUser
+    });
   } catch (err) {
     console.error("❌ Error in createOrFind:", err);
     return res.status(500).json({ error: "Server error" });
