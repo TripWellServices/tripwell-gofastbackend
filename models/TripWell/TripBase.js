@@ -12,7 +12,7 @@ const TripBaseSchema = new mongoose.Schema({
   whoWith: {
     type: String,
     default: "",
-    enum: ["spouse", "son-daughter", "spouse-kids", "dad-daughter", "mom-son", "friends", "parents", "multigen", "solo", "other"]
+    enum: ["spouse", "spouse-kids", "son-daughter", "friends", "solo", "other"]
   },
   season:    { type: String },
   daysTotal: { type: Number },
