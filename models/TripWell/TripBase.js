@@ -10,9 +10,9 @@ const TripBaseSchema = new mongoose.Schema({
   city:      { type: String, required: true },
   partyCount:  { type: Number, default: 1, min: 1 },  // hardened
   whoWith: {
-    type: [String],
-    default: [],
-    enum: ["spouse", "kids", "friends", "parents", "multigen", "solo", "other"]
+    type: String,
+    default: "",
+    enum: ["spouse", "son-daughter", "spouse-kids", "dad-daughter", "mom-son", "friends", "parents", "multigen", "solo", "other"]
   },
   season:    { type: String },
   daysTotal: { type: Number },
