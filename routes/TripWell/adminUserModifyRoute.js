@@ -71,29 +71,19 @@ router.delete("/users/:id", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     
-    // Import models for cascade deletion
-    const TripIntent = require("../../models/TripWell/TripIntent");
-    const JoinCode = require("../../models/TripWell/JoinCode");
-    const TripItinerary = require("../../models/TripWell/TripItinerary");
+    // Import unified cascade deletion service
+    const { cascadeDelete } = require("../../services/TripWell/cascadeDeletionService");
     
     // Start a session for transaction
     const session = await mongoose.startSession();
     
     try {
       await session.withTransaction(async () => {
-        // 1. Delete all TripIntents for this user
-        const deletedTripIntents = await TripIntent.deleteMany({ userId }, { session });
-        console.log(`🗑️ Deleted ${deletedTripIntents.deletedCount} TripIntents for user ${userToDelete.email}`);
+        // 1. Delete all trips and associated data for this user (unified cascade deletion)
+        const deletionResult = await cascadeDelete(userId, null, session);
+        console.log(`🗑️ Unified cascade deleted ${deletionResult.tripsDeleted} trips and ${deletionResult.totalRecordsDeleted} total records for user ${userToDelete.email}`);
         
-        // 2. Delete all JoinCodes for this user
-        const deletedJoinCodes = await JoinCode.deleteMany({ userId }, { session });
-        console.log(`🗑️ Deleted ${deletedJoinCodes.deletedCount} JoinCodes for user ${userToDelete.email}`);
-        
-        // 3. Delete all TripItineraries for this user
-        const deletedTripItineraries = await TripItinerary.deleteMany({ userId }, { session });
-        console.log(`🗑️ Deleted ${deletedTripItineraries.deletedCount} TripItineraries for user ${userToDelete.email}`);
-        
-        // 4. Finally delete the user
+        // 2. Finally delete the user
         const deletedUser = await TripWellUser.findByIdAndDelete(userId, { session });
         console.log(`✅ Admin deleted user: ${deletedUser.email} (${userId})`);
       });
@@ -146,6 +136,7 @@ router.get("/hydrate", async (req, res) => {
     // Transform data for admin dashboard - only use fields that exist in the model
     const adminUsers = users.map(user => ({
       userId: user._id,
+      firebaseId: user.firebaseId, // ✅ Include Firebase ID
       email: user.email,
       firstName: user.firstName || '',
       lastName: user.lastName || '',

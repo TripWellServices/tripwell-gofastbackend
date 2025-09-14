@@ -142,7 +142,12 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
         context: "trip_created",
         tripName: tripName,             // ✅ Include trip details
         city: city,                     // ✅ Include city
-        // ... other trip data
+        startDate: patch.startDate,     // ✅ Include start date
+        endDate: patch.endDate,         // ✅ Include end date
+        partyCount: patch.partyCount,   // ✅ Include party count
+        whoWith: patch.whoWith,         // ✅ Include who with
+        season: patch.season,           // ✅ Include season
+        daysTotal: patch.daysTotal      // ✅ Include days total
       }, {
         timeout: 15000
       });

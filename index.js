@@ -135,7 +135,6 @@ app.use("/tripwell/admin", require("./routes/TripWell/adminUserFetchRoute"));
 app.use("/tripwell/admin", require("./routes/TripWell/adminUserModifyRoute"));
 app.use("/tripwell/admin", require("./routes/TripWell/adminTripModifyRoute"));
 app.use("/tripwell/admin", require("./routes/TripWell/adminAnalyticsRoute"));
-app.use("/tripwell/admin", require("./routes/TripWell/adminCleanupRoute"));
 app.use("/tripwell", require("./routes/TripWell/adminUserAnalyzeRoute"));
 // Removed broken adminDeleteRoute - use /tripwell/admin/users/:id for proper cascade deletion
 console.log("✅ Admin routes loaded");
