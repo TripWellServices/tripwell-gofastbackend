@@ -2235,9 +2235,11 @@ const response = await fetch('/tripwell/admin/users', {
 #### **adminUserModifyRoute.js:**
 - **Location**: `gofastbackend/routes/TripWell/adminUserModifyRoute.js`
 - **Purpose**: User management and modification
+- **🚨 CRITICAL: NO AUTH REQUIRED** - Admin routes should NOT have authentication middleware
 - **Routes**:
   - `GET /tripwell/admin/users` - Fetch all users
   - `PUT /tripwell/admin/users/:id` - Modify user data
+  - `POST /tripwell/admin/user/:userId/reset-journey` - Reset user journey stage
 
 #### **adminDeleteRoute.js:**
 - **Location**: `gofastbackend/routes/TripWell/adminDeleteRoute.js`

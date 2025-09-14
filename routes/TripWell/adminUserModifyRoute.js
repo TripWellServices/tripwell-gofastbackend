@@ -158,6 +158,52 @@ router.get("/hydrate", async (req, res) => {
   }
 });
 
+// POST /tripwell/admin/user/:userId/reset-journey - Reset user journey stage
+router.post("/user/:userId/reset-journey", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const { journeyStage, userState } = req.body;
+    
+    console.log(`🔄 Admin resetting journey for user ${userId} to stage: ${journeyStage}, state: ${userState}`);
+    
+    if (!journeyStage || !userState) {
+      return res.status(400).json({ error: "journeyStage and userState are required" });
+    }
+    
+    const user = await TripWellUser.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Update user journey stage and state
+    const updatedUser = await TripWellUser.findByIdAndUpdate(
+      userId,
+      { 
+        journeyStage: journeyStage,
+        userState: userState,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+    
+    console.log(`✅ Admin reset journey for user: ${user.email} to ${journeyStage}/${userState}`);
+    
+    res.json({ 
+      success: true, 
+      message: `User journey reset to ${journeyStage}/${userState}`,
+      user: {
+        email: updatedUser.email,
+        journeyStage: updatedUser.journeyStage,
+        userState: updatedUser.userState
+      }
+    });
+    
+  } catch (error) {
+    console.error("❌ Error resetting user journey:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Add this new route to fix profileComplete
 router.put("/fixProfileComplete", async (req, res) => {
   try {
