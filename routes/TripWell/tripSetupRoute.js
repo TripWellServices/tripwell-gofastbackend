@@ -41,7 +41,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
 
     const payload = {
       city: String(city).trim(),
-      whoWith: Array.isArray(whoWith) ? whoWith : [],
+      whoWith: String(whoWith || "").trim(),
     };
     
     // Add optional fields for demo mode
