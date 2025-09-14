@@ -136,8 +136,13 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
         profileComplete: user.profileComplete,
         tripId: user.tripId,
         funnelStage: user.funnelStage,
+        journeyStage: 'trip_set_done',  // ✅ Include journey stage
+        userState: 'active',            // ✅ Include user state
         createdAt: user.createdAt,
-        context: "trip_created"
+        context: "trip_created",
+        tripName: tripName,             // ✅ Include trip details
+        city: city,                     // ✅ Include city
+        // ... other trip data
       }, {
         timeout: 15000
       });
