@@ -127,7 +127,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     // 🎯 TRIGGER: Call Python for trip creation analysis
     try {
       console.log(`🎯 Trip created - calling Python for user: ${user.email}`);
-      const pythonResponse = await axios.post(`${process.env.TRIPWELL_AI_BRAIN}/trip-created`, {
+      const pythonResponse = await axios.post(`${process.env.TRIPWELL_AI_BRAIN}/useactionendpoint`, {
         user_id: user._id.toString(),
         firebase_id: user.firebaseId,
         email: user.email,
