@@ -145,6 +145,11 @@ app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/profileSetupRoute"));
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/AnchorSelectSaveRoutes"));
 
+// Profile Generation Routes
+app.use("/tripwell", require("./routes/TripWell/profileGPTRoute"));
+app.use("/tripwell", require("./routes/TripWell/profileParserRoute"));
+app.use("/tripwell", require("./routes/TripWell/profileSaveRoute"));
+
 // === ROOT CHECK ===
 app.get("/", (req, res) => {
   res.status(200).json({

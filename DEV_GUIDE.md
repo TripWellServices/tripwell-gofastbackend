@@ -2247,6 +2247,120 @@ const response = await fetch('/tripwell/admin/users', {
 - **Routes**:
   - `DELETE /tripwell/admin/delete/user/:id` - Delete user
 
+## 🤖 **ANGELA AI PROMPT BUILDING** (Critical for UX)
+
+### **How Angela Uses User Data for GPT Prompts**
+
+Angela (the AI assistant) builds prompts using specific user data from the TripIntent form. Understanding this mapping is crucial for frontend UX and backend debugging.
+
+### **Data Flow:**
+1. **User fills TripIntent form** → `TripIntentForm.jsx`
+2. **Data saved to localStorage** → `tripIntentData`
+3. **Backend calls Angela services** → Uses localStorage data
+4. **GPT generates personalized content** → Based on user preferences
+
+### **Anchor Generation Service** (`services/TripWell/anchorgptService.js`)
+
+#### **Prompt Builder Function:**
+```javascript
+function buildAnchorPrompt({ vibes, priorities, mobility, travelPace, budget, city, season, purpose, whoWith })
+```
+
+#### **User Data Mapping:**
+- **`priorities`** → "Traveler emphasized these top trip priorities: **Culture & History, Food & Dining**"
+- **`vibes`** → "The intended vibe is **Romantic & Intimate, Luxurious** — reflect this in tone and energy"
+- **`mobility`** → "The traveler prefers to get around via **Love walking everywhere** — avoid conflicting transportation"
+- **`travelPace`** → "Preferred travel pace: **Slow & Relaxed - Take your time**"
+- **`budget`** → "The expected daily budget is **$100-200/day** — structure experiences to reflect that"
+- **`city`** → "Traveler is going to **Paris**"
+- **`season`** → "during **Spring**"
+- **`purpose`** → "Purpose of trip: **Explore culture on a budget**"
+- **`whoWith`** → "Travel companions: **solo**"
+
+#### **GPT Output:**
+- **5 anchor experiences** (JSON array)
+- Each anchor includes: `title`, `description`, `location`, `isDayTrip`, `suggestedFollowOn`
+
+### **Itinerary Generation Service** (`services/TripWell/itineraryGPTService.js`)
+
+#### **System Prompt Uses:**
+- **Trip duration**: `${daysTotal}-day itinerary`
+- **City & season**: `trip to ${city} during the ${season}`
+- **Purpose**: `"${purpose || "to enjoy and explore"}"`
+- **Companions**: `taken with ${whoWith?.join(", ") || "unspecified"}`
+
+#### **User Prompt Includes:**
+- **Calendar map** (all trip dates)
+- **Selected anchor experiences** (from anchor generation)
+- **Trip intent data** (full TripIntent object)
+
+### **Critical UX Considerations:**
+
+#### **Budget Field:**
+- **Frontend**: "What's your daily budget range?"
+- **Backend**: "The expected daily budget is **${budget}**"
+- **Impact**: Angela structures experiences around daily spending (not total trip budget)
+
+#### **Mobility vs Transportation:**
+- **Frontend**: "How do you like to get around?"
+- **Backend**: "prefers to get around via **${mobility}** — avoid conflicting transportation"
+- **Impact**: Angela avoids suggesting experiences requiring conflicting transport methods
+
+#### **Travel Pace vs Activity Density:**
+- **Frontend**: "What's your travel pace?"
+- **Backend**: "Preferred travel pace: **${travelPace}**"
+- **Impact**: Angela adjusts daily activity density and scheduling
+
+#### **Vibes vs Experience Tone:**
+- **Frontend**: "What's your travel style?"
+- **Backend**: "The intended vibe is **${vibes}** — reflect this in tone and energy"
+- **Impact**: Angela matches experience energy (romantic vs playful, high-energy vs relaxed)
+
+### **Testing Angela Output:**
+
+#### **Test Script Location:**
+- **File**: `gofastbackend/test-angela-paris.js`
+- **Purpose**: Test different user profiles to see Angela's output variations
+
+#### **Test Variations:**
+1. **Budget Traveler**: $50-100/day, solo, walking, slow pace
+2. **Luxury Traveler**: $500-1000/day, spouse, transport, moderate pace  
+3. **Family with Kids**: $200-300/day, spouse-kids, mixed transport, moderate pace
+
+#### **Expected Output Differences:**
+- **Budget**: Free cultural sites, local food tours, walking distances
+- **Luxury**: Guided excursions, upscale experiences, private transport
+- **Family**: Kid-friendly activities, educational content, flexible scheduling
+
+### **Debugging Angela Issues:**
+
+#### **Common Problems:**
+1. **Generic responses** → Check if user data is properly passed to prompt builder
+2. **Conflicting suggestions** → Verify mobility vs suggested transportation
+3. **Budget mismatch** → Confirm daily budget vs suggested experience costs
+4. **Wrong vibe** → Check if vibes array is properly formatted
+
+#### **Debug Logs to Check:**
+```javascript
+console.log("🔍 tripData received:", tripData);
+console.log("🔍 tripIntentData received:", tripIntentData);
+console.log("🧪 Calling OpenAI with real data...");
+```
+
+### **Frontend Form Validation:**
+
+#### **Required for Angela:**
+- **At least one priority** (Angela needs focus areas)
+- **At least one vibe** (Angela needs tone guidance)
+- **Mobility preference** (Angela needs transport constraints)
+- **Travel pace** (Angela needs activity density guidance)
+- **Budget range** (Angela needs spending constraints)
+
+#### **Optional but Helpful:**
+- **Multiple priorities** (gives Angela more options)
+- **Multiple vibes** (allows Angela to blend styles)
+- **Specific budget amounts** (more precise than "luxury")
+
 ### **User Status Categories:**
 - **Active User**: Has active trip - do not delete
 - **New User**: Account <15 days old with profile - give them time
