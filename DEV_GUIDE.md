@@ -18,6 +18,27 @@ TripWell is a full-stack application with:
 - **Email Service**: Microsoft Graph API
 - **Deployment**: Render (production), Vercel (frontend)
 
+## ⚠️ **CRITICAL DATABASE CONFIGURATION** ⚠️
+
+### **Database Connection Issue (FIXED)**
+**CRITICAL:** The backend uses `GoFastFamily` database for ALL existing routes. Changing the database name in `index.js` will break existing functionality.
+
+**What Happened:**
+- Changed `dbName` from `"GoFastFamily"` to `"Tripwell_itinerary_building"` 
+- This broke all existing routes that expect `GoFastFamily` database
+- TripBase, TripWellUser, and other existing models are in `GoFastFamily`
+
+**The Fix:**
+- **TripWell Branch**: Uses `dbName: "Tripwell_itinerary_building"` for all place-related routes
+- **Main Branch**: Uses `dbName: "GoFastFamily"` for existing functionality
+- Collections in TripWell database: `placeprofiles`, `metaattractions`, `placetodos`
+
+**NEVER change the database name without:**
+1. Checking all existing routes and models
+2. Updating all database references
+3. Testing all functionality
+4. Documenting the change
+
 ## 🗄️ **DATA MODELS** (Deep Dive)
 
 ### **TripWellUser Model** (`models/TripWellUser.js`)
