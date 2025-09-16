@@ -10,9 +10,38 @@ const mongoose = require('mongoose');
  * This is the third step in the separate call flow
  */
 
-// Get models
-const PlaceProfile = mongoose.model('PlaceProfile');
-const MetaAttractions = mongoose.model('MetaAttractions');
+// Define schemas and models
+const PlaceProfileSchema = new mongoose.Schema({
+  placeSlug: { type: String, required: true, unique: true },
+  city: { type: String, required: true },
+  season: { type: String, required: true },
+  purpose: { type: String, required: true },
+  whoWith: { type: String, required: true },
+  priorities: [String],
+  vibes: [String],
+  mobility: [String],
+  travelPace: { type: String, required: true },
+  budget: { type: String, required: true },
+  status: { type: String, default: 'profile_saved' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const MetaAttractionsSchema = new mongoose.Schema({
+  placeSlug: { type: String, required: true, unique: true },
+  city: { type: String, required: true },
+  season: { type: String, required: true },
+  metaAttractions: [{
+    name: String,
+    type: String,
+    reason: String
+  }],
+  status: { type: String, default: 'meta_generated' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const PlaceProfile = mongoose.model('PlaceProfile', PlaceProfileSchema);
+const MetaAttractions = mongoose.model('MetaAttractions', MetaAttractionsSchema);
 
 router.post("/build-list", async (req, res) => {
   console.log("🎯 BUILD LIST ROUTE HIT!");

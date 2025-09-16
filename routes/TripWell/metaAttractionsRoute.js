@@ -4,9 +4,18 @@ const mongoose = require('mongoose');
 const { generateMetaAttractions } = require("../../services/TripWell/metaAttractionsService");
 const { parsePlaceTodoData } = require("../../services/TripWell/placetodoSaveService");
 
-// MetaAttractions Schema
+// CityProfile Schema - Index for each city
+const CityProfileSchema = new mongoose.Schema({
+  city: { type: String, required: true, unique: true },
+  country: { type: String, required: true },
+  cityProfileId: { type: String, required: true, unique: true },
+  status: { type: String, default: 'active' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// MetaAttractions Schema - Indexed by city (reusable)
 const MetaAttractionsSchema = new mongoose.Schema({
-  placeSlug: { type: String, required: true, unique: true },
+  cityProfileId: { type: String, required: true, unique: true },
   city: { type: String, required: true },
   season: { type: String, required: true },
   metaAttractions: [{
@@ -18,6 +27,7 @@ const MetaAttractionsSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const CityProfile = mongoose.model('CityProfile', CityProfileSchema);
 const MetaAttractions = mongoose.model('MetaAttractions', MetaAttractionsSchema);
 
 /**
@@ -43,20 +53,51 @@ router.post("/meta-attractions", async (req, res) => {
   try {
     console.log("📋 Generating meta attractions for:", city, season);
     
-    // Step 1: Generate meta attractions
+    // Step 1: Get or create city profile
+    const cityProfileId = `${city}Profile`;
+    let cityProfile = await CityProfile.findOne({ city });
+    if (!cityProfile) {
+      cityProfile = new CityProfile({
+        city,
+        country: "Unknown", // TODO: Add country detection
+        cityProfileId
+      });
+      await cityProfile.save();
+      console.log("✅ City profile created:", cityProfileId);
+    } else {
+      console.log("✅ City profile found:", cityProfileId);
+    }
+    
+    // Step 2: Check if meta attractions already exist for this city/season
+    let metaAttractions = await MetaAttractions.findOne({ cityProfileId, season });
+    if (metaAttractions) {
+      console.log("✅ Meta attractions already exist for", city, season);
+      return res.json({
+        status: "success",
+        message: "Meta attractions already exist",
+        cityProfileId,
+        metaAttractionsId: metaAttractions._id,
+        metaAttractions: metaAttractions.metaAttractions,
+        nextStep: "Call build list service"
+      });
+    }
+    
+    // Step 3: Generate new meta attractions
     const metaAttractionsResult = await generateMetaAttractions({ city, season });
     console.log("✅ GPT meta attractions generated");
     
-    // Step 2: Use the parsed data directly (following existing pattern)
-    const metaAttractions = metaAttractionsResult.data;
-    console.log("✅ Meta attractions generated:", metaAttractions.length);
+    // Step 4: Use the parsed data directly (following existing pattern)
+    const metaAttractionsData = metaAttractionsResult.data;
+    console.log("✅ Meta attractions generated:", metaAttractionsData.length);
+    console.log("🔍 Meta attractions type:", typeof metaAttractionsData);
+    console.log("🔍 Meta attractions is array:", Array.isArray(metaAttractionsData));
     
-    // Step 3: Save to database
+    // Step 5: Save to database
     const newMetaAttractions = new MetaAttractions({
-      placeSlug,
+      cityProfileId,
       city,
       season,
-      metaAttractions,
+      metaAttractions: metaAttractionsData,
       status: 'meta_generated'
     });
     

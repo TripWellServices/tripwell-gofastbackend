@@ -8,10 +8,18 @@ const mongoose = require('mongoose');
  * This is the first step in the separate call flow
  */
 
-// Place Profile Schema
+// CityProfile Schema - Index for each city
+const CityProfileSchema = new mongoose.Schema({
+  cityName: { type: String, required: true, unique: true },
+  country: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// Place Profile Schema - References CityProfile
 const PlaceProfileSchema = new mongoose.Schema({
   placeSlug: { type: String, required: true, unique: true },
-  city: { type: String, required: true },
+  cityId: { type: mongoose.Schema.Types.ObjectId, ref: 'CityProfile', required: true },
+  cityName: { type: String, required: true }, // Keep for easy queries
   season: { type: String, required: true },
   purpose: { type: String },
   whoWith: { type: String, required: true },
@@ -25,13 +33,9 @@ const PlaceProfileSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-// Use existing connection or create model
-let PlaceProfile;
-try {
-  PlaceProfile = mongoose.model('PlaceProfile');
-} catch (error) {
-  PlaceProfile = mongoose.model('PlaceProfile', PlaceProfileSchema);
-}
+// Create models
+const CityProfile = mongoose.model('CityProfile', CityProfileSchema);
+const PlaceProfile = mongoose.model('PlaceProfile', PlaceProfileSchema);
 
 router.post("/place-profile-save", async (req, res) => {
   console.log("🎯 PLACE PROFILE SAVE ROUTE HIT!");
@@ -50,10 +54,25 @@ router.post("/place-profile-save", async (req, res) => {
   try {
     console.log("💾 Saving place profile to database...");
     
-    // Create new place profile
+    // Step 1: Parse and save city
+    const cityName = inputVariables.city;
+    let cityProfile = await CityProfile.findOne({ cityName });
+    if (!cityProfile) {
+      cityProfile = new CityProfile({
+        cityName,
+        country: "Unknown" // TODO: Add country detection
+      });
+      await cityProfile.save();
+      console.log("✅ City profile created:", cityName);
+    } else {
+      console.log("✅ City profile found:", cityName);
+    }
+    
+    // Step 2: Create new place profile with city reference
     const newPlaceProfile = new PlaceProfile({
       placeSlug,
-      city: inputVariables.city,
+      cityId: cityProfile._id,
+      cityName: cityName,
       season: inputVariables.season,
       purpose: inputVariables.purpose,
       whoWith: inputVariables.whoWith,
@@ -73,6 +92,8 @@ router.post("/place-profile-save", async (req, res) => {
       message: "Place profile saved successfully",
       placeSlug: placeSlug,
       placeProfileId: newPlaceProfile._id,
+      cityId: cityProfile._id,
+      cityName: cityName,
       nextStep: "Call meta attractions service"
     });
     
