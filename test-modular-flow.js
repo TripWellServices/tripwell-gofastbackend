@@ -2,12 +2,12 @@ const fetch = require('node-fetch');
 
 // Test data - formatted for the backend route
 const testData = {
-  placeSlug: "TokyoLuxuryCouple",
+  placeSlug: "LondonBudgetSolo",
   inputVariables: {
-    city: "Tokyo",
+    city: "London",
     season: "Spring",
-    whoWith: "Couple",
-    budget: "Luxury",
+    whoWith: "Solo",
+    budget: "Budget",
     priorities: ["Culture", "Food"],
     vibes: ["Adventure", "Local"],
     mobility: ["Love walking everywhere"],
