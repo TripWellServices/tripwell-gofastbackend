@@ -12,10 +12,12 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://tripwell-frontend.vercel.app",
   "https://tripwell-admin.vercel.app",
+  "https://tripwell-tripbuild.vercel.app",
   "https://tripwell.app",
   // Allow Vercel preview URLs
   /^https:\/\/tripwell-admin-.*\.vercel\.app$/,
   /^https:\/\/tripwell-frontend-.*\.vercel\.app$/,
+  /^https:\/\/tripwell-tripbuild-.*\.vercel\.app$/,
 ];
 
 const corsOptions = {
@@ -86,7 +88,7 @@ if (!admin.apps.length) {
 // === MONGO CONNECT ===
 mongoose
   .connect(process.env.MONGO_URI, {
-    dbName: "GoFastFamily",
+    dbName: "Tripwell_itinerary_building",
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
