@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 // Parse functions
 function parseMetaAttractionsData(rawResponse) {
   try {
-    // Try to parse as JSON
+    // Try to parse as JSON first
     const data = JSON.parse(rawResponse);
     
     return {
@@ -29,11 +29,30 @@ function parseMetaAttractionsData(rawResponse) {
         };
       }
     } catch (secondError) {
-      // If all parsing attempts fail
-      return {
-        success: false,
-        error: `Failed to parse JSON: ${error.message}`
-      };
+      // If that fails, try to handle the case where GPT returns a string representation
+      try {
+        // Check if the response looks like a stringified array
+        if (rawResponse.includes("'name':") && rawResponse.includes("'type':")) {
+          // Replace single quotes with double quotes for valid JSON
+          const jsonString = rawResponse
+            .replace(/'/g, '"')
+            .replace(/"name":/g, '"name":')
+            .replace(/"type":/g, '"type":')
+            .replace(/"reason":/g, '"reason":');
+          
+          const data = JSON.parse(jsonString);
+          return {
+            success: true,
+            data: data
+          };
+        }
+      } catch (thirdError) {
+        // If all parsing attempts fail
+        return {
+          success: false,
+          error: `Failed to parse JSON: ${error.message}`
+        };
+      }
     }
     
     return {

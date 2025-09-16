@@ -1,7 +1,24 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require('mongoose');
 const { generateMetaAttractions } = require("../../services/TripWell/metaAttractionsService");
-const { parseAndSaveMetaAttractions } = require("../../services/TripWell/metaParseAndSaveService");
+const { parsePlaceTodoData } = require("../../services/TripWell/placetodoSaveService");
+
+// MetaAttractions Schema
+const MetaAttractionsSchema = new mongoose.Schema({
+  placeSlug: { type: String, required: true, unique: true },
+  city: { type: String, required: true },
+  season: { type: String, required: true },
+  metaAttractions: [{
+    name: String,
+    type: String,
+    reason: String
+  }],
+  status: { type: String, default: 'meta_generated' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const MetaAttractions = mongoose.model('MetaAttractions', MetaAttractionsSchema);
 
 /**
  * POST /tripwell/meta-attractions
@@ -30,24 +47,28 @@ router.post("/meta-attractions", async (req, res) => {
     const metaAttractionsResult = await generateMetaAttractions({ city, season });
     console.log("✅ GPT meta attractions generated");
     
-    // Step 2: Parse and save using the dedicated service
-    const result = await parseAndSaveMetaAttractions({
+    // Step 2: Use the parsed data directly (following existing pattern)
+    const metaAttractions = metaAttractionsResult.data;
+    console.log("✅ Meta attractions generated:", metaAttractions.length);
+    
+    // Step 3: Save to database
+    const newMetaAttractions = new MetaAttractions({
       placeSlug,
       city,
       season,
-      rawResponse: metaAttractionsResult.rawResponse
+      metaAttractions,
+      status: 'meta_generated'
     });
     
-    if (!result.success) {
-      throw new Error(result.error);
-    }
+    await newMetaAttractions.save();
+    console.log("✅ Meta attractions saved to database");
     
     res.json({
       status: "success",
-      message: result.message,
+      message: "Meta attractions generated and saved successfully",
       placeSlug,
-      metaAttractionsId: result.metaAttractionsId,
-      metaAttractions: result.metaAttractions,
+      metaAttractionsId: newMetaAttractions._id,
+      metaAttractions: metaAttractions,
       nextStep: "Call build list service"
     });
     

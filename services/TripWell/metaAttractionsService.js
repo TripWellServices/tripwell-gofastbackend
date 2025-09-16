@@ -47,7 +47,15 @@ async function generateMetaAttractions({ city, season }) {
     temperature: 0.3
   });
 
-  return { rawResponse: completion.choices[0].message.content };
+  const content = completion.choices[0].message.content || "[]";
+  
+  // Parse the JSON directly like the existing pattern
+  const parsedArray = JSON.parse(content);
+  
+  return { 
+    rawResponse: content,
+    data: parsedArray
+  };
 }
 
 module.exports = { generateMetaAttractions };
