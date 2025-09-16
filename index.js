@@ -92,7 +92,7 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("✅ MongoDB connected"))
+  .then(() => console.log("✅ MongoDB connected to Tripwell_itinerary_building"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // === MIDDLEWARE ===
