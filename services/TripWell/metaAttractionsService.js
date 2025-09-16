@@ -49,8 +49,15 @@ async function generateMetaAttractions({ city, season }) {
 
   const content = completion.choices[0].message.content || "[]";
   
-  // Parse the JSON directly like the existing pattern
-  const parsedArray = JSON.parse(content);
+  // Parse the JSON - handle single quotes by converting to double quotes
+  let parsedArray;
+  try {
+    parsedArray = JSON.parse(content);
+  } catch (error) {
+    // If JSON parsing fails, try converting single quotes to double quotes
+    const jsonString = content.replace(/'/g, '"');
+    parsedArray = JSON.parse(jsonString);
+  }
   
   return { 
     rawResponse: content,
