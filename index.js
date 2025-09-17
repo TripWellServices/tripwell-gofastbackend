@@ -108,6 +108,8 @@ app.use("/tripwell", require("./routes/TripWell/anchorgptRoute"));
 app.use("/tripwell", require("./routes/TripWell/anchorgpttestRoute"));
 app.use("/tripwell", require("./routes/TripWell/placetodoGPTRoute"));
 app.use("/tripwell", require("./routes/TripWell/metaAttractionsRoute"));
+app.use("/tripwell", require("./routes/TripWell/metaCreatorRoute"));
+app.use("/tripwell", require("./routes/TripWell/metaParseAndSaveRoute"));
 app.use("/tripwell", require("./routes/TripWell/personaSamplesRoute"));
 app.use("/tripwell", require("./routes/TripWell/contentLibraryRoute"));
 app.use("/tripwell", require("./routes/TripWell/metaPlaceRoute"));

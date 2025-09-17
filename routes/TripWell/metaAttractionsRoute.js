@@ -1,16 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { OpenAI } = require("openai");
-const City = require("../../models/TripWell/City");
 const MetaAttractions = require("../../models/TripWell/MetaAttractions");
 const { getOrCreateCity } = require("../../services/TripWell/parseCityService");
 
-const openai = new OpenAI();
-
 /**
  * POST /tripwell/meta-attractions
- * Generates meta attractions and saves them to database
- * This is the second step in the separate call flow
+ * Hydrates existing meta attractions from database
+ * Meta attractions should already exist (generated during city creation)
  */
 
 router.post("/meta-attractions", async (req, res) => {
@@ -34,92 +30,28 @@ router.post("/meta-attractions", async (req, res) => {
     const cityDoc = await getOrCreateCity(city);
     console.log("✅ City ready:", cityDoc.cityName, cityDoc._id);
     
-    // Step 2: Check if meta attractions already exist for this city/season
+    // Step 2: Get existing meta attractions (they should exist because city creation generates them)
     let metaAttractions = await MetaAttractions.findOne({ cityId: cityDoc._id, season });
     if (metaAttractions) {
-      console.log("✅ Using saved meta attractions from content library");
+      console.log("✅ Meta attractions found for city:", cityDoc.cityName);
       return res.json({
         status: "success",
-        message: "Meta attractions loaded from content library",
+        message: "Meta attractions loaded",
         cityId: cityDoc._id,
         metaAttractionsId: metaAttractions._id,
         metaAttractions: metaAttractions.metaAttractions,
-        source: "saved_library",
+        source: "content_library",
         nextStep: "Call build list service"
       });
     }
     
-    // Step 3: Generate new meta attractions using GPT (not in content library yet)
-    console.log("🔄 Generating new meta attractions (not in content library)");
-    const systemPrompt = `You are Angela, TripWell's smart travel planner. Generate the "obvious" tourist attractions for ${city} in ${season}.
-
-These are the generic, touristy, "everyone goes here" attractions that we want to AVOID in our personalized recommendations.
-
-Return a JSON array of 8-12 obvious attractions with this structure:
-[
-  {
-    "name": "Eiffel Tower",
-    "type": "landmark",
-    "reason": "Most iconic symbol of the city"
-  },
-  {
-    "name": "Louvre Museum", 
-    "type": "museum",
-    "reason": "World's largest art museum"
-  }
-]
-
-Focus on the most obvious, touristy, generic attractions that every travel guide mentions.
-
-Return only the JSON array. No explanations, markdown, or extra commentary.`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { 
-          role: "system", 
-          content: "You are Angela, TripWell's travel assistant. Return structured JSON only. No prose. No markdown." 
-        },
-        { role: "user", content: systemPrompt }
-      ],
-      temperature: 0.3
-    });
-
-    const content = completion.choices[0].message.content || "[]";
-    console.log("✅ GPT meta attractions generated");
-    
-    // Step 4: Parse the JSON response
-    let metaAttractionsData;
-    try {
-      metaAttractionsData = JSON.parse(content);
-    } catch (error) {
-      // If JSON parsing fails, try converting single quotes to double quotes
-      const jsonString = content.replace(/'/g, '"');
-      metaAttractionsData = JSON.parse(jsonString);
-    }
-    
-    console.log("✅ Meta attractions parsed:", metaAttractionsData.length);
-    
-    // Step 5: Save to content library for future use
-    const newMetaAttractions = new MetaAttractions({
+    // Step 3: If no meta attractions found, something went wrong
+    console.log("❌ No meta attractions found for city:", cityDoc.cityName);
+    return res.status(404).json({
+      status: "error",
+      message: "Meta attractions not found. City should have been created with meta attractions.",
       cityId: cityDoc._id,
-      cityName: city,
-      season,
-      metaAttractions: metaAttractionsData
-    });
-    
-    await newMetaAttractions.save();
-    console.log("✅ Meta attractions saved to content library");
-    
-    res.json({
-      status: "success",
-      message: "Meta attractions generated and saved to content library",
-      placeSlug,
-      cityId: cityDoc._id,
-      metaAttractionsId: newMetaAttractions._id,
-      metaAttractions: metaAttractionsData,
-      source: "newly_generated",
-      nextStep: "Call build list service"
+      cityName: cityDoc.cityName
     });
     
   } catch (error) {

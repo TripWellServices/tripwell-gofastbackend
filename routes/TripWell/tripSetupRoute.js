@@ -10,6 +10,7 @@ const { setUserTrip } = require("../../services/TripWell/userTripService");
 const { parseTrip } = require("../../services/TripWell/tripSetupService");
 const { pushTripToRegistry } = require("../../services/TripWell/joinCodePushService");
 const { getOrCreateCity } = require("../../services/TripWell/parseCityService");
+const { generateMetaAttractions } = require("../../services/TripWell/metaAttractionsService");
 
 router.post("/", verifyFirebaseToken, async (req, res) => {
   try {
@@ -64,12 +65,34 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
 
     // 1.5) CREATE OR GET CITY OBJECT - for meta attractions capability
     let cityDoc = null;
+    let isNewCity = false;
     try {
-      cityDoc = await getOrCreateCity(city);
-      console.log("✅ City object ready:", cityDoc.cityName, cityDoc._id);
+      // Check if city already exists
+      const existingCity = await require("../../models/TripWell/City").findOne({ cityName: city });
+      if (existingCity) {
+        cityDoc = existingCity;
+        console.log("✅ City already exists:", cityDoc.cityName, cityDoc._id);
+      } else {
+        cityDoc = await getOrCreateCity(city);
+        isNewCity = true;
+        console.log("✅ New city created:", cityDoc.cityName, cityDoc._id);
+      }
     } catch (cityError) {
       console.warn("trip-setup: City creation failed:", cityError.message);
       // Continue anyway - city creation is not critical for trip creation
+    }
+
+    // 1.6) GENERATE META ATTRACTIONS FOR NEW CITIES
+    if (cityDoc && isNewCity) {
+      try {
+        console.log("🔄 Generating meta attractions for new city:", cityDoc.cityName);
+        const season = "Summer"; // Default season for now
+        await generateMetaAttractions(cityDoc._id, cityDoc.cityName, season);
+        console.log("✅ Meta attractions generated for new city");
+      } catch (metaError) {
+        console.warn("trip-setup: Meta attractions generation failed:", metaError.message);
+        // Continue anyway - meta attractions are not critical for trip creation
+      }
     }
 
     // 2) ON SAVE SUCCESS - now do the patch work
