@@ -32,6 +32,24 @@ Build a hybrid AI + data-driven persona system that learns from user behavior an
 - **Add flexibility:** `0.7` (free/spontaneous), `0.2` (locked/rigid)
 - **Add who with:** `solo`, `couple`, `family`, `friends`
 
+**File:** `TripWellUser.js` (Enduring Weights)
+- **Add planningFlex:** From ProfileSetup `planningVibe` radio answers
+  - "Spontaneity" = 0.8
+  - "Rigid" = 0.2
+  - "Like mix" = 0.5
+- **Add tripPreferenceFlex:** From ProfileSetup `travelVibe` radio answers
+  - "Go with flow" = 0.8
+  - "Spontaneity" = 0.7
+  - "Stick to schedule" = 0.2
+  - "Want to just enjoy the moment" = 0.6
+
+**File:** `TripWellUser.js` (Model Updates)
+```javascript
+// === ENDURING PERSONA WEIGHTS (from ProfileSetup radio answers) ===
+planningFlex: { type: Number, default: 0.5 }, // "Spontaneity" = 0.8, "Rigid" = 0.2, "Like mix" = 0.5
+tripPreferenceFlex: { type: Number, default: 0.5 } // "Go with flow" = 0.8, "Spontaneity" = 0.7, "Stick to schedule" = 0.2, "Want to just enjoy the moment" = 0.6
+```
+
 ### **3. Meta Layer (New)**
 **File:** `TripMetaSelects.js` (replaces TripAnchors)
 - **Generate meta attractions** for each city (obvious tourist traps)

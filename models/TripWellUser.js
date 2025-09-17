@@ -71,9 +71,14 @@ const tripWellUserSchema = new mongoose.Schema(
         default: null,
         enum: ["sent", "failed", "bounced", null]
       }
-    } // track last marketing email sent to prevent duplicates
+    }, // track last marketing email sent to prevent duplicates
+    
+    // === ENDURING PERSONA WEIGHTS (from ProfileSetup radio answers) ===
+    planningFlex: { type: Number, default: 0.5 }, // "Spontaneity" = 0.8, "Rigid" = 0.2, "Like mix" = 0.5
+    tripPreferenceFlex: { type: Number, default: 0.5 } // "Go with flow" = 0.8, "Spontaneity" = 0.7, "Stick to schedule" = 0.2, "Want to just enjoy the moment" = 0.6
   },
   { timestamps: true }
 );
+
 
 module.exports = mongoose.model("TripWellUser", tripWellUserSchema);

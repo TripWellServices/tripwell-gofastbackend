@@ -1,9 +1,12 @@
 const mongoose = require('mongoose');
+const City = require('../../models/TripWell/City');
+const MetaAttractions = require('../../models/TripWell/MetaAttractions');
+const { getOrCreateCity } = require('./parseCityService');
 
 /**
  * Meta Parse & Save Service
  * Handles parsing GPT responses for meta attractions and saving to database
- * Follows the same pattern as placetodoSaveService.js
+ * Uses proper City and MetaAttractions models
  */
 
 // Parse functions
@@ -118,36 +121,18 @@ function validateMetaAttractionsData(data) {
   }
 }
 
-// Meta Attractions Schema
-const MetaAttractionsSchema = new mongoose.Schema({
-  placeSlug: { type: String, required: true, unique: true },
-  city: { type: String, required: true },
-  season: { type: String, required: true },
-  metaAttractions: [{
-    name: String,
-    type: String,
-    reason: String
-  }],
-  status: { type: String, default: 'meta_generated' },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-// Use existing connection or create model
-let MetaAttractions;
-try {
-  MetaAttractions = mongoose.model('MetaAttractions');
-} catch (error) {
-  MetaAttractions = mongoose.model('MetaAttractions', MetaAttractionsSchema);
-}
-
-async function saveMetaAttractionsData({ placeSlug, city, season, metaAttractions }) {
+async function saveMetaAttractionsData({ city, season, metaAttractions }) {
   try {
     console.log("💾 Saving meta attractions to database...");
     
+    // Step 1: Get or create city
+    const cityDoc = await getOrCreateCity(city);
+    console.log("✅ City ready:", cityDoc.cityName, cityDoc._id);
+    
+    // Step 2: Save meta attractions with proper cityId reference
     const newMetaAttractions = new MetaAttractions({
-      placeSlug,
-      city,
+      cityId: cityDoc._id,
+      cityName: city,
       season,
       metaAttractions,
       status: 'meta_generated'
@@ -159,6 +144,7 @@ async function saveMetaAttractionsData({ placeSlug, city, season, metaAttraction
     return {
       success: true,
       metaAttractionsId: newMetaAttractions._id,
+      cityId: cityDoc._id,
       message: "Meta attractions saved successfully"
     };
   } catch (error) {
