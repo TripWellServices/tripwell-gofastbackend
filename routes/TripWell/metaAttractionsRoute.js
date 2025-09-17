@@ -82,8 +82,7 @@ Return only the JSON array. No explanations, markdown, or extra commentary.`;
         },
         { role: "user", content: systemPrompt }
       ],
-      temperature: 0.3,
-      timeout: 30000
+      temperature: 0.3
     });
 
     const content = completion.choices[0].message.content || "[]";

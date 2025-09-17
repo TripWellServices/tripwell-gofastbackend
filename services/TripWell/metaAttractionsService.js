@@ -45,7 +45,6 @@ async function generateMetaAttractions({ city, season }) {
       { role: "user", content: prompt }
     ],
     temperature: 0.3,
-    timeout: 30000  // 30 second timeout
   });
 
   const content = completion.choices[0].message.content || "[]";

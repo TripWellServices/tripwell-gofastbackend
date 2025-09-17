@@ -9,6 +9,7 @@ const TripBase = require("../../models/TripWell/TripBase");
 const { setUserTrip } = require("../../services/TripWell/userTripService");
 const { parseTrip } = require("../../services/TripWell/tripSetupService");
 const { pushTripToRegistry } = require("../../services/TripWell/joinCodePushService");
+const { getOrCreateCity } = require("../../services/TripWell/parseCityService");
 
 router.post("/", verifyFirebaseToken, async (req, res) => {
   try {
@@ -61,6 +62,16 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     const doc = await TripBase.create(payload);
     console.log("✅ Trip saved successfully:", doc._id.toString());
 
+    // 1.5) CREATE OR GET CITY OBJECT - for meta attractions capability
+    let cityDoc = null;
+    try {
+      cityDoc = await getOrCreateCity(city);
+      console.log("✅ City object ready:", cityDoc.cityName, cityDoc._id);
+    } catch (cityError) {
+      console.warn("trip-setup: City creation failed:", cityError.message);
+      // Continue anyway - city creation is not critical for trip creation
+    }
+
     // 2) ON SAVE SUCCESS - now do the patch work
     const user = await TripWellUser.findOne({ firebaseId: uid });
     if (!user) {
@@ -103,11 +114,19 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       console.log("✅ Updated user with trip link");
       
       // 🎯 NODE.JS MUTATES: Set journey stage when trip is created
+      const userUpdateData = {
+        journeyStage: 'trip_set_done',
+        userState: 'active'
+      };
+      
+      // Add cityId if city object was created
+      if (cityDoc) {
+        userUpdateData.cityId = cityDoc._id;
+        console.log("✅ Linking user to city object:", cityDoc.cityName);
+      }
+      
       await TripWellUser.findByIdAndUpdate(user._id, {
-        $set: {
-          journeyStage: 'trip_set_done',
-          userState: 'active'
-        }
+        $set: userUpdateData
       });
       console.log("✅ Updated user journey stage to trip_set_done");
     } catch (e) {

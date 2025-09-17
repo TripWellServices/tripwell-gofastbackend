@@ -72,7 +72,6 @@ Return only the JSON object. No explanations, markdown, or extra commentary.`;
         { role: "user", content: systemPrompt }
       ],
       temperature: 0.7,
-      timeout: 30000
     });
 
     const content = completion.choices[0].message.content || "{}";
@@ -163,7 +162,6 @@ Return only the JSON object. No explanations, markdown, or extra commentary.`;
         { role: "user", content: systemPrompt }
       ],
       temperature: 0.3,
-      timeout: 30000
     });
 
     const content = completion.choices[0].message.content || "{}";

@@ -312,8 +312,8 @@ return "active"
 
 2. **Access.jsx** - Authentication and user routing
    - After sign-in → call `createOrFind` → route based on `isNewUser` flag
-   - Routes to `/profilesetup` (if `isNewUser: true` OR incomplete profile)
-   - Routes to `/localrouter` (if `isNewUser: false` AND complete profile)
+   - Routes to `/profilesetup` (if `isNewUser: true`)
+   - Routes to `/localrouter` (if `isNewUser: false` - let LocalRouter handle incomplete profiles)
 
 3. **LocalUniversalRouter.jsx** - Smart routing for users with complete profiles
    - **Simplified routing logic** based on actual trip progression flags
@@ -343,13 +343,14 @@ return "active"
 3. **LocalUniversalRouter.jsx** → Routes based on existing data:
    - Has trip → Trip dashboard
    - No trip → Trip creation/join
-   - Incomplete profile → ProfileSetup.jsx
+   - Incomplete profile → ProfileSetup.jsx (handled by LocalRouter)
 
 #### **Key Routing Rules**
-- **LocalRouter is ONLY for returning users** who already have complete profiles
+- **LocalRouter handles ALL existing users** (complete and incomplete profiles)
 - **New users NEVER go to LocalRouter** - they go through the full onboarding flow
 - **ProfileSetup → PostProfileRoleSelect → Trip Creation** is the correct new user flow
 - **Access.jsx** is the entry point that determines which flow to use
+- **LocalRouter is the traffic cop** that handles incomplete profiles and routes appropriately
 
 #### **Simplified Routing Logic (LocalUniversalRouter)**
 The router uses **actual trip progression flags** to determine where to send users:
@@ -1986,20 +1987,26 @@ const unsub = auth.onAuthStateChanged(async (firebaseUser) => {
 return unsub;
 ```
 
-#### **Access.jsx Profile Complete Flag:**
-**Problem:** Hydrating user data but not setting `profileComplete` flag
-**Solution:** Set flag based on backend data
+#### **Access.jsx Simplified Binary Logic (FIXED!):**
+**Problem:** Complex logic with hydration checks was breaking the page
+**Solution:** Simplified binary logic - let LocalRouter handle incomplete profiles
 
 ```javascript
-// Set profileComplete flag based on backend data
-if (localStorageData.userData?.profileComplete) {
-  localStorage.setItem("profileComplete", "true");
-  console.log("💾 Set profileComplete to true");
+// ✅ SIMPLIFIED BINARY LOGIC
+if (isNewUser) {
+  // New user - go to profile setup
+  navigate("/profilesetup");
 } else {
-  localStorage.setItem("profileComplete", "false");
-  console.log("💾 Set profileComplete to false");
+  // Existing user - go to localrouter (let LocalRouter handle incomplete profiles)
+  navigate("/localrouter");
 }
 ```
+
+**Key Benefits:**
+- ✅ **No hydration checks in Access.jsx** (avoids breaking the page)
+- ✅ **Simple binary logic** for MVP 1
+- ✅ **LocalRouter is the traffic cop** it was designed to be
+- ✅ **Clean separation** - Access handles auth, LocalRouter handles routing
 
 ### **Legacy User Data Fix:**
 **Problem:** Existing users created before `profileComplete` field was added
@@ -2047,8 +2054,8 @@ curl -H "Origin: https://tripwell.app" \
 ### **Testing Checklist:**
 - [ ] CORS allows `https://tripwell.app`
 - [ ] Home.jsx routes to `/access` for unauthenticated users
-- [ ] Access.jsx properly hydrates and sets `profileComplete`
-- [ ] LocalUniversalRouter recognizes complete profiles
+- [ ] Access.jsx uses simplified binary logic (new user → profile setup, existing user → local router)
+- [ ] LocalUniversalRouter handles incomplete profiles appropriately
 - [ ] No authentication routing loops
 - [ ] Existing users can sign in without errors
 - [ ] Authorization headers included in all protected backend calls
