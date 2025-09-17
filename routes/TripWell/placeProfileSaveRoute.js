@@ -1,41 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require('mongoose');
+const PlaceProfile = require("../../models/TripWell/PlaceProfile");
+const { getOrCreateCity } = require("../../services/TripWell/parseCityService");
 
 /**
  * POST /tripwell/place-profile-save
  * Saves the initial place + profile data to database
  * This is the first step in the separate call flow
  */
-
-// CityProfile Schema - Index for each city
-const CityProfileSchema = new mongoose.Schema({
-  cityName: { type: String, required: true, unique: true },
-  country: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-// Place Profile Schema - References CityProfile
-const PlaceProfileSchema = new mongoose.Schema({
-  placeSlug: { type: String, required: true, unique: true },
-  cityId: { type: mongoose.Schema.Types.ObjectId, ref: 'CityProfile', required: true },
-  cityName: { type: String, required: true }, // Keep for easy queries
-  season: { type: String, required: true },
-  purpose: { type: String },
-  whoWith: { type: String, required: true },
-  priorities: [String],
-  vibes: [String],
-  mobility: [String],
-  travelPace: [String],
-  budget: { type: String },
-  status: { type: String, default: 'profile_saved' }, // profile_saved, meta_generated, content_built
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-// Create models
-const CityProfile = mongoose.model('CityProfile', CityProfileSchema);
-const PlaceProfile = mongoose.model('PlaceProfile', PlaceProfileSchema);
 
 router.post("/place-profile-save", async (req, res) => {
   console.log("🎯 PLACE PROFILE SAVE ROUTE HIT!");

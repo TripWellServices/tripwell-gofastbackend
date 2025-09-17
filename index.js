@@ -107,10 +107,11 @@ app.use("/tripwell", require("./routes/TripWell/tripCreatedRoute"));
 app.use("/tripwell", require("./routes/TripWell/anchorgptRoute"));
 app.use("/tripwell", require("./routes/TripWell/anchorgpttestRoute"));
 app.use("/tripwell", require("./routes/TripWell/placetodoGPTRoute"));
+app.use("/tripwell", require("./routes/TripWell/metaAttractionsRoute"));
+app.use("/tripwell", require("./routes/TripWell/personaSamplesRoute"));
+app.use("/tripwell", require("./routes/TripWell/contentLibraryRoute"));
 app.use("/tripwell", require("./routes/TripWell/metaPlaceRoute"));
 app.use("/tripwell", require("./routes/TripWell/placeProfileSaveRoute"));
-app.use("/tripwell", require("./routes/TripWell/metaAttractionsRoute"));
-app.use("/tripwell", require("./routes/TripWell/buildListRoute"));
 app.use("/tripwell", require("./routes/TripWell/placeLibraryRoute"));
 app.use("/tripwell", require("./routes/TripWell/profileDetailRoute"));
 app.use("/tripwell", require("./routes/TripWell/itineraryRoutes")); // ✅ ADDED - Missing itinerary build route!

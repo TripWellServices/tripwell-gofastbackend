@@ -1,34 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require('mongoose');
-const { generateMetaAttractions } = require("../../services/TripWell/metaAttractionsService");
-const { parsePlaceTodoData } = require("../../services/TripWell/placetodoSaveService");
+const { OpenAI } = require("openai");
+const City = require("../../models/TripWell/City");
+const MetaAttractions = require("../../models/TripWell/MetaAttractions");
+const { getOrCreateCity } = require("../../services/TripWell/parseCityService");
 
-// CityProfile Schema - Index for each city
-const CityProfileSchema = new mongoose.Schema({
-  city: { type: String, required: true, unique: true },
-  country: { type: String, required: true },
-  cityProfileId: { type: String, required: true, unique: true },
-  status: { type: String, default: 'active' },
-  createdAt: { type: Date, default: Date.now }
-});
-
-// MetaAttractions Schema - Indexed by city (reusable)
-const MetaAttractionsSchema = new mongoose.Schema({
-  cityProfileId: { type: String, required: true, unique: true },
-  city: { type: String, required: true },
-  season: { type: String, required: true },
-  metaAttractions: [{
-    name: String,
-    type: String,
-    reason: String
-  }],
-  status: { type: String, default: 'meta_generated' },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const CityProfile = mongoose.model('CityProfile', CityProfileSchema);
-const MetaAttractions = mongoose.model('MetaAttractions', MetaAttractionsSchema);
+const openai = new OpenAI();
 
 /**
  * POST /tripwell/meta-attractions
@@ -51,65 +28,98 @@ router.post("/meta-attractions", async (req, res) => {
   }
 
   try {
-    console.log("📋 Generating meta attractions for:", city, season);
+    console.log("📋 Building content library for:", city, season);
     
-    // Step 1: Get or create city profile
-    const cityProfileId = `${city}Profile`;
-    let cityProfile = await CityProfile.findOne({ city });
-    if (!cityProfile) {
-      cityProfile = new CityProfile({
-        city,
-        country: "Unknown", // TODO: Add country detection
-        cityProfileId
-      });
-      await cityProfile.save();
-      console.log("✅ City profile created:", cityProfileId);
-    } else {
-      console.log("✅ City profile found:", cityProfileId);
-    }
+    // Step 1: Get or create city using parseCityService
+    const cityDoc = await getOrCreateCity(city);
+    console.log("✅ City ready:", cityDoc.cityName, cityDoc._id);
     
     // Step 2: Check if meta attractions already exist for this city/season
-    let metaAttractions = await MetaAttractions.findOne({ cityProfileId, season });
+    let metaAttractions = await MetaAttractions.findOne({ cityId: cityDoc._id, season });
     if (metaAttractions) {
-      console.log("✅ Meta attractions already exist for", city, season);
+      console.log("✅ Using saved meta attractions from content library");
       return res.json({
         status: "success",
-        message: "Meta attractions already exist",
-        cityProfileId,
+        message: "Meta attractions loaded from content library",
+        cityId: cityDoc._id,
         metaAttractionsId: metaAttractions._id,
         metaAttractions: metaAttractions.metaAttractions,
+        source: "saved_library",
         nextStep: "Call build list service"
       });
     }
     
-    // Step 3: Generate new meta attractions
-    const metaAttractionsResult = await generateMetaAttractions({ city, season });
+    // Step 3: Generate new meta attractions using GPT (not in content library yet)
+    console.log("🔄 Generating new meta attractions (not in content library)");
+    const systemPrompt = `You are Angela, TripWell's smart travel planner. Generate the "obvious" tourist attractions for ${city} in ${season}.
+
+These are the generic, touristy, "everyone goes here" attractions that we want to AVOID in our personalized recommendations.
+
+Return a JSON array of 8-12 obvious attractions with this structure:
+[
+  {
+    "name": "Eiffel Tower",
+    "type": "landmark",
+    "reason": "Most iconic symbol of the city"
+  },
+  {
+    "name": "Louvre Museum", 
+    "type": "museum",
+    "reason": "World's largest art museum"
+  }
+]
+
+Focus on the most obvious, touristy, generic attractions that every travel guide mentions.
+
+Return only the JSON array. No explanations, markdown, or extra commentary.`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are Angela, TripWell's travel assistant. Return structured JSON only. No prose. No markdown." 
+        },
+        { role: "user", content: systemPrompt }
+      ],
+      temperature: 0.3,
+      timeout: 30000
+    });
+
+    const content = completion.choices[0].message.content || "[]";
     console.log("✅ GPT meta attractions generated");
     
-    // Step 4: Use the parsed data directly (following existing pattern)
-    const metaAttractionsData = metaAttractionsResult.data;
-    console.log("✅ Meta attractions generated:", metaAttractionsData.length);
-    console.log("🔍 Meta attractions type:", typeof metaAttractionsData);
-    console.log("🔍 Meta attractions is array:", Array.isArray(metaAttractionsData));
+    // Step 4: Parse the JSON response
+    let metaAttractionsData;
+    try {
+      metaAttractionsData = JSON.parse(content);
+    } catch (error) {
+      // If JSON parsing fails, try converting single quotes to double quotes
+      const jsonString = content.replace(/'/g, '"');
+      metaAttractionsData = JSON.parse(jsonString);
+    }
     
-    // Step 5: Save to database
+    console.log("✅ Meta attractions parsed:", metaAttractionsData.length);
+    
+    // Step 5: Save to content library for future use
     const newMetaAttractions = new MetaAttractions({
-      cityProfileId,
-      city,
+      cityId: cityDoc._id,
+      cityName: city,
       season,
-      metaAttractions: metaAttractionsData,
-      status: 'meta_generated'
+      metaAttractions: metaAttractionsData
     });
     
     await newMetaAttractions.save();
-    console.log("✅ Meta attractions saved to database");
+    console.log("✅ Meta attractions saved to content library");
     
     res.json({
       status: "success",
-      message: "Meta attractions generated and saved successfully",
+      message: "Meta attractions generated and saved to content library",
       placeSlug,
+      cityId: cityDoc._id,
       metaAttractionsId: newMetaAttractions._id,
-      metaAttractions: metaAttractions,
+      metaAttractions: metaAttractionsData,
+      source: "newly_generated",
       nextStep: "Call build list service"
     });
     
