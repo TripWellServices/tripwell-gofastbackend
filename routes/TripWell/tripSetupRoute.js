@@ -67,6 +67,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     let cityDoc = null;
     let isNewCity = false;
     try {
+      console.log("🔍 DEBUG: Checking for existing city:", city);
       // Check if city already exists
       const existingCity = await require("../../models/TripWell/City").findOne({ cityName: city });
       if (existingCity) {
@@ -74,6 +75,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
         isNewCity = false;
         console.log("✅ City already exists:", cityDoc.cityName, cityDoc._id);
       } else {
+        console.log("🔍 DEBUG: Creating new city with:", { cityName: city, country: country });
         // Create new city
         cityDoc = new (require("../../models/TripWell/City"))({
           cityName: city,
@@ -85,21 +87,28 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
         console.log("✅ New city created:", cityDoc.cityName, cityDoc._id);
       }
     } catch (cityError) {
+      console.error("❌ DEBUG: City creation failed:", cityError);
       console.warn("trip-setup: City creation failed:", cityError.message);
       // Continue anyway - city creation is not critical for trip creation
     }
 
     // 1.6) GENERATE META ATTRACTIONS FOR NEW CITIES (BACKGROUND)
     if (cityDoc && isNewCity) {
+      console.log("🔍 DEBUG: Starting meta attractions generation for new city");
+      console.log("🔍 DEBUG: CityId:", cityDoc._id, "CityName:", cityDoc.cityName);
       // Don't await - let this run in background
       generateMetaAttractions(cityDoc._id, cityDoc.cityName, "Summer")
-        .then(() => {
+        .then((result) => {
           console.log("✅ Meta attractions generated for new city:", cityDoc.cityName);
+          console.log("🔍 DEBUG: Meta attractions result:", result);
         })
         .catch((metaError) => {
+          console.error("❌ DEBUG: Meta attractions generation failed:", metaError);
           console.warn("trip-setup: Meta attractions generation failed:", metaError.message);
         });
       console.log("🔄 Meta attractions generation started in background for:", cityDoc.cityName);
+    } else {
+      console.log("🔍 DEBUG: Skipping meta attractions - cityDoc:", !!cityDoc, "isNewCity:", isNewCity);
     }
 
     // 2) ON SAVE SUCCESS - now do the patch work
