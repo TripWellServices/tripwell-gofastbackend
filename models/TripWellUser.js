@@ -33,7 +33,6 @@ const tripWellUserSchema = new mongoose.Schema(
     dreamDestination: { type: String, default: "" }, // Dream destination from ProfileSetup
     profileComplete: { type: Boolean, default: false }, // tracks if profile setup is complete
     tripId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set post trip creation
-    cityId: { type: mongoose.Schema.Types.ObjectId, ref: 'City', default: null }, // set post trip creation for meta attractions
     role: { 
       type: String, 
       default: "noroleset",

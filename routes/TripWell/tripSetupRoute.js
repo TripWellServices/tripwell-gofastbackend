@@ -142,10 +142,10 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
         userState: 'active'
       };
       
-      // Add cityId if city object was created
+      // Add cityId to TripBase if city object was created
       if (cityDoc) {
-        userUpdateData.cityId = cityDoc._id;
-        console.log("✅ Linking user to city object:", cityDoc.cityName);
+        await TripBase.updateOne({ _id: doc._id }, { $set: { cityId: cityDoc._id } });
+        console.log("✅ Linking TripBase to city object:", cityDoc.cityName);
       }
       
       await TripWellUser.findByIdAndUpdate(user._id, {
