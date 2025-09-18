@@ -8,6 +8,7 @@ const TripBaseSchema = new mongoose.Schema({
   startDate: { type: Date, required: true },
   endDate:   { type: Date, required: true },
   city:      { type: String, required: true },
+  country:   { type: String, required: true },
   cityId:    { type: mongoose.Schema.Types.ObjectId, ref: 'City', default: null }, // Link to City object
   partyCount:  { type: Number, default: 1, min: 1 },  // hardened
   whoWith: {

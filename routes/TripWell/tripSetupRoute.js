@@ -9,7 +9,6 @@ const TripBase = require("../../models/TripWell/TripBase");
 const { setUserTrip } = require("../../services/TripWell/userTripService");
 const { parseTrip } = require("../../services/TripWell/tripSetupService");
 const { pushTripToRegistry } = require("../../services/TripWell/joinCodePushService");
-const { getOrCreateCity } = require("../../services/TripWell/parseCityService");
 const { generateMetaAttractions } = require("../../services/TripWell/metaAttractionsService");
 
 router.post("/", verifyFirebaseToken, async (req, res) => {
@@ -17,7 +16,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     const uid = req.user?.uid;
     if (!uid) return res.status(401).json({ ok: false, error: "Unauthorized" });
 
-    const { tripName, purpose, startDate, endDate, city, partyCount, whoWith = [], joinCode, demoMode = false } = req.body || {};
+    const { tripName, purpose, startDate, endDate, city, country, partyCount, whoWith = [], joinCode, demoMode = false } = req.body || {};
     
     // For demo mode, some fields can be null/optional
     if (demoMode) {
@@ -26,7 +25,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       }
     } else {
       // Full mode requires all fields
-      if (!tripName || !purpose || !city || !startDate || !endDate || !joinCode) {
+      if (!tripName || !purpose || !city || !country || !startDate || !endDate || !joinCode) {
         return res.status(400).json({ ok:false, error:"Missing required fields" });
       }
     }
@@ -43,6 +42,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
 
     const payload = {
       city: String(city).trim(),
+      country: String(country).trim(),
       whoWith: String(whoWith || "").trim(),
     };
     
@@ -71,9 +71,16 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       const existingCity = await require("../../models/TripWell/City").findOne({ cityName: city });
       if (existingCity) {
         cityDoc = existingCity;
+        isNewCity = false;
         console.log("✅ City already exists:", cityDoc.cityName, cityDoc._id);
       } else {
-        cityDoc = await getOrCreateCity(city);
+        // Create new city
+        cityDoc = new (require("../../models/TripWell/City"))({
+          cityName: city,
+          country: country,
+          status: 'active'
+        });
+        await cityDoc.save();
         isNewCity = true;
         console.log("✅ New city created:", cityDoc.cityName, cityDoc._id);
       }
@@ -82,17 +89,17 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       // Continue anyway - city creation is not critical for trip creation
     }
 
-    // 1.6) GENERATE META ATTRACTIONS FOR NEW CITIES
+    // 1.6) GENERATE META ATTRACTIONS FOR NEW CITIES (BACKGROUND)
     if (cityDoc && isNewCity) {
-      try {
-        console.log("🔄 Generating meta attractions for new city:", cityDoc.cityName);
-        const season = "Summer"; // Default season for now
-        await generateMetaAttractions(cityDoc._id, cityDoc.cityName, season);
-        console.log("✅ Meta attractions generated for new city");
-      } catch (metaError) {
-        console.warn("trip-setup: Meta attractions generation failed:", metaError.message);
-        // Continue anyway - meta attractions are not critical for trip creation
-      }
+      // Don't await - let this run in background
+      generateMetaAttractions(cityDoc._id, cityDoc.cityName, "Summer")
+        .then(() => {
+          console.log("✅ Meta attractions generated for new city:", cityDoc.cityName);
+        })
+        .catch((metaError) => {
+          console.warn("trip-setup: Meta attractions generation failed:", metaError.message);
+        });
+      console.log("🔄 Meta attractions generation started in background for:", cityDoc.cityName);
     }
 
     // 2) ON SAVE SUCCESS - now do the patch work
