@@ -26,8 +26,8 @@ router.post("/profile-save", async (req, res) => {
   }
 
   try {
-    // Connect to Tripwell_itinerary_building database
-    const itineraryDb = mongoose.connection.useDb("Tripwell_itinerary_building");
+    // Connect to GoFastFamily database (consolidated for MVP1)
+    const itineraryDb = mongoose.connection.useDb("GoFastFamily");
 
     // Create profile document
     const profileDoc = {

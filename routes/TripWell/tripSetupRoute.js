@@ -71,16 +71,23 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       // Check if city already exists
       const existingCity = await require("../../models/TripWell/City").findOne({ cityName: city });
       if (existingCity) {
+        // Clean up old fields if they exist (migration)
+        if (existingCity.country || existingCity.status) {
+          console.log("🔧 DEBUG: Cleaning up old city fields");
+          await require("../../models/TripWell/City").updateOne(
+            { _id: existingCity._id },
+            { $unset: { country: "", status: "" } }
+          );
+          console.log("✅ City cleaned up, removed old fields");
+        }
         cityDoc = existingCity;
         isNewCity = false;
         console.log("✅ City already exists:", cityDoc.cityName, cityDoc._id);
       } else {
-        console.log("🔍 DEBUG: Creating new city with:", { cityName: city, country: country });
+        console.log("🔍 DEBUG: Creating new city with:", { cityName: city });
         // Create new city
         cityDoc = new (require("../../models/TripWell/City"))({
-          cityName: city,
-          country: country,
-          status: 'active'
+          cityName: city
         });
         await cityDoc.save();
         isNewCity = true;

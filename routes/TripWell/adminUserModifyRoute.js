@@ -79,9 +79,11 @@ router.delete("/users/:id", async (req, res) => {
     
     try {
       await session.withTransaction(async () => {
+        console.log(`🔍 DEBUG: Starting cascade deletion for user ${userId}`);
         // 1. Delete all trips and associated data for this user (unified cascade deletion)
         const deletionResult = await cascadeDelete(userId, null, session);
         console.log(`🗑️ Unified cascade deleted ${deletionResult.tripsDeleted} trips and ${deletionResult.totalRecordsDeleted} total records for user ${userToDelete.email}`);
+        console.log(`🔍 DEBUG: Deletion result:`, deletionResult);
         
         // 2. Finally delete the user
         const deletedUser = await TripWellUser.findByIdAndDelete(userId, { session });

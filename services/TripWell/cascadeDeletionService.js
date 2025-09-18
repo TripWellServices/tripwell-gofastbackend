@@ -9,6 +9,10 @@ const TripDay = require('../../models/TripWell/TripDay');
 const AnchorLogic = require('../../models/TripWell/AnchorLogic');
 const TripReflection = require('../../models/TripWell/TripReflection');
 
+// Ensure we're using the correct database connection (same as TripBase)
+const db = mongoose.connection.useDb('GoFastFamily');
+console.log('🔍 DEBUG: Using database:', db.databaseName);
+
 /**
  * Delete a trip and all associated data (cascade deletion)
  * @param {string} tripId - The trip ID to delete
@@ -88,8 +92,13 @@ async function deleteUserTripsCascade(userId, session = null) {
   try {
     console.log(`🗑️ Starting cascade deletion for all trips by user: ${userId}`);
     
-    // Find all trips by this user
-    const userTrips = await TripBase.find({ originatorId: userId });
+    // Find all trips by this user (through TripWellUser relationship)
+    const TripWellUser = require('../../models/TripWellUser');
+    const userTrips = await TripWellUser.find({ 
+      _id: userId, 
+      role: "originator" 
+    }).populate('tripId');
+    
     console.log(`🔍 Found ${userTrips.length} trips by user ${userId}`);
     
     if (userTrips.length === 0) {
@@ -100,14 +109,16 @@ async function deleteUserTripsCascade(userId, session = null) {
     const deletedTrips = [];
     
     // Delete each trip with cascade
-    for (const trip of userTrips) {
-      const result = await deleteTripCascade(trip._id, session);
-      totalRecordsDeleted += result.totalDeleted;
-      deletedTrips.push({
-        tripId: trip._id,
-        tripName: trip.tripName,
-        joinCode: trip.joinCode
-      });
+    for (const userTrip of userTrips) {
+      if (userTrip.tripId) {
+        const result = await deleteTripCascade(userTrip.tripId._id, session);
+        totalRecordsDeleted += result.totalDeleted;
+        deletedTrips.push({
+          tripId: userTrip.tripId._id,
+          tripName: userTrip.tripId.tripName,
+          joinCode: userTrip.tripId.joinCode
+        });
+      }
     }
     
     console.log(`✅ Cascade deletion complete for user ${userId}. Deleted ${deletedTrips.length} trips and ${totalRecordsDeleted} total records`);
@@ -194,9 +205,9 @@ async function deleteOrphanedDataCascade(session = null) {
     totalDeleted += orphanedTripReflections.deletedCount;
     console.log(`🗑️ Deleted ${orphanedTripReflections.deletedCount} orphaned TripReflections`);
     
-    // Delete orphaned TripBases
+    // Delete orphaned TripBases (trips without valid originators)
     const orphanedTripBases = await TripBase.deleteMany({
-      originatorId: { $nin: existingUserIds }
+      _id: { $nin: existingTripIds }
     }, deleteOptions);
     totalDeleted += orphanedTripBases.deletedCount;
     console.log(`🗑️ Deleted ${orphanedTripBases.deletedCount} orphaned TripBases`);

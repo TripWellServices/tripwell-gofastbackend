@@ -29,8 +29,8 @@ router.post("/city-data", async (req, res) => {
     // Create slug from city name
     const citySlug = city.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-    // Connect to Tripwell_content_library database
-    const contentDb = mongoose.connection.useDb("Tripwell_content_library");
+    // Connect to GoFastFamily database (consolidated for MVP1)
+    const contentDb = mongoose.connection.useDb("GoFastFamily");
 
     // Prepare documents with common fields
     const commonFields = {
