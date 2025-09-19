@@ -24,12 +24,12 @@ TripWell is a full-stack application with:
 **CRITICAL:** The backend uses `GoFastFamily` database for ALL existing routes. Changing the database name in `index.js` will break existing functionality.
 
 **What Happened:**
-- Changed `dbName` from `"GoFastFamily"` to `"Tripwell_itinerary_building"` 
+- Changed `dbName` from `"Tripwell_itinerary_building"` to `"GoFastFamily"` (consolidated for MVP1) 
 - This broke all existing routes that expect `GoFastFamily` database
 - TripBase, TripWellUser, and other existing models are in `GoFastFamily`
 
 **The Fix:**
-- **TripWell Branch**: Uses `dbName: "Tripwell_itinerary_building"` for all place-related routes
+- **TripWell Branch**: Uses `dbName: "GoFastFamily"` for all routes (consolidated for MVP1)
 - **Main Branch**: Uses `dbName: "GoFastFamily"` for existing functionality
 - Collections in TripWell database: `placeprofiles`, `metaattractions`, `placetodos`
 
@@ -38,6 +38,42 @@ TripWell is a full-stack application with:
 2. Updating all database references
 3. Testing all functionality
 4. Documenting the change
+
+## 🚨 **MVP2 DATABASE ARCHITECTURE BREADCRUMB** 🚨
+
+### **Meta Attractions Database Issue (MVP1 Workaround)**
+**Problem**: We want meta attractions to be in a separate content library database, but we hardcoded everything to `GoFastFamily` for MVP1 simplicity.
+
+**Current MVP1 Approach**:
+- ✅ All data consolidated in `GoFastFamily` database
+- ✅ Meta attractions stored in `MetaAttractions` collection
+- ✅ City data stored in `City` collection
+- ✅ Works for MVP1 but not scalable
+
+**MVP2 Requirements**:
+- 🎯 **Separate content library database** for meta attractions
+- 🎯 **Dedicated content server** for managing attractions
+- 🎯 **API separation** between user data and content data
+- 🎯 **Scalable architecture** for content management
+
+**MVP2 Implementation Plan**:
+1. **Create separate content database** (e.g., `TripWellContent`)
+2. **Spin up content library server** for meta attractions
+3. **Update meta attractions routes** to use content database
+4. **Implement content API** for attraction management
+5. **Update frontend** to call content API instead of user API
+
+**Files to Refactor in MVP2**:
+- `routes/TripWell/metaAttractionsRoute.js` - Move to content server
+- `services/TripWell/metaAttractionsService.js` - Update database connection
+- `models/TripWell/MetaAttractions.js` - Move to content server
+- `models/TripWell/City.js` - Move to content server
+
+**Why This Matters**:
+- **Content vs User Data**: Meta attractions are content, not user data
+- **Scalability**: Content library can be shared across multiple apps
+- **Performance**: Separate databases for different data types
+- **Maintenance**: Easier to manage content separately from user data
 
 ## 🗄️ **DATA MODELS** (Deep Dive)
 

@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 
 /**
  * POST /Tripwell/profile-save
- * Saves parsed profile data to Tripwell_itinerary_building database
+ * Saves parsed profile data to GoFastFamily database
  */
 router.post("/profile-save", async (req, res) => {
   const { profileSlug, inputVariables, profileData } = req.body;

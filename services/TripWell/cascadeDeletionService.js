@@ -10,7 +10,7 @@ const AnchorLogic = require('../../models/TripWell/AnchorLogic');
 const TripReflection = require('../../models/TripWell/TripReflection');
 
 // Ensure we're using the correct database connection (same as TripBase)
-const db = mongoose.connection.useDb('Tripwell_itinerary_building');
+const db = mongoose.connection.useDb('GoFastFamily');
 console.log('🔍 DEBUG: Using database:', db.databaseName);
 
 /**

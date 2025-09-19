@@ -6,7 +6,7 @@ const { getOrCreateCity } = require("../../services/TripWell/parseCityService");
 
 /**
  * POST /tripwell/parse-city
- * Parse city string and save to content library (Tripwell_itinerary_building database)
+ * Parse city string and save to content library (GoFastFamily database)
  */
 router.post("/parse-city", async (req, res) => {
   try {
@@ -57,7 +57,7 @@ router.post("/parse-city", async (req, res) => {
         status: cityDoc.status,
         createdAt: cityDoc.createdAt
       },
-      database: "Tripwell_itinerary_building",
+      database: "GoFastFamily",
       collection: "cities",
       source: tripId ? "tripbase_data" : "direct_input"
     });

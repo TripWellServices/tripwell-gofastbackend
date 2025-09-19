@@ -88,7 +88,7 @@ if (!admin.apps.length) {
 // === MONGO CONNECT ===
 mongoose
   .connect(process.env.MONGO_URI, {
-    dbName: "Tripwell_itinerary_building",
+    dbName: "GoFastFamily",
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
