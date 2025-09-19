@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { verifyFirebaseToken } = require('../../middleware/verifyFirebaseToken');
+const verifyFirebaseToken = require('../../middleware/verifyFirebaseToken');
 const { 
   saveMetaSelections, 
   saveSampleSelections, 
