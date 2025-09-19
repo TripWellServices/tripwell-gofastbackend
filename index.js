@@ -88,11 +88,11 @@ if (!admin.apps.length) {
 // === MONGO CONNECT ===
 mongoose
   .connect(process.env.MONGO_URI, {
-    dbName: "Tripwell_itinerary_building",
+    dbName: "GoFastFamily",
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("✅ MongoDB connected to Tripwell_itinerary_building"))
+  .then(() => console.log("✅ MongoDB connected to GoFastFamily"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // === MIDDLEWARE ===

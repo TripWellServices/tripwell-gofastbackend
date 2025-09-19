@@ -17,7 +17,17 @@ router.post("/createOrFind", async (req, res) => {
       return res.status(400).json({ error: "Missing firebaseId or email" });
     }
 
+    console.log("🔍 DEBUG - Searching for user with firebaseId:", firebaseId);
     let user = await TripWellUser.findOne({ firebaseId });
+    console.log("🔍 DEBUG - User found:", user ? "YES" : "NO");
+    if (user) {
+      console.log("🔍 DEBUG - Found user:", { 
+        _id: user._id, 
+        firebaseId: user.firebaseId, 
+        email: user.email,
+        profileComplete: user.profileComplete 
+      });
+    }
     let isNewUser = false;
 
     if (!user) {

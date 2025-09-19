@@ -206,7 +206,8 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       tripData,
       tripIntentData,
       anchorLogicData,
-      itineraryData
+      itineraryData,
+      isNewUser: isNewUser
     };
 
     console.log("✅ Hydration complete:", {
