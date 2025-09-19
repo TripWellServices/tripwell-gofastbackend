@@ -1,70 +1,74 @@
 const OpenAI = require("openai");
+const MetaAttractions = require("../../models/TripWell/MetaAttractions");
+const TripBase = require("../../models/TripWell/TripBase");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// 🧠 GPT prompt builder
-function buildAnchorPrompt({ vibes, priorities, mobility, travelPace, budget, city, season, purpose, whoWith }) {
+// 🧠 GPT prompt builder for persona samples
+function buildSamplePrompt({ city, season, purpose, whoWith, primaryPersona, budget, travelPace, metaAttractions }) {
   return `
 You are Angela, TripWell's smart travel planner.
 
-Suggest 5 immersive travel *anchor experiences* based on the traveler's input. Anchor experiences are major parts of a trip — like a full-day excursion, iconic site visit, or themed cultural activity — that shape the rest of the day.
+Generate 6 persona learning samples for a traveler going to **${city}** during **${season}**.
+Purpose: ${purpose || "to explore and enjoy"}
+Travel companions: ${whoWith || "unspecified"}
+Primary persona: ${primaryPersona}
+Budget: $${budget} per day
+Travel pace: ${travelPace}
 
-Traveler is going to **${city}** during **${season}**.  
-Purpose of trip: ${purpose || "not specified"}  
-Travel companions: ${Array.isArray(whoWith) ? whoWith.join(", ") : whoWith || "unspecified"}
+**Meta Attractions Available:**
+${metaAttractions.map(attraction => `- ${attraction.name}: ${attraction.description}`).join('\n')}
 
-Traveler Priorities:
-The traveler emphasized these top trip priorities: **${priorities?.join(", ") || "no specific priorities"}**.  
-Please scope your anchor suggestions around these interests.
+**Task:** Create 6 samples (2 attractions, 2 restaurants, 2 neat things) that will help me learn the traveler's preferences. Each sample should be personalized based on their primary persona (${primaryPersona}) and travel style.
 
-Trip Vibe:
-The intended vibe is **${vibes?.join(", ") || "flexible"}** — reflect this in the tone and energy of the experiences you suggest (e.g., romantic vs. playful, high-energy vs. relaxed).
+**Format:** Return only a JSON array with 6 objects, each containing:
+- type: "attraction" | "restaurant" | "neat_thing"
+- name: string
+- description: string
+- location: string
+- why_recommended: string (explain why this matches their ${primaryPersona} persona)
 
-Mobility & Travel Pace:
-The traveler prefers to get around via **${mobility?.join(", ") || "any mode"}**.  
-Please suggest anchors and follow-ons that are realistically accessible based on that. Avoid experiences that would require conflicting transportation methods.  
-Preferred travel pace: **${travelPace?.join(", ") || "any"}**.
+**Important:** 
+- Make samples diverse and interesting
+- Avoid the generic meta attractions listed above
+- Focus on local, authentic experiences
+- Each recommendation should teach us something about their preferences
 
-Budget Guidance:
-The expected daily budget is **${budget || "flexible"}**.  
-Structure your anchor experiences and follow-on suggestions to reflect that — i.e., a lower budget may favor local food tours or free cultural sites, while a higher budget may justify guided excursions or upscale experiences.
-
-Respond only with an array of 5 JSON objects. Each object should contain:
-- title (string)
-- description (string)
-- location (string)
-- isDayTrip (boolean)
-- suggestedFollowOn (string) – what the rest of the day looks like after this anchor
-
-Return only the raw JSON array. No explanations, markdown, or extra commentary.
+Return only the raw JSON array. No explanations or markdown.
 `.trim();
 }
 
-// 🤖 Main GPT anchor suggestion service
-async function generateAnchorSuggestions({ tripId, userId, tripData, tripIntentData }) {
+// 🤖 Main GPT sample generation service
+async function generatePersonaSamples({ tripId, userId }) {
   if (!tripId || !userId) throw new Error("Missing tripId or userId");
 
-  console.log("🔍 Using localStorage data:", { tripId, userId });
-  console.log("🔍 tripData received:", tripData);
-  console.log("🔍 tripIntentData received:", tripIntentData);
+  console.log("🔍 Generating persona samples for:", { tripId, userId });
 
-  // Use the data from localStorage that frontend sends
-  const prompt = buildAnchorPrompt({
-    city: tripData?.city || "Paris",
-    season: tripData?.season || "Summer", 
-    purpose: tripData?.purpose || "Make memories",
-    whoWith: tripData?.whoWith || ["family"],
-    priorities: tripIntentData?.priorities || ["culture", "food"],
-    vibes: tripIntentData?.vibes || ["family-friendly", "educational"],
-    mobility: tripIntentData?.mobility || ["walking", "metro"],
-    travelPace: tripIntentData?.travelPace || ["moderate"],
-    budget: tripIntentData?.budget || "mid-range"
+  // Get trip data and meta attractions from database
+  const tripBase = await TripBase.findById(tripId);
+  if (!tripBase) throw new Error("Trip not found");
+
+  const metaAttractions = await MetaAttractions.findOne({ cityId: tripBase.cityId });
+  if (!metaAttractions) throw new Error("Meta attractions not found for this city");
+
+  console.log("🔍 Found meta attractions:", metaAttractions.metaAttractions.length);
+
+  // Use the data from database
+  const prompt = buildSamplePrompt({
+    city: tripBase.city,
+    season: tripBase.season, 
+    purpose: tripBase.purpose || "to explore and enjoy",
+    whoWith: tripBase.whoWith,
+    primaryPersona: "art", // This should come from TripPersona model
+    budget: 250, // This should come from TripPersona model
+    travelPace: "moderate", // This should come from TripPersona model
+    metaAttractions: metaAttractions.metaAttractions
   });
 
   try {
-    console.log("🧪 Calling OpenAI with real data...");
+    console.log("🧪 Calling OpenAI for persona samples...");
     
     const response = await openai.chat.completions.create({
       model: "gpt-4",
@@ -73,20 +77,20 @@ async function generateAnchorSuggestions({ tripId, userId, tripData, tripIntentD
         { role: "user", content: prompt }
       ],
       temperature: 0.8,
-      max_tokens: 600
+      max_tokens: 800
     });
 
     const parsed = JSON.parse(response.choices?.[0]?.message?.content || "[]");
-    console.log("✅ OpenAI call successful! Got anchors:", parsed.length);
+    console.log("✅ OpenAI call successful! Got samples:", parsed.length);
 
     return {
-      anchors: parsed,
+      samples: parsed,
       raw: response
     };
   } catch (err) {
     console.error("❌ OpenAI call failed:", err);
-    throw new Error("Failed to generate anchor suggestions");
+    throw new Error("Failed to generate persona samples");
   }
 }
 
-module.exports = { generateAnchorSuggestions };
+module.exports = { generatePersonaSamples };

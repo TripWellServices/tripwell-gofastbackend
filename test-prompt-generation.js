@@ -1,44 +1,85 @@
-const TripPersona = require("../../models/TripWell/TripPersona");
-const TripBase = require("../../models/TripWell/TripBase");
-const TripWellUser = require("../../models/TripWellUser");
-const { OpenAI } = require("openai");
-const openai = new OpenAI();
+require('dotenv').config();
 
-async function generateItineraryFromMetaLogic(tripId, userId, selectedMetas = [], selectedSamples = []) {
-  try {
-    const tripBase = await TripBase.findById(tripId);
-    const tripPersona = await TripPersona.findOne({ tripId, userId });
-    const tripWellUser = await TripWellUser.findOne({ firebaseId: userId });
-
-    if (!tripPersona || !tripBase) {
-      throw new Error("Missing trip data or persona.");
+// Test just the prompt generation without database calls
+function testPromptGeneration() {
+  console.log('🧪 Testing prompt generation logic...');
+  
+  // Mock data
+  const tripBase = {
+    city: 'Paris',
+    season: 'Summer',
+    startDate: new Date('2025-09-22'),
+    daysTotal: 5,
+    purpose: 'Romantic getaway',
+    whoWith: 'couple',
+    arrivalTime: '14:30'
+  };
+  
+  const tripPersona = {
+    primaryPersona: 'art',
+    budget: 300,
+    travelPace: 'moderate',
+    personas: { art: 0.6, foodie: 0.1, adventure: 0.1, history: 0.2 },
+    romanceLevel: 0.4,
+    caretakerRole: 0.1,
+    flexibility: 0.2,
+    adultLevel: 0.3
+  };
+  
+  const tripWellUser = {
+    planningFlex: 0.7,
+    tripPreferenceFlex: 0.8
+  };
+  
+  const selectedMetas = [
+    {
+      name: 'Eiffel Tower',
+      description: 'Iconic iron lattice tower and symbol of Paris'
+    },
+    {
+      name: 'Louvre Museum', 
+      description: 'World-famous art museum with Mona Lisa'
     }
+  ];
+  
+  const selectedSamples = [
+    {
+      name: 'Le Comptoir du Relais',
+      type: 'restaurant',
+      why_recommended: 'Perfect for foodie persona - authentic French bistro'
+    },
+    {
+      name: 'Montmartre Walking Tour',
+      type: 'attraction', 
+      why_recommended: 'Great for art persona - historic artist quarter'
+    }
+  ];
 
-    const { city, season, startDate, daysTotal, purpose, whoWith, arrivalTime } = tripBase;
+  // Generate dayMap
+  const start = new Date(tripBase.startDate);
+  const dayMap = Array.from({ length: tripBase.daysTotal }).map((_, i) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+    return {
+      dayIndex: i + 1,
+      dayNumber: i + 1,
+      isoDate: date.toISOString().split("T")[0],
+      weekday: date.toLocaleDateString("en-US", { weekday: "long" }),
+      formatted: date.toLocaleDateString("en-US", { month: "long", day: "numeric" }),
+      label: `Day ${i + 1} – ${date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric"
+      })}`
+    };
+  });
 
-    const start = new Date(startDate);
-    const dayMap = Array.from({ length: daysTotal }).map((_, i) => {
-      const date = new Date(start);
-      date.setDate(start.getDate() + i);
-      return {
-        dayIndex: i + 1,
-        dayNumber: i + 1,
-        isoDate: date.toISOString().split("T")[0],
-        weekday: date.toLocaleDateString("en-US", { weekday: "long" }),
-        formatted: date.toLocaleDateString("en-US", { month: "long", day: "numeric" }),
-        label: `Day ${i + 1} – ${date.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric"
-        })}`
-      };
-    });
-
-    const systemPrompt = `
+  // Generate system prompt
+  const systemPrompt = `
 You are Angela, a highly intuitive AI travel planner.
 
-You are building a ${daysTotal}-day itinerary for a trip to ${city} during the ${season}.
-The purpose of this trip is "${purpose || "to enjoy and explore"}", and it is being taken with ${whoWith || "unspecified"}.
+You are building a ${tripBase.daysTotal}-day itinerary for a trip to ${tripBase.city} during the ${tripBase.season}.
+The purpose of this trip is "${tripBase.purpose || "to enjoy and explore"}", and it is being taken with ${tripBase.whoWith || "unspecified"}.
 
 **Selected Meta Attractions (MUST INCLUDE):**
 ${selectedMetas.length > 0 ? selectedMetas.map(meta => `- ${meta.name}: ${meta.description}`).join('\n') : 'No specific meta attractions selected'}
@@ -104,65 +145,20 @@ Each day of the trip should include:
 - Day 1 (dayIndex: 1) = First day of trip
 - Day 2+ (dayIndex: 2+) = Full trip days with activities
 
-All days (1 through ${daysTotal}) must include:
+All days (1 through ${tripBase.daysTotal}) must include:
 - Real calendar dates
 - Accurate weekdays
 - A well-paced mix of activity, rest, and delight
 - "Why" explanations for each recommendation based on persona weights
-
-You will be provided:
-- A calendar map of the trip
-- The selected meta attractions to integrate
-- The trip persona with weights and factors
-
-Output should follow this exact format:
-
-Day X – {Weekday}, {Month Day}  
-Summary of the day: ...
-
-Morning:
-• [Activity] - [Why this fits their persona: art/foodie/adventure/history + romance/caretaker/flexibility factors]
-
-Afternoon:
-• [Activity] - [Why this fits their persona: art/foodie/adventure/history + romance/caretaker/flexibility factors]
-
-Evening:
-• [Activity] - [Why this fits their persona: art/foodie/adventure/history + romance/caretaker/flexibility factors]
-
-Only include Day 0 through Day ${daysTotal} — no extras.
 `.trim();
 
-    const userPrompt = `
-Here is the trip calendar:
-${JSON.stringify(dayMap, null, 2)}
-
-Here are the selected meta attractions to integrate:
-${JSON.stringify(selectedMetas, null, 2)}
-
-Here is the trip persona with weights:
-${JSON.stringify(tripPersona, null, 2)}
-
-Here are the selected samples that influenced the persona weights:
-${JSON.stringify(selectedSamples, null, 2)}
-`.trim();
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      temperature: 0.8,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ]
-    });
-
-    const content = completion.choices?.[0]?.message?.content;
-    if (!content) throw new Error("No GPT output received.");
-
-    return content.trim();
-  } catch (error) {
-    console.error("Angela itinerary generation error:", error);
-    throw error;
-  }
+  console.log('✅ Day Map Generated:');
+  console.log(JSON.stringify(dayMap, null, 2));
+  
+  console.log('\n✅ System Prompt Generated:');
+  console.log(systemPrompt);
+  
+  console.log('\n🎯 Test completed successfully!');
 }
 
-module.exports = { generateItineraryFromMetaLogic };
+testPromptGeneration();

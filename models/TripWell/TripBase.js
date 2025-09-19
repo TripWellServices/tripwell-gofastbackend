@@ -7,6 +7,7 @@ const TripBaseSchema = new mongoose.Schema({
   purpose:   { type: String, required: true },        // matches your route validation
   startDate: { type: Date, required: true },
   endDate:   { type: Date, required: true },
+  arrivalTime: { type: String, default: null }, // For MVP2: "14:30", "morning", "evening", etc.
   city:      { type: String, required: true },
   country:   { type: String, required: true },
   cityId:    { type: mongoose.Schema.Types.ObjectId, ref: 'City', default: null }, // Link to City object

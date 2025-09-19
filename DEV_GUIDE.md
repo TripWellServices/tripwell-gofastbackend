@@ -41,6 +41,73 @@ TripWell is a full-stack application with:
 
 ## 🗄️ **DATA MODELS** (Deep Dive)
 
+### **NEW: User Selections Persistence Architecture**
+
+**Problem Solved:** Everything was stored in localStorage, which gets wiped when users clear browser data. We need database persistence for:
+- User's selected meta attractions
+- User's selected samples for persona learning  
+- Behavior tracking for prediction
+- Recall capability when localStorage is cleared
+
+**New Models:**
+
+#### **UserSelections Model** (`models/TripWell/UserSelections.js`)
+```javascript
+{
+  tripId: ObjectId,                    // Link to TripBase
+  userId: String,                      // Firebase UID
+  
+  // Meta attraction selections
+  selectedMetas: [{
+    name: String,                      // "Eiffel Tower"
+    type: String,                      // "landmark"
+    reason: String,                    // "Iconic symbol of Paris"
+    selectedAt: Date                   // When user selected it
+  }],
+  
+  // Sample selections for persona learning
+  selectedSamples: [{
+    name: String,                      // "Le Comptoir du Relais"
+    type: String,                      // "restaurant"
+    why_recommended: String,           // "Perfect for foodie persona"
+    selectedAt: Date                   // When user selected it
+  }],
+  
+  // Behavior tracking for prediction
+  behaviorData: {
+    totalSelections: Number,           // Total selections made
+    metaPreferences: {                 // Scoring for meta types
+      art: Number,                     // Art-related selections
+      foodie: Number,                  // Food-related selections
+      adventure: Number,               // Adventure selections
+      history: Number                  // History selections
+    },
+    samplePreferences: {                // Scoring for sample types
+      attraction: Number,              // Attraction selections
+      restaurant: Number,              // Restaurant selections
+      neat_thing: Number              // Neat thing selections
+    },
+    lastUpdated: Date                  // Last behavior update
+  }
+}
+```
+
+**New Services:**
+- **`userSelectionsService.js`** - Handles persistence and behavior tracking
+- **`userSelectionsRoute.js`** - API endpoints for frontend
+
+**New API Endpoints:**
+- `POST /tripwell/user-selections/meta` - Save meta selections
+- `POST /tripwell/user-selections/samples` - Save sample selections  
+- `GET /tripwell/user-selections/:tripId` - Get user's selections
+- `GET /tripwell/user-behavior/:userId` - Get behavior patterns
+
+**Behavior Prediction:**
+- Tracks user preferences across multiple trips
+- Learns from meta attraction selections
+- Learns from sample selections
+- Builds preference profiles for future recommendations
+
 ### **TripWellUser Model** (`models/TripWellUser.js`)
 ```javascript
 {
