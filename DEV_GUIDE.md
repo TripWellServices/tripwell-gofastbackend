@@ -2047,20 +2047,49 @@ When debugging the live frontend:
 ## 🚨 **ACCESS.JSX ROUTING ISSUE - PERENNIAL PROBLEM (FIXED!)**
 
 ### **The Problem:**
-Access.jsx sometimes routes new users to `/localrouter` instead of `/profilesetup`. This was caused by **overcomplicating the auth flow** with unnecessary state management and race condition prevention.
+Access.jsx sometimes routes new users to `/localrouter` instead of `/profilesetup`. This was caused by **Home.jsx automatically routing ALL authenticated users to `/localrouter`** without checking if they're new or existing users.
 
 ### **Root Cause:**
-- **Frontend was overcomplicating** the auth flow with multiple `onAuthStateChanged` listeners
-- **Home.jsx already handles auth checking** - Access.jsx doesn't need to check auth state
-- **Race conditions** from multiple auth state changes and complex state management
-- **Manufacturing complexity** where simple logic would work
+- **Home.jsx was the real culprit!** It routes ALL authenticated users to `/localrouter`
+- **Access.jsx was never reached** for the main flow - users go to `/` first
+- **Home.jsx didn't check user status** - just routed authenticated users to `/localrouter`
+- **This is the 1000th time we've fixed this!** The issue was in the wrong file!
 
-### **The Real Fix:**
+### **The REAL Fix (Home.jsx):**
 **DEAD SIMPLE LOGIC:**
-1. **User clicks sign-in** → Firebase auth
-2. **Backend createOrFind** → Check MongoDB  
-3. **Backend returns JSON** → `userCreated: true/false`
-4. **Frontend routes** → ProfileSetup or LocalRouter
+1. **User goes to `/`** → Home.jsx checks Firebase auth
+2. **If authenticated** → Call `createOrFind` to check user status
+3. **If new user** → Route to `/profilesetup` (SKIP `/localrouter` entirely!)
+4. **If existing user** → Route to `/localrouter`
+
+### **The Code Fix:**
+```javascript
+// Home.jsx - THE REAL FIX!
+if (firebaseUser) {
+  console.log("✅ User found, checking if new or existing...");
+  
+  // Check if user is new or existing by calling createOrFind
+  const res = await fetch(`${BACKEND_URL}/tripwell/user/createOrFind`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      firebaseId: firebaseUser.uid,
+      email: firebaseUser.email,
+    }),
+  });
+  
+  const userData = await res.json();
+  
+  // Route based on response
+  if (userData.userCreated) {
+    console.log("👋 User created → /profilesetup");
+    navigate("/profilesetup");  // NEW USER - skip localrouter!
+  } else {
+    console.log("✅ User found → /localrouter");
+    navigate("/localrouter");   // EXISTING USER - go to localrouter
+  }
+}
+```
 
 ### **What We Removed:**
 - ❌ `useEffect` and `onAuthStateChanged` in Access.jsx
