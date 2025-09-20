@@ -2044,6 +2044,100 @@ When debugging the live frontend:
 
 *This guide covers the complete user flow from Firebase authentication through trip creation, planning phases, live trip experience, and post-trip reflection. Each step has specific debugging points and commands to help identify and fix issues quickly.*
 
+## 🚨 **ACCESS.JSX ROUTING ISSUE - PERENNIAL PROBLEM (FIXED!)**
+
+### **The Problem:**
+Access.jsx sometimes routes new users to `/localrouter` instead of `/profilesetup`. This was caused by **overcomplicating the auth flow** with unnecessary state management and race condition prevention.
+
+### **Root Cause:**
+- **Frontend was overcomplicating** the auth flow with multiple `onAuthStateChanged` listeners
+- **Home.jsx already handles auth checking** - Access.jsx doesn't need to check auth state
+- **Race conditions** from multiple auth state changes and complex state management
+- **Manufacturing complexity** where simple logic would work
+
+### **The Real Fix:**
+**DEAD SIMPLE LOGIC:**
+1. **User clicks sign-in** → Firebase auth
+2. **Backend createOrFind** → Check MongoDB  
+3. **Backend returns JSON** → `userCreated: true/false`
+4. **Frontend routes** → ProfileSetup or LocalRouter
+
+### **What We Removed:**
+- ❌ `useEffect` and `onAuthStateChanged` in Access.jsx
+- ❌ Complex state management (`hasRouted`, `hasAttemptedSignIn`, `isCheckingAuth`)
+- ❌ Race condition prevention with `setTimeout`
+- ❌ Multiple auth state checks
+- ❌ Separate `handleUser` function
+
+### **What We Kept:**
+- ✅ Simple sign-in button
+- ✅ Firebase auth
+- ✅ Backend call
+- ✅ JSON response check
+- ✅ Simple routing
+
+### **The Refactored Access.jsx:**
+```javascript
+const handleGoogle = async () => {
+  if (isSigningIn) return;
+  
+  try {
+    setIsSigningIn(true);
+    
+    // 1) Sign in with Firebase
+    const result = await signInWithPopup(auth, googleProvider);
+    
+    // 2) Check MongoDB - create or find user
+    const res = await fetch(`${BACKEND_URL}/tripwell/user/createOrFind`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        firebaseId: result.user.uid,
+        email: result.user.email,
+      }),
+    });
+    
+    const userData = await res.json();
+    
+    // 3) Route based on response
+    if (userData.userCreated) {
+      navigate("/profilesetup");
+    } else {
+      navigate("/localrouter");
+    }
+    
+  } catch (err) {
+    console.error("❌ Error:", err);
+    if (err.code !== 'auth/popup-closed-by-user') {
+      alert("Authentication error — please try again.");
+    }
+  } finally {
+    setIsSigningIn(false);
+  }
+};
+```
+
+### **Backend Changes:**
+- ✅ **Changed response field** from `isNewUser` to `userCreated`
+- ✅ **Added Python call** for new user tracking
+- ✅ **Kept all existing logic** - just cleaner response
+
+### **Key Lesson:**
+**Don't overcomplicate simple flows!** The issue wasn't complex race conditions - it was unnecessary complexity. Sometimes the simplest solution is the right one:
+- Auth with Firebase
+- Call backend
+- Route based on response
+- Done.
+
+### **Testing:**
+- ✅ **New user** → `/profilesetup`
+- ✅ **Existing user** → `/localrouter`
+- ✅ **No race conditions** → Clean, simple flow
+- ✅ **Python tracking** → Still works for new users
+
+### **Documentation:**
+See `ACCESS_DEBUG.md` for complete technical details and troubleshooting guide.
+
 ## 🔧 **DECEMBER 2024 - CORS & AUTHENTICATION FIXES**
 
 ### **Domain Migration Issues (December 2024)**

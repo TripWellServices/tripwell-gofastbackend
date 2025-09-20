@@ -36,7 +36,7 @@ router.post("/createOrFind", async (req, res) => {
         firebaseId,
         email,
         name: null,           // Legacy placeholder
-        firstName: null,      // ✅ Profile field
+        firstName: null,        // ✅ Profile field
         lastName: null,       // ✅ Profile field
         hometownCity: null,   // ✅ Profile field
         state: null,          // ✅ Profile field
@@ -60,11 +60,39 @@ router.post("/createOrFind", async (req, res) => {
       await user.save();
     }
 
-    // Note: Python service will be called after hydration in hydrateRoute.js
+    // 🎯 Call Python for new user tracking and state management
+    if (isNewUser) {
+      try {
+        console.log(`🎯 Calling Python for new user tracking: ${email}`);
+        
+        const pythonResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/useactionendpoint`, {
+          user_id: user._id,
+          firebase_id: user.firebaseId,
+          email: user.email,
+          context: "new_user_signup",
+          // Send minimal data for tracking
+          _id: user._id,
+          firebaseId: user.firebaseId,
+          journeyStage: user.journeyStage,
+          userState: user.userState
+        });
+
+        if (pythonResponse.status === 200) {
+          const pythonData = pythonResponse.data;
+          console.log(`✅ Python tracking complete for ${email}:`, {
+            actions_taken: pythonData.actions_taken?.length || 0,
+            user_state: pythonData.user_state
+          });
+        }
+      } catch (pythonError) {
+        console.error(`❌ Python tracking failed for ${email}:`, pythonError.message);
+        // Don't fail the request if Python service fails
+      }
+    }
 
     return res.status(200).json({
       ...user.toObject(),
-      isNewUser: isNewUser
+      userCreated: isNewUser  // Simple boolean - was user created or found?
     });
   } catch (err) {
     console.error("❌ Error in createOrFind:", err);
