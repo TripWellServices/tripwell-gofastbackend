@@ -3,7 +3,7 @@ const router = express.Router();
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const TripWellUser = require("../../models/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
-const TripIntent = require("../../models/TripWell/TripIntent");
+const TripPersona = require("../../models/TripWell/TripPersona");
 const AnchorLogic = require("../../models/TripWell/AnchorLogic");
 const TripDay = require("../../models/TripWell/TripDay");
 const axios = require("axios");
@@ -58,7 +58,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       return res.json({
         userData,
         tripData: null,
-        tripIntentData: null,
+        tripPersonaData: null,
         anchorLogicData: null,
         itineraryData: null
       });
@@ -71,7 +71,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       return res.json({
         userData,
         tripData: null,
-        tripIntentData: null,
+        tripPersonaData: null,
         anchorLogicData: null,
         itineraryData: null
       });
@@ -111,53 +111,57 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
 
     // Get related data in parallel using OG pattern
     console.log("🔍 Querying for tripId:", trip._id.toString());
-    const [tripIntent, anchorLogic, tripDays] = await Promise.all([
+    const [tripPersona, anchorLogic, tripDays] = await Promise.all([
       // ✅ FIX: Use OG pattern - just tripId
-      TripIntent.findOne({ tripId: trip._id }).catch((err) => {
-        console.log("❌ TripIntent query error:", err);
+      TripPersona.findOne({ tripId: trip._id }).catch((err) => {
+        console.log("❌ TripPersona query error:", err);
         return null;
       }),
       AnchorLogic.findOne({ tripId: trip._id }).catch(() => null),
       TripDay.find({ tripId: trip._id }).sort({ dayIndex: 1 }).catch(() => [])
     ]);
     
-    // Use the found TripIntent (ObjectId pattern is now correct)
-    let finalTripIntent = tripIntent;
+    // Use the found TripPersona (ObjectId pattern is now correct)
+    let finalTripPersona = tripPersona;
     
-    console.log("🔍 TripIntent found:", !!finalTripIntent);
-    if (finalTripIntent) {
-      console.log("🔍 TripIntent data:", {
-        tripId: finalTripIntent.tripId,
-        priorities: finalTripIntent.priorities,
-        mobility: finalTripIntent.mobility,
-        travelPace: finalTripIntent.travelPace
+    console.log("🔍 TripPersona found:", !!finalTripPersona);
+    if (finalTripPersona) {
+      console.log("🔍 TripPersona data:", {
+        tripId: finalTripPersona.tripId,
+        primaryPersona: finalTripPersona.primaryPersona,
+        personas: finalTripPersona.personas,
+        budget: finalTripPersona.budget
       });
     }
 
-    // Build tripIntentData
-    let tripIntentData = null;
-    if (finalTripIntent) {
-      console.log("🔍 Raw TripIntent from DB:", {
-        _id: finalTripIntent._id,
-        tripId: finalTripIntent.tripId,
-        userId: finalTripIntent.userId,
-        priorities: finalTripIntent.priorities,
-        vibes: finalTripIntent.vibes,
-        mobility: finalTripIntent.mobility,
-        travelPace: finalTripIntent.travelPace,
-        budget: finalTripIntent.budget
+    // Build tripPersonaData
+    let tripPersonaData = null;
+    if (finalTripPersona) {
+      console.log("🔍 Raw TripPersona from DB:", {
+        _id: finalTripPersona._id,
+        tripId: finalTripPersona.tripId,
+        userId: finalTripPersona.userId,
+        primaryPersona: finalTripPersona.primaryPersona,
+        personas: finalTripPersona.personas,
+        budget: finalTripPersona.budget,
+        whoWith: finalTripPersona.whoWith,
+        romanceLevel: finalTripPersona.romanceLevel,
+        caretakerRole: finalTripPersona.caretakerRole,
+        flexibility: finalTripPersona.flexibility
       });
       
-      tripIntentData = {
-        tripIntentId: finalTripIntent._id,
-        priorities: Array.isArray(finalTripIntent.priorities) ? finalTripIntent.priorities : [],
-        vibes: Array.isArray(finalTripIntent.vibes) ? finalTripIntent.vibes : [],
-        mobility: Array.isArray(finalTripIntent.mobility) ? finalTripIntent.mobility : [],
-        travelPace: Array.isArray(finalTripIntent.travelPace) ? finalTripIntent.travelPace : [],
-        budget: finalTripIntent.budget || ""
+      tripPersonaData = {
+        tripPersonaId: finalTripPersona._id,
+        primaryPersona: finalTripPersona.primaryPersona,
+        personas: finalTripPersona.personas || {},
+        budget: finalTripPersona.budget || "",
+        whoWith: finalTripPersona.whoWith || "",
+        romanceLevel: finalTripPersona.romanceLevel || 0.0,
+        caretakerRole: finalTripPersona.caretakerRole || 0.0,
+        flexibility: finalTripPersona.flexibility || 0.7
       };
       
-      console.log("🔍 Built tripIntentData:", tripIntentData);
+      console.log("🔍 Built tripPersonaData:", tripPersonaData);
     }
 
     // Build anchorLogicData from AnchorLogic (the REAL model)
@@ -204,7 +208,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     const response = {
       userData,
       tripData,
-      tripIntentData,
+      tripPersonaData,
       anchorLogicData,
       itineraryData,
       isNewUser: isNewUser
@@ -213,7 +217,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     console.log("✅ Hydration complete:", {
       hasUserData: !!userData,
       hasTripData: !!tripData,
-      hasTripIntentData: !!tripIntentData,
+      hasTripPersonaData: !!tripPersonaData,
       hasAnchorLogicData: !!anchorLogicData,
       hasItineraryData: !!itineraryData,
       tripSeason: tripData.season,

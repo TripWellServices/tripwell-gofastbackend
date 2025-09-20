@@ -102,7 +102,7 @@ const verifyFirebaseToken = require("./middleware/verifyFirebaseToken");
 app.use("/tripwell/trip-setup", require("./routes/TripWell/tripSetupRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripBaseLoadRoute"));
 app.use("/tripwell", require("./routes/TripWell/JoinCodeCheckRoute"));
-app.use("/tripwell", require("./routes/TripWell/tripIntentRoutes"));
+app.use("/tripwell", require("./routes/TripWell/tripPersonaRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripCreatedRoute"));
 app.use("/tripwell", require("./routes/TripWell/anchorgptRoute"));
 app.use("/tripwell", require("./routes/TripWell/anchorgpttestRoute"));
@@ -131,7 +131,6 @@ app.use("/tripwell", require("./routes/TripWell/lookbackRoute"));
 app.use("/tripwell", require("./routes/TripWell/askAngelaLiveRoute"));
 app.use("/tripwell", require("./routes/TripWell/livedayGPTModifyBlockRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripStartRoute"));
-app.use("/tripwell", require("./routes/TripWell/tripStatusRoute"));
 app.use("/tripwell", require("./routes/TripWell/validateJoinCodeRoute"));
 app.use("/tripwell", require("./routes/TripWell/hydrateRoute"));
 app.use("/tripwell/user", require("./routes/TripWell/TripWellUserRoute"));
@@ -156,7 +155,6 @@ app.use("/tripwell/participant", require("./routes/TripWell/participantUserCreat
 // ✅ Secure Auth-Protected Flow
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/profileSetupRoute"));
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/AnchorSelectSaveRoutes"));
 
 // Profile Generation Routes
 app.use("/tripwell", require("./routes/TripWell/profileGPTRoute"));
