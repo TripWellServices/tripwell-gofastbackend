@@ -91,8 +91,8 @@ router.post("/createOrFind", async (req, res) => {
     }
 
     return res.status(200).json({
-      ...user.toObject(),
-      userCreated: isNewUser  // Simple boolean - was user created or found?
+      userCreated: isNewUser,  // Simple boolean - was user created or found?
+      user: user.toObject()
     });
   } catch (err) {
     console.error("❌ Error in createOrFind:", err);
