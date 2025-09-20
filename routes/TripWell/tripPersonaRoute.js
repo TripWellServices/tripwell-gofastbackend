@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const TripPersona = require("../../models/TripWell/TripPersona");
-const TripBase = require("../../models/TripBase");
+const TripBase = require("../../models/TripWell/TripBase");
 
 /**
  * POST /tripwell/trip-persona
