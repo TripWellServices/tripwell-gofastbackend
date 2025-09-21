@@ -11,7 +11,7 @@ const mongoose = require("mongoose");
     - firstName → user input
     - lastName → user input
     - hometownCity → "City/State You Call Home"
-    - state → dropdown
+    - homeState → dropdown
     - travelStyle → [String] checkbox group
     - tripVibe → [String] checkbox group
 
@@ -27,12 +27,12 @@ const tripWellUserSchema = new mongoose.Schema(
     firstName: { type: String, default: "" },
     lastName: { type: String, default: "" },
     hometownCity: { type: String, default: "" },
-    state: { type: String, default: "" },
+    homeState: { type: String, default: "" },
     planningVibe: { type: String, default: "" }, // Planning approach: "Spontaneous", "Balanced mix", or "Detail oriented"
     travelVibe: { type: String, default: "" }, // Travel style: "Spontaneous", "Go with flow", or "Stick to plan"
     dreamDestination: { type: String, default: "" }, // Dream destination from ProfileSetup
     profileComplete: { type: Boolean, default: false }, // tracks if profile setup is complete
-    userStatus: { type: String, default: "new", enum: ["new", "active"] }, // user status for routing
+    userStatus: { type: String, default: "signup", enum: ["demo_only", "signup", "active", "abandoned", "inactive"] }, // user status for routing
     tripId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set post trip creation
     role: { 
       type: String, 
@@ -52,11 +52,6 @@ const tripWellUserSchema = new mongoose.Schema(
       enum: ["new_user", "profile_complete", "trip_set_done", "itinerary_complete", "trip_active", "trip_complete"]
     }, // where user is in the journey flow
     
-    userState: {
-      type: String,
-      default: "demo_only",
-      enum: ["demo_only", "active", "abandoned", "inactive"]
-    }, // simplified user state
     
     lastAnalyzedAt: {
       type: Date,

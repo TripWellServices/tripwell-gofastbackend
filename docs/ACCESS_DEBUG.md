@@ -44,7 +44,7 @@ if (firebaseUser) {
     console.log("🔍 Backend response:", userData);
     
     // Route based on response
-    if (userData.userCreated) {
+    if (userData.user?.userStatus === "new") {
       console.log("👋 User created → /profilesetup");
       navigate("/profilesetup");  // NEW USER - skip localrouter!
     } else {
@@ -72,7 +72,7 @@ The backend returns:
 ```javascript
 {
   ...userData,
-  userCreated: true/false  // Simple boolean - was user created or found?
+  user: { userStatus: "new" | "active", ... }  // userStatus is the source of truth
 }
 ```
 

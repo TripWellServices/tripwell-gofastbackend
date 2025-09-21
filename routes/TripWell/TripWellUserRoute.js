@@ -39,17 +39,17 @@ router.post("/createOrFind", async (req, res) => {
         firstName: null,        // ✅ Profile field
         lastName: null,       // ✅ Profile field
         hometownCity: null,   // ✅ Profile field
-        state: null,          // ✅ Profile field
+        homeState: null,      // ✅ Profile field
         travelStyle: [],      // ✅ Profile field
         tripVibe: [],         // ✅ Profile field
         profileComplete: false, // ✅ Explicitly set to false for new users
-        userStatus: "new", // ✅ Backend sets userStatus for new users
+        userStatus: "signup", // ✅ Backend sets userStatus for new users
         tripId: null,
         role: "noroleset",    // Will be assigned later
         funnelStage: funnelStage || "none",  // Set funnel stage if provided
         // 🎯 NODE.JS MUTATES: Set initial state flags
         journeyStage: "new_user",
-        userState: funnelStage && funnelStage !== "none" ? "demo_only" : "active"
+        userStatus: funnelStage && funnelStage !== "none" ? "demo_only" : "signup"
       });
 
       await user.save();
@@ -75,7 +75,7 @@ router.post("/createOrFind", async (req, res) => {
           _id: user._id,
           firebaseId: user.firebaseId,
           journeyStage: user.journeyStage,
-          userState: user.userState,
+          userStatus: user.userStatus,
           userStage: user.userStage || "new_user",
           profileComplete: user.profileComplete || false
         });

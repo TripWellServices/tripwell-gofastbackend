@@ -2098,7 +2098,7 @@ if (firebaseUser) {
   const userData = await res.json();
   
   // Route based on response
-  if (userData.userCreated) {
+  if (userData.user?.userStatus === "new") {
     console.log("👋 User created → /profilesetup");
     navigate("/profilesetup");  // NEW USER - skip localrouter!
   } else {
@@ -2146,7 +2146,7 @@ const handleGoogle = async () => {
     const userData = await res.json();
     
     // 3) Route based on response
-    if (userData.userCreated) {
+    if (userData.user?.userStatus === "new") {
       navigate("/profilesetup");
     } else {
       navigate("/localrouter");
