@@ -16,8 +16,8 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     lastName,
     hometownCity,
     state,
-    planningVibe,
-    travelVibe,
+    persona,
+    planningStyle,
     dreamDestination
   } = req.body;
 
@@ -25,21 +25,22 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     // First get the current user to check their funnel stage
     const currentUser = await TripWellUser.findOne({ firebaseId });
     
-    // Convert vibe strings to numeric weights
-    const getPlanningFlex = (vibe) => {
-      switch (vibe) {
-        case "Spontaneous": return 0.1;
-        case "Balanced mix": return 0.5;
-        case "Detail oriented": return 0.9;
-        default: return 0.5;
+    // Convert persona and planning style to numeric weights
+    const getPersonaScore = (persona) => {
+      switch (persona) {
+        case "Art": return 0.6;
+        case "Food": return 0.6;
+        case "History": return 0.6;
+        case "Adventure": return 0.6;
+        default: return 0.1;
       }
     };
     
-    const getTripPreferenceFlex = (vibe) => {
-      switch (vibe) {
-        case "Spontaneous": return 0.1;
-        case "Go with flow": return 0.5;
-        case "Stick to plan": return 0.9;
+    const getPlanningFlex = (style) => {
+      switch (style) {
+        case "Spontaneity": return 0.4;
+        case "Flow": return 0.1;
+        case "Rigid": return 0.0;
         default: return 0.5;
       }
     };
@@ -53,12 +54,12 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           lastName,
           hometownCity,
           homeState: state, // Use homeState instead of state
-          planningVibe,
-          travelVibe,
+          persona,
+          planningStyle,
           dreamDestination,
-          // Convert vibes to numeric weights
-          planningFlex: getPlanningFlex(planningVibe),
-          tripPreferenceFlex: getTripPreferenceFlex(travelVibe),
+          // Convert persona and planning style to numeric weights
+          personaScore: getPersonaScore(persona),
+          planningFlex: getPlanningFlex(planningStyle),
           profileComplete: true,
           // If user was in funnel, upgrade them to full_app
           ...(currentUser?.funnelStage && currentUser.funnelStage !== 'full_app' && {

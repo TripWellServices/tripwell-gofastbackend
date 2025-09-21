@@ -28,8 +28,8 @@ const tripWellUserSchema = new mongoose.Schema(
     lastName: { type: String, default: "" },
     hometownCity: { type: String, default: "" },
     homeState: { type: String, default: "" },
-    planningVibe: { type: String, default: "" }, // Planning approach: "Spontaneous", "Balanced mix", or "Detail oriented"
-    travelVibe: { type: String, default: "" }, // Travel style: "Spontaneous", "Go with flow", or "Stick to plan"
+    persona: { type: String, default: "" }, // Persona: "Art", "Food", "History", "Adventure"
+    planningStyle: { type: String, default: "" }, // Planning style: "Spontaneity", "Flow", "Rigid"
     dreamDestination: { type: String, default: "" }, // Dream destination from ProfileSetup
     profileComplete: { type: Boolean, default: false }, // tracks if profile setup is complete
     userStatus: { type: String, default: "signup", enum: ["demo_only", "signup", "active", "abandoned", "inactive"] }, // user status for routing
@@ -69,8 +69,8 @@ const tripWellUserSchema = new mongoose.Schema(
     }, // track last marketing email sent to prevent duplicates
     
     // === ENDURING PERSONA WEIGHTS (from ProfileSetup radio answers) ===
-    planningFlex: { type: Number, default: 0.5 }, // "Spontaneous" = 0.1, "Balanced mix" = 0.5, "Detail oriented" = 0.9
-    tripPreferenceFlex: { type: Number, default: 0.5 } // "Spontaneous" = 0.1, "Go with flow" = 0.5, "Stick to plan" = 0.9
+    personaScore: { type: Number, default: 0.1 }, // "Art", "Food", "History", "Adventure" = 0.6, others = 0.1
+    planningFlex: { type: Number, default: 0.5 } // "Spontaneity" = 0.4, "Flow" = 0.1, "Rigid" = 0.0
   },
   { timestamps: true }
 );
