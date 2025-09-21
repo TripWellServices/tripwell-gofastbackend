@@ -12,12 +12,12 @@ router.post("/trip-persona", async (req, res) => {
     console.log("🎭 TRIP PERSONA ROUTE HIT!");
     console.log("🎭 Body:", req.body);
     
-    const { tripId, userId, primaryPersona, budget, whoWith, dailySpacing, romanceLevel, caretakerRole, flexibility } = req.body;
+    const { tripId, userId, primaryPersona, budget, dailySpacing, romanceLevel, caretakerRole, flexibility } = req.body;
 
-    if (!tripId || !userId || !primaryPersona || !budget || !whoWith || !dailySpacing) {
+    if (!tripId || !userId || !primaryPersona || !budget || !dailySpacing) {
       return res.status(400).json({
         status: "error",
-        message: "Missing required fields: tripId, userId, primaryPersona, budget, whoWith, dailySpacing"
+        message: "Missing required fields: tripId, userId, primaryPersona, budget, dailySpacing"
       });
     }
 
@@ -31,7 +31,7 @@ router.post("/trip-persona", async (req, res) => {
       // Update existing persona
       tripPersona.primaryPersona = primaryPersona;
       tripPersona.budget = budget;
-      tripPersona.whoWith = whoWith;
+      tripPersona.dailySpacing = dailySpacing;
       tripPersona.romanceLevel = romanceLevel || 0.0;
       tripPersona.caretakerRole = caretakerRole || 0.0;
       tripPersona.flexibility = flexibility || 0.7;
@@ -45,7 +45,7 @@ router.post("/trip-persona", async (req, res) => {
         userId,
         primaryPersona,
         budget,
-        whoWith,
+        dailySpacing,
         romanceLevel: romanceLevel || 0.0,
         caretakerRole: caretakerRole || 0.0,
         flexibility: flexibility || 0.7
