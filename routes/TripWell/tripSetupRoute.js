@@ -40,10 +40,34 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       }
     }
 
+    // Calculate weights based on whoWith selection
+    const calculateWhoWithWeights = (whoWith) => {
+      switch (whoWith) {
+        case "spouse":
+          return { romanceLevel: 0.9, caretakerRole: 0.0, flexibility: 0.7 };
+        case "spouse-kids":
+          return { romanceLevel: 0.6, caretakerRole: 0.8, flexibility: 0.4 };
+        case "son-daughter":
+          return { romanceLevel: 0.0, caretakerRole: 0.9, flexibility: 0.3 };
+        case "friends":
+          return { romanceLevel: 0.0, caretakerRole: 0.0, flexibility: 0.8 };
+        case "solo":
+          return { romanceLevel: 0.0, caretakerRole: 0.0, flexibility: 0.9 };
+        case "other":
+          return { romanceLevel: 0.3, caretakerRole: 0.3, flexibility: 0.6 };
+        default:
+          return { romanceLevel: 0.0, caretakerRole: 0.0, flexibility: 0.5 };
+      }
+    };
+
+    const weights = calculateWhoWithWeights(whoWith);
+
     const payload = {
       city: String(city).trim(),
       country: String(country).trim(),
       whoWith: String(whoWith || "").trim(),
+      romanceLevel: weights.romanceLevel,
+      caretakerRole: weights.caretakerRole,
     };
     
     // Add optional fields for demo mode

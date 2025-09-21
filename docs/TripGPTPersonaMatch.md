@@ -122,18 +122,22 @@ const updatedWeights = {
 ### **Budget Weights**
 ```javascript
 const budgetWeights = {
-  low: 0.3,      // $50-100/day
+  low: 0.3,      // < $100/day
   moderate: 0.5, // $100-200/day
-  high: 1.0      // $200+/day
+  high: 0.7,     // $200-300/day
+  luxury: 1.0    // $300+/day
 };
 ```
 
-### **Other Weights**
+### **WhoWith Weight Mappings**
 ```javascript
-const otherWeights = {
-  romanceLevel: 0.0,    // 0.0 to 1.0
-  caretakerRole: 0.0,   // 0.0 to 1.0
-  flexibility: 0.7      // 0.7 free/spontaneous, 0.2 locked/rigid
+const whoWithWeights = {
+  "spouse": { romanceLevel: 0.9, caretakerRole: 0.0, flexibility: 0.7 },
+  "spouse-kids": { romanceLevel: 0.6, caretakerRole: 0.8, flexibility: 0.4 },
+  "son-daughter": { romanceLevel: 0.0, caretakerRole: 0.9, flexibility: 0.3 },
+  "friends": { romanceLevel: 0.0, caretakerRole: 0.0, flexibility: 0.8 },
+  "solo": { romanceLevel: 0.0, caretakerRole: 0.0, flexibility: 0.9 },
+  "other": { romanceLevel: 0.3, caretakerRole: 0.3, flexibility: 0.6 }
 };
 ```
 
@@ -182,15 +186,19 @@ const updatePersonaWeights = async (userPicks, currentWeights) => {
 - Build data-driven persona profiles
 - Replace OpenAI with ML models
 
-## 🎯 **The Flow**
+## 🎯 **The Actual Flow**
 
-1. **User fills form** → **Simple radio buttons**
-2. **Backend creates persona** → **Default weights (0.6, 0.1, 0.1, 0.1)**
-3. **System generates meta attractions** → **Obvious tourist traps to avoid**
-4. **System generates samples** → **2 attractions + 2 restaurants + 2 neat things**
-5. **User selects samples** → **OpenAI updates weights**
-6. **System builds itinerary** → **Based on updated weights + meta avoidance**
-7. **Collect data** → **For future Python analysis**
+1. **ProfileSetup** → **Persona + Planning Style questions**
+2. **TripSetup** → **Trip details + whoWith (auto-calculates romance/caretaker weights)**
+3. **TripPersonaForm** → **Primary persona + budget + daily spacing**
+4. **Meta Select** → **Choose attractions to avoid**
+5. **Sample Select** → **Pick samples based on persona**
+6. **Itinerary Build** → **Based on all weights + meta avoidance**
+
+### **Weight Calculation Logic**
+- **ProfileSetup**: persona → 0.6 for selected, 0.1 for others
+- **TripSetup**: whoWith → romanceLevel, caretakerRole, flexibility
+- **TripPersona**: budget → budgetLevel (0.3-1.0), dailySpacing (0.2-0.8)
 
 ## 🚀 **The End Goal**
 

@@ -12,7 +12,7 @@ router.post("/trip-persona", async (req, res) => {
     console.log("🎭 TRIP PERSONA ROUTE HIT!");
     console.log("🎭 Body:", req.body);
     
-    const { tripId, userId, primaryPersona, budget, dailySpacing, romanceLevel, caretakerRole, flexibility } = req.body;
+    const { tripId, userId, primaryPersona, budget, dailySpacing } = req.body;
 
     if (!tripId || !userId || !primaryPersona || !budget || !dailySpacing) {
       return res.status(400).json({
@@ -23,6 +23,16 @@ router.post("/trip-persona", async (req, res) => {
 
     console.log("📋 Creating/updating trip persona for:", { tripId, userId, primaryPersona });
 
+    // Calculate budget level based on numeric budget
+    const calculateBudgetLevel = (budget) => {
+      if (budget < 100) return 0.3;      // Low budget
+      if (budget < 200) return 0.5;      // Moderate budget  
+      if (budget < 300) return 0.7;      // High budget
+      return 1.0;                        // Luxury budget
+    };
+    
+    const budgetLevel = calculateBudgetLevel(budget);
+
     // Check if TripPersona already exists
     let tripPersona = await TripPersona.findOne({ tripId, userId });
     
@@ -32,33 +42,28 @@ router.post("/trip-persona", async (req, res) => {
       tripPersona.primaryPersona = primaryPersona;
       tripPersona.budget = budget;
       tripPersona.dailySpacing = dailySpacing;
-      tripPersona.romanceLevel = romanceLevel || 0.0;
-      tripPersona.caretakerRole = caretakerRole || 0.0;
-      tripPersona.flexibility = flexibility || 0.7;
+      tripPersona.budgetLevel = budgetLevel;
       tripPersona.status = 'created';
       await tripPersona.save();
     } else {
       console.log("🔍 Creating new TripPersona");
-      // Create new persona - the pre-save middleware will calculate weights
+      // Create new persona
       tripPersona = await TripPersona.create({
         tripId,
         userId,
         primaryPersona,
         budget,
         dailySpacing,
-        romanceLevel: romanceLevel || 0.0,
-        caretakerRole: caretakerRole || 0.0,
-        flexibility: flexibility || 0.7
+        budgetLevel
       });
     }
 
     console.log("✅ TripPersona saved:", {
       id: tripPersona._id,
       primaryPersona: tripPersona.primaryPersona,
-      personas: tripPersona.personas,
-      romanceLevel: tripPersona.romanceLevel,
-      caretakerRole: tripPersona.caretakerRole,
-      flexibility: tripPersona.flexibility
+      budget: tripPersona.budget,
+      dailySpacing: tripPersona.dailySpacing,
+      budgetLevel: tripPersona.budgetLevel
     });
 
     res.json({

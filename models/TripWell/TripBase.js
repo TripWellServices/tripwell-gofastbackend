@@ -17,6 +17,8 @@ const TripBaseSchema = new mongoose.Schema({
     default: "",
     enum: ["spouse", "spouse-kids", "son-daughter", "friends", "solo", "other"]
   },
+  romanceLevel: { type: Number, default: 0.0, min: 0, max: 1 }, // 0.0 to 1.0
+  caretakerRole: { type: Number, default: 0.0, min: 0, max: 1 }, // 0.0 to 1.0
   season:    { type: String },
   daysTotal: { type: Number },
   tripStartedByOriginator: { type: Boolean, default: false },
