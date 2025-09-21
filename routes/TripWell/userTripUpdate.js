@@ -9,7 +9,7 @@ const TripWellUser = require("../../models/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 const TripPersona = require("../../models/TripWell/TripPersona");
 const UserSelections = require("../../models/TripWell/UserSelections");
-const Itinerary = require("../../models/TripWell/Itinerary");
+const TripItinerary = require("../../models/TripWell/TripItinerary");
 
 // POST /api/usertrip/set
 router.post("/set", verifyFirebaseToken, async (req, res) => {

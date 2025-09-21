@@ -4,7 +4,7 @@ const TripPersona = require("../../models/TripWell/TripPersona");
 const City = require("../../models/TripWell/City");
 const MetaAttractions = require("../../models/TripWell/MetaAttractions");
 const UserSelections = require("../../models/TripWell/UserSelections");
-const Itinerary = require("../../models/TripWell/Itinerary");
+const TripItinerary = require("../../models/TripWell/TripItinerary");
 
 class UserResetService {
   /**
@@ -52,8 +52,8 @@ class UserResetService {
           const selectionsDeleted = await UserSelections.deleteMany({ tripId: trip._id });
           results.selectionsDeleted += selectionsDeleted.deletedCount;
 
-          // Delete itineraries
-          const itinerariesDeleted = await Itinerary.deleteMany({ tripId: trip._id });
+            // Delete itineraries
+            const itinerariesDeleted = await TripItinerary.deleteMany({ tripId: trip._id });
           results.itinerariesDeleted += itinerariesDeleted.deletedCount;
 
           console.log(`🗑️ Deleted data for trip ${trip._id}: ${personasDeleted.deletedCount} personas, ${selectionsDeleted.deletedCount} selections, ${itinerariesDeleted.deletedCount} itineraries`);
