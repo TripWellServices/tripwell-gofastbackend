@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const TripPersona = require("../../models/TripWell/TripPersona");
 const TripBase = require("../../models/TripWell/TripBase");
+const { generateOpenAIPrompt, generateUserSegmentation } = require("../../services/TripWell/weightToPromptService");
 
 /**
  * POST /tripwell/trip-persona
