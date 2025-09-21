@@ -13,7 +13,7 @@ const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "https://tripwell-ai.
 
 // 🔐 GET /tripwell/hydrate
 // Description: Returns all localStorage data for the authenticated user
-// Simple, direct database queries - no TripExtra complexity
+// Simple, direct database queries
 router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
   try {
     console.log("🔄 GET /tripwell/hydrate - Simple data flush");

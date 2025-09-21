@@ -162,7 +162,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       // 🎯 NODE.JS MUTATES: Set journey stage when trip is created
       const userUpdateData = {
         journeyStage: 'trip_set_done',
-        userState: 'active'
+        userStatus: 'active'
       };
       
       // Add cityId to TripBase if city object was created
@@ -202,7 +202,7 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
         tripId: user.tripId,
         funnelStage: user.funnelStage,
         journeyStage: 'trip_set_done',  // ✅ Include journey stage
-        userState: 'active',            // ✅ Include user state
+        userStatus: 'active',            // ✅ Include user state
         createdAt: user.createdAt,
         context: "trip_created",
         tripName: tripName,             // ✅ Include trip details
@@ -308,7 +308,7 @@ router.post("/demo/save", verifyFirebaseToken, async (req, res) => {
         funnelStage: "itinerary_demo",
         // 🎯 NODE.JS MUTATES: Set demo user state
         journeyStage: "trip_set_done",
-        userState: "demo_only"
+        userStatus: "demo_only"
       },
       { new: true }
     );

@@ -25,6 +25,25 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     // First get the current user to check their funnel stage
     const currentUser = await TripWellUser.findOne({ firebaseId });
     
+    // Convert vibe strings to numeric weights
+    const getPlanningFlex = (vibe) => {
+      switch (vibe) {
+        case "Spontaneous": return 0.1;
+        case "Balanced mix": return 0.5;
+        case "Detail oriented": return 0.9;
+        default: return 0.5;
+      }
+    };
+    
+    const getTripPreferenceFlex = (vibe) => {
+      switch (vibe) {
+        case "Spontaneous": return 0.1;
+        case "Go with flow": return 0.5;
+        case "Stick to plan": return 0.9;
+        default: return 0.5;
+      }
+    };
+    
     // Update profile and set state flags
     const user = await TripWellUser.findOneAndUpdate(
       { firebaseId },
@@ -33,10 +52,13 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           firstName,
           lastName,
           hometownCity,
-          state,
+          homeState: state, // Use homeState instead of state
           planningVibe,
           travelVibe,
           dreamDestination,
+          // Convert vibes to numeric weights
+          planningFlex: getPlanningFlex(planningVibe),
+          tripPreferenceFlex: getTripPreferenceFlex(travelVibe),
           profileComplete: true,
           // If user was in funnel, upgrade them to full_app
           ...(currentUser?.funnelStage && currentUser.funnelStage !== 'full_app' && {
@@ -44,7 +66,7 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           }),
           // 🎯 NODE.JS MUTATES: Set journey stage and user state
           journeyStage: 'profile_complete',
-          userState: 'active'
+          userStatus: 'active'
         }
       },
       { new: true }
