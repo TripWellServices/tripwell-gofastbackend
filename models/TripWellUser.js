@@ -32,6 +32,7 @@ const tripWellUserSchema = new mongoose.Schema(
     travelVibe: { type: String, default: "" }, // Travel style: "Spontaneous", "Go with flow", or "Stick to plan"
     dreamDestination: { type: String, default: "" }, // Dream destination from ProfileSetup
     profileComplete: { type: Boolean, default: false }, // tracks if profile setup is complete
+    userStatus: { type: String, default: "new", enum: ["new", "active"] }, // user status for routing
     tripId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set post trip creation
     role: { 
       type: String, 

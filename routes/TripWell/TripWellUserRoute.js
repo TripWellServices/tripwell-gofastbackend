@@ -43,6 +43,7 @@ router.post("/createOrFind", async (req, res) => {
         travelStyle: [],      // ✅ Profile field
         tripVibe: [],         // ✅ Profile field
         profileComplete: false, // ✅ Explicitly set to false for new users
+        userStatus: "new", // ✅ Backend sets userStatus for new users
         tripId: null,
         role: "noroleset",    // Will be assigned later
         funnelStage: funnelStage || "none",  // Set funnel stage if provided
@@ -70,11 +71,13 @@ router.post("/createOrFind", async (req, res) => {
           firebase_id: user.firebaseId,
           email: user.email,
           context: "new_user_signup",
-          // Send minimal data for tracking
+          // Send user status data for tracking
           _id: user._id,
           firebaseId: user.firebaseId,
           journeyStage: user.journeyStage,
-          userState: user.userState
+          userState: user.userState,
+          userStage: user.userStage || "new_user",
+          profileComplete: user.profileComplete || false
         });
 
         if (pythonResponse.status === 200) {

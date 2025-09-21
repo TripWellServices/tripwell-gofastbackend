@@ -1,6 +1,23 @@
 # TripWell Development Guide
 ## Complete Frontend, Backend & Admin Documentation
 
+## 🚨 CRITICAL RULE: NEVER MODIFY ACCESS.JSX WITHOUT EXPLICIT USER APPROVAL
+
+**BACKEND IS SOURCE OF TRUTH FOR USER STATUS**
+
+### User Status Management
+- Backend sets `userStatus: "new"` for new users in database
+- Backend sets `profileComplete: false"` for new users in database  
+- Frontend reads these values from backend via `hydrateRoute`
+- No need for complex localStorage merging - backend is authoritative
+
+### Flow
+1. **Backend creates user** → sets `userStatus: "new"` and `profileComplete: false` in database
+2. **Access.jsx** → gets backend response, saves to localStorage  
+3. **LocalUniversalRouter** → calls `hydrateRoute` → gets same values from backend → no overwrite needed!
+
+---
+
 ## 🏗️ System Architecture Overview
 
 TripWell is a full-stack application with:
