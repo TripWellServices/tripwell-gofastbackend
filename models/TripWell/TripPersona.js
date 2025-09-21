@@ -18,11 +18,12 @@ const TripPersonaSchema = new mongoose.Schema({
     min: 0
   },
   
-  // Travel pace (from user selection)
-  travelPace: { 
-    type: String, 
+  // Daily spacing (from user selection)
+  dailySpacing: { 
+    type: Number, 
     required: true,
-    enum: ['tons', 'moderate', 'slow']
+    min: 0,
+    max: 1
   },
   
   // Calculated weights based on conditional logic (backend secret sauce)
@@ -57,8 +58,8 @@ TripPersonaSchema.pre('save', async function(next) {
     const trip = await TripBase.findById(this.tripId);
     const whoWith = trip ? trip.whoWith : 'solo'; // fallback
     
-    // Calculate conditional weights based on whoWith + budget + primaryPersona + travelPace
-    const { budget, travelPace, primaryPersona } = this;
+    // Calculate conditional weights based on whoWith + budget + primaryPersona + dailySpacing
+    const { budget, dailySpacing, primaryPersona } = this;
     
     // Base weights by whoWith
     let baseWeights = {
@@ -68,23 +69,12 @@ TripPersonaSchema.pre('save', async function(next) {
       friends: { romance: 0.1, caretaker: 0.1, flexibility: 0.3, adult: 0.5 }
     };
     
-    // Adjust based on budget (categorize the number)
-    let budgetCategory = 'moderate';
-    if (budget < 150) budgetCategory = 'low';
-    else if (budget > 300) budgetCategory = 'high';
+    // Calculate budget score (0.1 to 1.0+ based on actual dollar amount)
+    // $50 = 0.1, $200 = 0.5, $400 = 1.0, $1000 = 2.0
+    const budgetScore = Math.max(0.1, Math.min(2.0, budget / 400));
     
-    const budgetMultiplier = {
-      low: 0.8,
-      moderate: 1.0,
-      high: 1.2
-    };
-    
-    // Adjust based on travel pace
-    const paceMultiplier = {
-      tons: 1.2,    // More action = higher weights
-      moderate: 1.0,
-      slow: 0.8     // Slower pace = lower weights
-    };
+    // Adjust based on daily spacing (numeric value: 0.2=light, 0.5=moderate, 0.8=packed)
+    const spacingMultiplier = dailySpacing; // Use the numeric value directly
     
     // Adjust based on primary persona
     const personaAdjustments = {
@@ -95,15 +85,14 @@ TripPersonaSchema.pre('save', async function(next) {
     };
     
     const base = baseWeights[whoWith];
-    const budgetMult = budgetMultiplier[budgetCategory];
-    const paceMult = paceMultiplier[travelPace];
+    const spacingMult = spacingMultiplier;
     const adjustment = personaAdjustments[primaryPersona];
     
-    // Apply calculations (ensure weights stay between 0 and 1)
-    this.romanceLevel = Math.max(0, Math.min(1, (base.romance + adjustment.romance) * budgetMult * paceMult));
-    this.caretakerRole = Math.max(0, Math.min(1, base.caretaker * budgetMult * paceMult));
-    this.flexibility = Math.max(0, Math.min(1, base.flexibility * budgetMult * paceMult));
-    this.adultLevel = Math.max(0, Math.min(1, (base.adult + adjustment.adult) * budgetMult * paceMult));
+    // Apply calculations using budget score (can go above 1.0 for high budgets)
+    this.romanceLevel = Math.max(0, (base.romance + adjustment.romance) * budgetScore * spacingMult);
+    this.caretakerRole = Math.max(0, base.caretaker * budgetScore * spacingMult);
+    this.flexibility = Math.max(0, base.flexibility * budgetScore * spacingMult);
+    this.adultLevel = Math.max(0, (base.adult + adjustment.adult) * budgetScore * spacingMult);
     
     this.updatedAt = new Date();
     next();

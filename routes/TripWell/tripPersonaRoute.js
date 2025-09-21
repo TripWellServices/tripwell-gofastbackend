@@ -12,12 +12,12 @@ router.post("/trip-persona", async (req, res) => {
     console.log("🎭 TRIP PERSONA ROUTE HIT!");
     console.log("🎭 Body:", req.body);
     
-    const { tripId, userId, primaryPersona, budget, whoWith, romanceLevel, caretakerRole, flexibility } = req.body;
+    const { tripId, userId, primaryPersona, budget, whoWith, dailySpacing, romanceLevel, caretakerRole, flexibility } = req.body;
 
-    if (!tripId || !userId || !primaryPersona || !budget || !whoWith) {
+    if (!tripId || !userId || !primaryPersona || !budget || !whoWith || !dailySpacing) {
       return res.status(400).json({
         status: "error",
-        message: "Missing required fields: tripId, userId, primaryPersona, budget, whoWith"
+        message: "Missing required fields: tripId, userId, primaryPersona, budget, whoWith, dailySpacing"
       });
     }
 

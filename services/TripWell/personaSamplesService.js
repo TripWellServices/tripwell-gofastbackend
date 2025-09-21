@@ -6,16 +6,23 @@ const openai = new OpenAI();
  * Generate persona-based samples for user learning
  * Returns 2 attractions, 2 restaurants, 2 neat things tagged by persona
  */
-async function generatePersonaSamples(city, personas, budget, whoWith) {
+async function generatePersonaSamples(city, personas, budget, whoWith, season, purpose) {
   try {
-    console.log("🎯 Generating persona samples for:", { city, personas, budget, whoWith });
+    console.log("🎯 Generating persona samples for:", { city, personas, budget, whoWith, season, purpose });
+
+    // Convert numeric budget to category for GPT
+    let budgetCategory = "moderate";
+    if (budget < 200) budgetCategory = "budget";
+    else if (budget > 400) budgetCategory = "luxury";
 
     const systemPrompt = `You are Angela, TripWell's smart travel planner. Generate 6 curated samples for ${city} based on the user's persona weights and preferences.
 
 User Profile:
 - Primary Persona Weights: ${JSON.stringify(personas)}
-- Budget: ${budget}
+- Budget: ${budgetCategory} ($${budget}/day - consider budget level in recommendations)
 - Traveling With: ${whoWith}
+- Season: ${season}
+- Trip Purpose: ${purpose}
 
 Generate exactly 6 items with this structure:
 1. 2 Attractions (tagged by persona)
@@ -30,7 +37,8 @@ Return a JSON object with this exact structure:
       "name": "Attraction Name",
       "type": "museum/landmark/etc",
       "description": "Brief description",
-      "personaTags": ["art", "history"]
+      "personaTags": ["art", "history"],
+      "budgetLevel": "moderate"
     }
   ],
   "restaurants": [
@@ -39,7 +47,8 @@ Return a JSON object with this exact structure:
       "name": "Restaurant Name",
       "cuisine": "Italian/French/etc",
       "description": "Brief description",
-      "personaTags": ["foodie", "art"]
+      "personaTags": ["foodie", "art"],
+      "budgetLevel": "luxury"
     }
   ],
   "neatThings": [
@@ -48,17 +57,20 @@ Return a JSON object with this exact structure:
       "name": "Neat Thing Name", 
       "type": "experience/activity/etc",
       "description": "Brief description",
-      "personaTags": ["adventure", "foodie"]
+      "personaTags": ["adventure", "foodie"],
+      "budgetLevel": "budget"
     }
   ]
 }
 
 Rules:
 - Tag each item with relevant personas (art, foodie, adventure, history)
+- Tag each item with budget level (budget, moderate, luxury)
 - Avoid obvious tourist attractions (those are handled separately)
-- Consider budget level and who they're traveling with
+- Consider budget level, who they're traveling with, season, and trip purpose
 - Make descriptions engaging but brief
 - Ensure variety across the 6 samples
+- Consider seasonal appropriateness (${season})
 
 Return only the JSON object. No explanations, markdown, or extra commentary.`;
 
