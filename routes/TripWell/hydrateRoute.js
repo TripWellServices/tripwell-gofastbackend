@@ -205,6 +205,10 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       };
     }
 
+    // 🎯 Call Python Main Service for new user signup (after full hydration)
+    // Check if this is a new user (created recently)
+    const isNewUser = user.createdAt && (Date.now() - new Date(user.createdAt).getTime()) < 300000; // 5 minutes
+
     const response = {
       userData,
       tripData,
@@ -224,10 +228,6 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       tripDaysTotal: tripData.daysTotal,
       userRole: userData.role
     });
-
-    // 🎯 Call Python Main Service for new user signup (after full hydration)
-    // Check if this is a new user (created recently)
-    const isNewUser = user.createdAt && (Date.now() - new Date(user.createdAt).getTime()) < 300000; // 5 minutes
     if (isNewUser) {
       try {
         console.log(`🎯 Calling Python Main Service for new user after hydration: ${user.email}`);
