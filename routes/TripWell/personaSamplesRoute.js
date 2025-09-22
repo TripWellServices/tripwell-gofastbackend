@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const TripPersona = require("../../models/TripWell/TripPersona");
-const TripBase = require("../../models/TripWell/TripBase");
 const { needSmartPromptService } = require("../../services/TripWell/needsmartpromptservice");
+const { OpenAI } = require("openai");
+const CityStuffToDo = require("../../models/TripWell/CityStuffToDo");
+const SampleSelects = require("../../models/TripWell/SampleSelects");
+const TripBase = require("../../models/TripWell/TripBase");
 
 /**
  * POST /tripwell/persona-samples
@@ -22,39 +24,155 @@ router.post("/persona-samples", async (req, res) => {
   }
 
   try {
-    console.log("📋 Generating persona samples using smart prompt service for trip:", tripId);
+    console.log("📋 Getting persona samples for trip:", tripId);
     
-    // Use the new smart prompt service
-    const result = await needSmartPromptService(tripId, userId);
-    
-    if (!result.success) {
-      return res.status(500).json({
+    // Get trip info to determine cityId and season
+    const tripBase = await TripBase.findById(tripId);
+    if (!tripBase) {
+      return res.status(404).json({
         status: "error",
-        message: result.message
+        message: "TripBase not found"
       });
     }
     
-    console.log("✅ Persona samples generated:", {
-      attractions: result.samples.attractions?.length || 0,
-      restaurants: result.samples.restaurants?.length || 0,
-      neatThings: result.samples.neatThings?.length || 0
+    const cityId = tripBase.cityId || tripBase.city; // Use cityId if available, fallback to city
+    const season = tripBase.season || "any";
+    
+    console.log("🔍 Checking for existing samples:", { cityId, season });
+    
+    // Step 1: Check if samples already exist for this city/season
+    let existingSamples = await CityStuffToDo.findOne({ cityId, season });
+    
+    if (existingSamples) {
+      console.log("✅ Found existing samples for city:", cityId);
+      return res.json({
+        status: "success",
+        message: "Existing samples loaded",
+        tripId,
+        userId,
+        samples: existingSamples.samples,
+        metadata: existingSamples.metadata,
+        sampleObjectId: existingSamples._id,
+        source: "existing"
+      });
+    }
+    
+    console.log("🆕 No existing samples found, generating new ones...");
+    
+    // Step 2: Get prompt from Python via needSmartPromptService
+    const promptResult = await needSmartPromptService(tripId, userId);
+    
+    if (!promptResult.success) {
+      return res.status(500).json({
+        status: "error",
+        message: promptResult.message
+      });
+    }
+    
+    console.log("✅ Python prompt received, calling OpenAI...");
+    
+    // Step 3: Call OpenAI with the generated prompt
+    const openai = new OpenAI();
+    
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are Angela, TripWell's travel assistant. Return structured JSON only. No prose. No markdown." 
+        },
+        { role: "user", content: promptResult.prompt }
+      ],
+      temperature: 0.7,
     });
+
+    const content = completion.choices[0].message.content || "{}";
+    console.log("✅ OpenAI response received");
+    
+    let samplesData;
+    try {
+      samplesData = JSON.parse(content);
+    } catch (error) {
+      const jsonString = content.replace(/'/g, '"');
+      samplesData = JSON.parse(jsonString);
+    }
+    
+    console.log("✅ Persona samples generated:", {
+      attractions: samplesData.attractions?.length || 0,
+      restaurants: samplesData.restaurants?.length || 0,
+      neatThings: samplesData.neatThings?.length || 0
+    });
+    
+    // Step 4: Save samples to CityStuffToDo collection
+    const cityStuffToDo = await CityStuffToDo.create({
+      cityId,
+      season,
+      samples: samplesData,
+      metadata: promptResult.metadata,
+      prompt: promptResult.prompt
+    });
+    
+    console.log("💾 Samples saved to CityStuffToDo:", cityStuffToDo._id);
     
     res.json({
       status: "success",
-      message: "Persona samples generated successfully using smart prompt service",
+      message: "Persona samples generated and saved successfully",
       tripId,
       userId,
-      samples: result.samples,
-      prompt: result.prompt, // Include the generated prompt for debugging
-      metadata: result.metadata,
-      tempState: result.tempState,
+      samples: samplesData,
+      metadata: promptResult.metadata,
+      sampleObjectId: cityStuffToDo._id,
+      source: "generated",
       nextStep: "User selects samples, then call persona-sample-service"
     });
     
   } catch (error) {
     console.error("❌ Persona samples generation failed:", error);
     res.status(500).json({
+      status: "error",
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /tripwell/persona-samples/:cityId/:season
+ * Hydrate existing samples for a city/season (fast lookup)
+ */
+router.get("/persona-samples/:cityId/:season", async (req, res) => {
+  const { cityId, season } = req.params;
+  
+  console.log("🔍 Hydrating samples for:", { cityId, season });
+
+  try {
+    const existingSamples = await CityStuffToDo.findOne({ cityId, season });
+    
+    if (existingSamples) {
+      console.log("✅ Found existing samples for city:", cityId);
+      return res.json({
+        status: "success",
+        message: "Existing samples loaded",
+        cityId,
+        season,
+        samples: existingSamples.samples,
+        metadata: existingSamples.metadata,
+        sampleObjectId: existingSamples._id,
+        source: "hydrated"
+      });
+    } else {
+      console.log("❌ No existing samples found for:", { cityId, season });
+      return res.json({
+        status: "success",
+        message: "No existing samples found",
+        cityId,
+        season,
+        samples: null,
+        source: "not_found"
+      });
+    }
+  } catch (error) {
+    console.error("❌ Sample hydration failed:", error);
+    return res.status(500).json({
       status: "error",
       message: error.message
     });
@@ -69,65 +187,47 @@ router.post("/persona-sample-service", async (req, res) => {
   console.log("🎯 PERSONA SAMPLE SERVICE ROUTE HIT!");
   console.log("🎯 Body:", req.body);
   
-  const { tripId, userId, selectedSamples, currentPersonas } = req.body;
+  const { tripId, userId, selectedSamples, sampleObjectId, cityId } = req.body;
 
-  if (!tripId || !userId || !selectedSamples || !currentPersonas) {
+  if (!tripId || !userId || !selectedSamples || !sampleObjectId || !cityId) {
     return res.status(400).json({
       status: "error",
-      message: "Missing required fields: tripId, userId, selectedSamples, currentPersonas"
+      message: "Missing required fields: tripId, userId, selectedSamples, sampleObjectId, cityId"
     });
   }
 
   try {
-    console.log("📋 Updating persona weights based on selections:", selectedSamples);
-    
-    // Find the TripPersona document
-    let tripPersona = await TripPersona.findOne({ tripId, userId });
-    if (!tripPersona) {
-      return res.status(404).json({
-        status: "error",
-        message: "TripPersona not found"
-      });
-    }
-    
-    // For now, we'll use a simple weight adjustment based on selections
-    // In the future, this could call the updatePersonaWeights service with OpenAI
-    const updatedPersonas = { ...currentPersonas };
-    
-    // Simple logic: if user selected samples, slightly boost those persona weights
-    // This is a placeholder - the real logic would use OpenAI analysis
-    if (selectedSamples.length > 0) {
-      // Boost the primary persona slightly
-      const primaryPersona = Object.keys(updatedPersonas).find(key => updatedPersonas[key] === 0.6);
-      if (primaryPersona) {
-        updatedPersonas[primaryPersona] = Math.min(0.7, updatedPersonas[primaryPersona] + 0.05);
-        // Reduce others slightly to maintain sum of 1.0
-        Object.keys(updatedPersonas).forEach(key => {
-          if (key !== primaryPersona) {
-            updatedPersonas[key] = Math.max(0.05, updatedPersonas[key] - 0.02);
-          }
-        });
-      }
-    }
-    
-    // Update the TripPersona document
-    tripPersona.personas = updatedPersonas;
-    tripPersona.status = 'samples_processed';
-    await tripPersona.save();
-    
-    console.log("✅ Persona weights updated:", updatedPersonas);
-    
-    res.json({
-      status: "success",
-      message: "Persona weights updated successfully",
+    console.log("💾 Saving user sample selections:", {
       tripId,
       userId,
-      updatedPersona: tripPersona,
-      nextStep: "Call build list service with updated weights"
+      selectedSamples: selectedSamples.length,
+      sampleObjectId,
+      cityId
     });
-    
+
+    // Save user selections to SampleSelects collection
+    const sampleSelection = await SampleSelects.create({
+      sampleObjectId,
+      tripId,
+      cityId,
+      userId,
+      selectedSamples
+    });
+
+    console.log("✅ Sample selections saved:", sampleSelection._id);
+
+    res.json({
+      status: "success",
+      message: "Sample selections saved successfully",
+      tripId,
+      userId,
+      sampleSelectionId: sampleSelection._id,
+      selectedCount: selectedSamples.length,
+      nextStep: "Use selections for itinerary generation"
+    });
+
   } catch (error) {
-    console.error("❌ Persona weight update failed:", error);
+    console.error("❌ Sample selection save failed:", error);
     res.status(500).json({
       status: "error",
       message: error.message
