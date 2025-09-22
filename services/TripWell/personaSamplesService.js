@@ -1,9 +1,48 @@
 const { OpenAI } = require("openai");
+const { generatePersonaSamplesWithFallback } = require('./pythonSampleService');
 
 const openai = new OpenAI();
 
 /**
- * Generate persona-based samples for user learning
+ * Generate persona-based samples using Python service (new approach)
+ * Returns 2 attractions, 2 restaurants, 2 neat things tagged by persona
+ */
+async function generatePersonaSamplesNew(city, personaWeights, budget, budgetLevel, romanceLevel, caretakerRole, flexibility, whoWith, dailySpacing, season, purpose) {
+  try {
+    console.log("🎯 Generating persona samples with Python service...");
+    
+    const requestData = {
+      city,
+      persona_weights: personaWeights,
+      budget,
+      budget_level: budgetLevel,
+      romance_level: romanceLevel,
+      caretaker_role: caretakerRole,
+      flexibility,
+      who_with: whoWith,
+      daily_spacing: dailySpacing,
+      season,
+      purpose
+    };
+    
+    const result = await generatePersonaSamplesWithFallback(requestData);
+    
+    if (result.success) {
+      console.log("✅ Persona samples generated successfully");
+      return result.samples;
+    } else {
+      console.error("❌ Sample generation failed:", result.message);
+      throw new Error(result.message);
+    }
+    
+  } catch (error) {
+    console.error("❌ Persona samples generation failed:", error);
+    throw error;
+  }
+}
+
+/**
+ * Generate persona-based samples for user learning (legacy function)
  * Returns 2 attractions, 2 restaurants, 2 neat things tagged by persona
  */
 async function generatePersonaSamples(city, personas, budget, whoWith, season, purpose) {
@@ -207,5 +246,6 @@ Return only the JSON object. No explanations, markdown, or extra commentary.`;
 
 module.exports = {
   generatePersonaSamples,
+  generatePersonaSamplesNew,
   updatePersonaWeights
 };

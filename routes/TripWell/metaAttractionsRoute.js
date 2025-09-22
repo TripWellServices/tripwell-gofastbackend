@@ -5,7 +5,51 @@ const City = require("../../models/TripWell/City");
 const { generateMetaAttractions } = require("../../services/TripWell/metaAttractionsService");
 
 /**
- * POST /tripwell/meta-attractions
+ * GET /tripwell/meta-attractions/:cityId/:season
+ * Fast lookup of existing meta attractions from database
+ * No auth needed - just a content library lookup
+ */
+
+router.get("/meta-attractions/:cityId/:season", async (req, res) => {
+  const { cityId, season } = req.params;
+  
+  console.log("🎯 FAST META LOOKUP:", { cityId, season });
+
+  try {
+    // Simple fast lookup - no generation, just return what exists
+    const metaAttractions = await MetaAttractions.findOne({ cityId, season });
+    
+    if (metaAttractions && metaAttractions.metaAttractions) {
+      console.log("✅ Meta attractions found:", metaAttractions.metaAttractions.length);
+      return res.json({
+        status: "success",
+        message: "Meta attractions loaded",
+        cityId,
+        metaAttractionsId: metaAttractions._id,
+        metaAttractions: metaAttractions.metaAttractions,
+        source: "fast_lookup"
+      });
+    } else {
+      console.log("❌ No meta attractions found for:", { cityId, season });
+      return res.json({
+        status: "success",
+        message: "No meta attractions found",
+        cityId,
+        metaAttractions: [],
+        source: "fast_lookup_empty"
+      });
+    }
+  } catch (error) {
+    console.error("❌ Fast meta lookup failed:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Fast lookup failed: " + error.message
+    });
+  }
+});
+
+/**
+ * POST /tripwell/meta-attractions (LEGACY - KEEP FOR NOW)
  * Hydrates existing meta attractions from database
  * Meta attractions should already exist (generated during city creation)
  */

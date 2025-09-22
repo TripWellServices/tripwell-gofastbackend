@@ -1,43 +1,54 @@
 const express = require("express");
 const router = express.Router();
 const TripPersona = require("../../models/TripWell/TripPersona");
-const { generatePersonaSamples } = require("../../services/TripWell/personaSamplesService");
+const TripBase = require("../../models/TripWell/TripBase");
+const { needSmartPromptService } = require("../../services/TripWell/needsmartpromptservice");
 
 /**
  * POST /tripwell/persona-samples
- * Generate persona-based samples for user learning
+ * Generate persona-based samples using Python AI service
  */
 router.post("/persona-samples", async (req, res) => {
   console.log("🎯 PERSONA SAMPLES ROUTE HIT!");
   console.log("🎯 Body:", req.body);
   
-  const { tripId, userId, city, personas, budget, whoWith } = req.body;
+  const { tripId, userId } = req.body;
 
-  if (!tripId || !userId || !city || !personas || !budget || !whoWith) {
+  if (!tripId || !userId) {
     return res.status(400).json({
       status: "error",
-      message: "Missing required fields: tripId, userId, city, personas, budget, whoWith"
+      message: "Missing required fields: tripId, userId"
     });
   }
 
   try {
-    console.log("📋 Generating persona samples for:", city);
+    console.log("📋 Generating persona samples using smart prompt service for trip:", tripId);
     
-    // Generate samples using OpenAI
-    const samples = await generatePersonaSamples(city, personas, budget, whoWith);
+    // Use the new smart prompt service
+    const result = await needSmartPromptService(tripId, userId);
+    
+    if (!result.success) {
+      return res.status(500).json({
+        status: "error",
+        message: result.message
+      });
+    }
     
     console.log("✅ Persona samples generated:", {
-      attractions: samples.attractions?.length || 0,
-      restaurants: samples.restaurants?.length || 0,
-      neatThings: samples.neatThings?.length || 0
+      attractions: result.samples.attractions?.length || 0,
+      restaurants: result.samples.restaurants?.length || 0,
+      neatThings: result.samples.neatThings?.length || 0
     });
     
     res.json({
       status: "success",
-      message: "Persona samples generated successfully",
+      message: "Persona samples generated successfully using smart prompt service",
       tripId,
       userId,
-      samples: samples,
+      samples: result.samples,
+      prompt: result.prompt, // Include the generated prompt for debugging
+      metadata: result.metadata,
+      tempState: result.tempState,
       nextStep: "User selects samples, then call persona-sample-service"
     });
     
