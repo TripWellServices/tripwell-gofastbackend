@@ -11,7 +11,6 @@
 
 const TripPersona = require("../../models/TripWell/TripPersona");
 const TripBase = require("../../models/TripWell/TripBase");
-const TripSetup = require("../../models/TripWell/TripSetup");
 const { generatePromptPython } = require('./pythonSampleService');
 
 /**
@@ -90,11 +89,8 @@ async function getUserContext(tripId, userId) {
       throw new Error("TripBase not found");
     }
     
-    // Get TripSetup data for whoWith, romanceLevel, etc.
-    const tripSetup = await TripSetup.findOne({ tripId, userId });
-    if (!tripSetup) {
-      console.log("⚠️ TripSetup not found, using defaults");
-    }
+    // Note: TripSetup model doesn't exist, using defaults for now
+    console.log("⚠️ Using default values for trip setup data");
     
     // Calculate persona weights from primaryPersona
     const personaWeights = {
@@ -110,10 +106,10 @@ async function getUserContext(tripId, userId) {
       persona_weights: personaWeights,
       budget: tripPersona.budget,
       budget_level: tripPersona.budgetLevel,
-      romance_level: tripSetup?.romanceLevel || 0.0,
-      caretaker_role: tripSetup?.caretakerRole || 0.0,
-      flexibility: tripSetup?.flexibility || 0.5,
-      who_with: tripSetup?.whoWith || "solo",
+      romance_level: 0.0, // Default values since TripSetup doesn't exist
+      caretaker_role: 0.0,
+      flexibility: 0.5,
+      who_with: "solo",
       daily_spacing: tripPersona.dailySpacing,
       season: tripBase.season,
       purpose: "vacation" // TODO: get from tripBase or tripSetup
