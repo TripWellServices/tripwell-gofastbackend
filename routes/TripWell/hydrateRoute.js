@@ -151,7 +151,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       });
       
       tripPersonaData = {
-        tripPersonaId: finalTripPersona._id,
+        tripPersonaId: finalTripPersona._id.toString(),
         primaryPersona: finalTripPersona.primaryPersona,
         personas: finalTripPersona.personas || {},
         budget: finalTripPersona.budget || "",

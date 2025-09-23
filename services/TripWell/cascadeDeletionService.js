@@ -92,12 +92,19 @@ async function deleteUserTripsCascade(userId, session = null) {
   try {
     console.log(`🗑️ Starting cascade deletion for all trips by user: ${userId}`);
     
-    // Find all trips by this user (through TripWellUser relationship)
+    // Find the user and their tripId
     const TripWellUser = require('../../models/TripWellUser');
-    const userTrips = await TripWellUser.find({ 
-      _id: userId, 
-      role: "originator" 
-    }).populate('tripId');
+    const user = await TripWellUser.findById(userId);
+    if (!user) {
+      throw new Error(`User ${userId} not found`);
+    }
+    
+    if (!user.tripId) {
+      console.log(`✅ User ${userId} has no tripId, nothing to delete`);
+      return { success: true, tripsDeleted: 0, totalRecordsDeleted: 0 };
+    }
+    
+    const userTrips = [{ tripId: user.tripId }];
     
     console.log(`🔍 Found ${userTrips.length} trips by user ${userId}`);
     
@@ -108,18 +115,14 @@ async function deleteUserTripsCascade(userId, session = null) {
     let totalRecordsDeleted = 0;
     const deletedTrips = [];
     
-    // Delete each trip with cascade
-    for (const userTrip of userTrips) {
-      if (userTrip.tripId) {
-        const result = await deleteTripCascade(userTrip.tripId._id, session);
-        totalRecordsDeleted += result.totalDeleted;
-        deletedTrips.push({
-          tripId: userTrip.tripId._id,
-          tripName: userTrip.tripId.tripName,
-          joinCode: userTrip.tripId.joinCode
-        });
-      }
-    }
+    // Delete the trip with cascade
+    const result = await deleteTripCascade(userTrips[0].tripId, session);
+    totalRecordsDeleted += result.totalDeleted;
+    deletedTrips.push({
+      tripId: userTrips[0].tripId,
+      tripName: "User's trip",
+      joinCode: "N/A"
+    });
     
     console.log(`✅ Cascade deletion complete for user ${userId}. Deleted ${deletedTrips.length} trips and ${totalRecordsDeleted} total records`);
     

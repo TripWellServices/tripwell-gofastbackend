@@ -31,46 +31,46 @@ class UserResetService {
         throw new Error(`User ${userId} not found`);
       }
 
-      // 2. Get all trips for this user
-      const userTrips = await TripBase.find({ 
-        $or: [
-          { originatorId: userId },
-          { participantIds: userId }
-        ]
-      });
-
-      console.log(`🔍 Found ${userTrips.length} trips for user`);
-
-      // 3. Delete all related data (cascade)
-      for (const trip of userTrips) {
-        try {
-          // Delete trip personas
-          const personasDeleted = await TripPersona.deleteMany({ tripId: trip._id });
-          results.personasDeleted += personasDeleted.deletedCount;
-
-          // Delete user selections
-          const selectionsDeleted = await UserSelections.deleteMany({ tripId: trip._id });
-          results.selectionsDeleted += selectionsDeleted.deletedCount;
-
-            // Delete itineraries
-            const itinerariesDeleted = await TripItinerary.deleteMany({ tripId: trip._id });
-          results.itinerariesDeleted += itinerariesDeleted.deletedCount;
-
-          console.log(`🗑️ Deleted data for trip ${trip._id}: ${personasDeleted.deletedCount} personas, ${selectionsDeleted.deletedCount} selections, ${itinerariesDeleted.deletedCount} itineraries`);
-        } catch (tripError) {
-          console.error(`❌ Error deleting data for trip ${trip._id}:`, tripError);
-          results.errors.push(`Trip ${trip._id}: ${tripError.message}`);
+      // 2. Get user's tripId
+      const userTripId = user.tripId;
+      if (!userTripId) {
+        console.log("✅ User has no tripId, skipping trip deletion");
+        results.tripsDeleted = 0;
+      } else {
+        // 3. Find the trip
+        const userTrip = await TripBase.findById(userTripId);
+        if (!userTrip) {
+          console.log("⚠️ User has tripId but trip not found, continuing with reset");
+        } else {
+          console.log(`🔍 Found trip ${userTripId} for user`);
         }
       }
 
-      // 4. Delete all trips
-      const tripsDeleted = await TripBase.deleteMany({ 
-        $or: [
-          { originatorId: userId },
-          { participantIds: userId }
-        ]
-      });
-      results.tripsDeleted = tripsDeleted.deletedCount;
+      // 3. Delete all related data (cascade) if user has a trip
+      if (userTripId) {
+        try {
+          // Delete trip personas
+          const personasDeleted = await TripPersona.deleteMany({ tripId: userTripId });
+          results.personasDeleted = personasDeleted.deletedCount;
+
+          // Delete user selections
+          const selectionsDeleted = await UserSelections.deleteMany({ tripId: userTripId });
+          results.selectionsDeleted = selectionsDeleted.deletedCount;
+
+          // Delete itineraries
+          const itinerariesDeleted = await TripItinerary.deleteMany({ tripId: userTripId });
+          results.itinerariesDeleted = itinerariesDeleted.deletedCount;
+
+          // Delete the trip itself
+          const tripDeleted = await TripBase.findByIdAndDelete(userTripId);
+          results.tripsDeleted = tripDeleted ? 1 : 0;
+
+          console.log(`🗑️ Deleted data for trip ${userTripId}: ${personasDeleted.deletedCount} personas, ${selectionsDeleted.deletedCount} selections, ${itinerariesDeleted.deletedCount} itineraries, ${results.tripsDeleted} trips`);
+        } catch (tripError) {
+          console.error(`❌ Error deleting data for trip ${userTripId}:`, tripError);
+          results.errors.push(`Trip ${userTripId}: ${tripError.message}`);
+        }
+      }
 
       // 5. Reset user to new user state
       const userReset = await TripWellUser.findByIdAndUpdate(
