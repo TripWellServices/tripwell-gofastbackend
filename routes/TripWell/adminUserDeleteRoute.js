@@ -41,20 +41,21 @@ router.delete("/users/:id", verifyAdminAuth, async (req, res) => {
     
     // Start a session for transaction
     const session = await mongoose.startSession();
-    let deletionResult;
     
     try {
-      await session.withTransaction(async () => {
+      const deletionResult = await session.withTransaction(async () => {
         console.log(`🔍 DEBUG: Starting modular cascade deletion for user ${userId}`);
         
         // Use modular cascade deletion service
-        deletionResult = await deleteUserWithCascade(userId, session);
+        const result = await deleteUserWithCascade(userId, session);
         
         console.log(`🗑️ Modular cascade deleted user ${userToDelete.email}:`, {
-          tripsDeleted: deletionResult.tripsDeleted,
-          totalRecordsDeleted: deletionResult.totalRecordsDeleted,
-          deletedCollections: deletionResult.deletedCollections
+          tripsDeleted: result.tripsDeleted,
+          totalRecordsDeleted: result.totalRecordsDeleted,
+          deletedCollections: result.deletedCollections
         });
+        
+        return result;
       });
       
       console.log(`✅ Admin deleted user: ${userToDelete.email} (${userId}) with modular cascade`);

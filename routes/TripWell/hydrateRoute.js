@@ -22,7 +22,16 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     // Get user data
     const user = await TripWellUser.findOne({ firebaseId });
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      console.log("🔍 No user found for firebaseId:", firebaseId);
+      return res.status(200).json({ 
+        message: "No users to load - please sign up first!",
+        isNewUser: true,
+        userData: null,
+        tripData: null,
+        tripPersonaData: null,
+        itineraryData: null,
+        anchorLogicData: null
+      });
     }
 
     // Build userData
