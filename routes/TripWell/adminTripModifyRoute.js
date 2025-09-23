@@ -29,20 +29,46 @@ router.get("/trips", async (req, res) => {
   }
 });
 
-// DELETE /tripwell/admin/trips/:id - Delete a trip
+// DELETE /tripwell/admin/trips/:id - Delete a trip with cascade deletion
 router.delete("/trips/:id", async (req, res) => {
   try {
     const tripId = req.params.id;
+    console.log(`🗑️ Admin attempting to delete trip: ${tripId}`);
     
-    // Find and delete the trip
-    const deletedTrip = await TripBase.findByIdAndDelete(tripId);
-    
-    if (!deletedTrip) {
+    // Find the trip first to get its name for logging
+    const tripToDelete = await TripBase.findById(tripId);
+    if (!tripToDelete) {
+      console.log(`❌ Trip not found: ${tripId}`);
       return res.status(404).json({ error: "Trip not found" });
     }
     
-    console.log(`✅ Admin deleted trip: ${deletedTrip.tripName} (${tripId})`);
-    res.json({ message: "Trip deleted successfully" });
+    // Import cascade deletion service
+    const { deleteTripCascade } = require("../../services/TripWell/cascadeDeletionService");
+    
+    // Start a session for transaction
+    const mongoose = require("mongoose");
+    const session = await mongoose.startSession();
+    
+    try {
+      await session.withTransaction(async () => {
+        console.log(`🔍 DEBUG: Starting cascade deletion for trip ${tripId}`);
+        // Delete trip and all associated data (cascade deletion)
+        const deletionResult = await deleteTripCascade(tripId, session);
+        console.log(`🗑️ Cascade deleted trip ${tripToDelete.tripName} and ${deletionResult.totalDeleted} total records`);
+        console.log(`🔍 DEBUG: Deletion result:`, deletionResult);
+      });
+      
+      console.log(`✅ Admin deleted trip: ${tripToDelete.tripName} (${tripId}) with cascade deletion`);
+      res.json({ 
+        message: "Trip deleted successfully with cascade deletion",
+        tripName: tripToDelete.tripName,
+        totalRecordsDeleted: deletionResult.totalDeleted
+      });
+      
+    } finally {
+      await session.endSession();
+    }
+    
   } catch (error) {
     console.error("❌ Admin trip delete error:", error);
     res.status(500).json({ error: "Failed to delete trip" });

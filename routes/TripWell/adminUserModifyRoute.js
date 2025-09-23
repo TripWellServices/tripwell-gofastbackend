@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require("mongoose");
 const TripWellUser = require("../../models/TripWellUser");
 
 // Simple admin auth middleware
@@ -22,223 +21,92 @@ const verifyAdminAuth = (req, res, next) => {
   }
 };
 
-// Simple test route without auth to verify route mounting
-router.get("/ping", (req, res) => {
-  console.log("🏓 Ping route hit!");
-  res.json({ message: "Admin route is working!", timestamp: new Date().toISOString() });
-});
+// 🚧 FUTURE RABBIT HOLE: User Modification Tool
+// This is a breadcrumb for future development
+// The full implementation would be in FullUser.jsx with drill-down editing
 
-
-
-// GET /tripwell/admin/test - Test route to verify TripWellUser model
-router.get("/test", verifyAdminAuth, async (req, res) => {
+// PUT /tripwell/admin/users/:id - Modify user data (BREADCRUMB)
+router.put("/users/:id", verifyAdminAuth, async (req, res) => {
+  console.log("🚧 FUTURE RABBIT HOLE: User modification route hit!");
+  console.log("🔍 This is a breadcrumb for future FullUser.jsx drill-down editing");
+  
   try {
-    console.log("🔍 Testing TripWellUser model access...");
-    console.log("🔍 Model path:", require.resolve("../../models/TripWellUser"));
+    const userId = req.params.id;
+    const { firstName, lastName, email, hometownCity, state, persona, planningStyle, dreamDestination } = req.body;
     
-    const userCount = await TripWellUser.countDocuments();
-    console.log("✅ User count:", userCount);
-    
-    // Try to get one user to verify the model works
-    const sampleUser = await TripWellUser.findOne();
-    console.log("✅ Sample user:", sampleUser ? sampleUser.email : "No users found");
-    
-    res.json({ 
-      message: "TripWellUser model is accessible", 
-      userCount: userCount,
-      modelPath: "models/TripWellUser",
-      sampleUser: sampleUser ? { email: sampleUser.email, id: sampleUser._id } : null
+    console.log(`🚧 FUTURE: Would modify user ${userId} with data:`, {
+      firstName, lastName, email, hometownCity, state, persona, planningStyle, dreamDestination
     });
+    
+    // 🚧 FUTURE IMPLEMENTATION:
+    // 1. FullUser.jsx would have drill-down editing
+    // 2. Profile editing within FullUser component
+    // 3. Trip editing within FullUser component
+    // 4. Real-time validation and error handling
+    
+    // For now, return a breadcrumb response
+    res.json({
+      message: "🚧 FUTURE RABBIT HOLE: User modification not yet implemented",
+      breadcrumb: "This will be implemented in FullUser.jsx with drill-down editing",
+      futureFeatures: [
+        "Edit user profile data (names, email, hometown)",
+        "Edit trip preferences (persona, planning style)",
+        "Edit dream destination",
+        "Real-time validation",
+        "Drill-down editing interface"
+      ],
+      currentStatus: "Breadcrumb only - use DELETE route for user deletion"
+    });
+    
   } catch (error) {
-    console.error("❌ Test route error:", error);
-    res.status(500).json({ error: "Test route failed", details: error.message });
+    console.error("❌ Future user modification error:", error);
+    res.status(500).json({ 
+      error: "Future user modification not implemented",
+      breadcrumb: "Use DELETE route for user deletion"
+    });
   }
 });
 
-// GET /tripwell/admin/users route moved to adminUserFetchRoute.js
-
-// DELETE /tripwell/admin/users/:id - Delete a user and all associated data
-router.delete("/users/:id", async (req, res) => {
-  console.log("🎯 DELETE /tripwell/admin/users/:id route hit!");
+// GET /tripwell/admin/users/:id - Get user details for FullUser.jsx (BREADCRUMB)
+router.get("/users/:id", verifyAdminAuth, async (req, res) => {
+  console.log("🚧 FUTURE RABBIT HOLE: Get user details route hit!");
+  
   try {
     const userId = req.params.id;
-    console.log(`🗑️ Admin attempting to delete user: ${userId}`);
     
-    // Find the user first to get their email for logging
-    const userToDelete = await TripWellUser.findById(userId);
-    if (!userToDelete) {
-      console.log(`❌ User not found in database: ${userId}`);
-      return res.status(404).json({ error: "User not found" });
-    }
-    
-    // Import unified cascade deletion service
-    const { cascadeDelete } = require("../../services/TripWell/cascadeDeletionService");
-    
-    // Start a session for transaction
-    const session = await mongoose.startSession();
-    
-    try {
-      await session.withTransaction(async () => {
-        console.log(`🔍 DEBUG: Starting cascade deletion for user ${userId}`);
-        // 1. Delete all trips and associated data for this user (unified cascade deletion)
-        const deletionResult = await cascadeDelete(userId, null, session);
-        console.log(`🗑️ Unified cascade deleted ${deletionResult.tripsDeleted} trips and ${deletionResult.totalRecordsDeleted} total records for user ${userToDelete.email}`);
-        console.log(`🔍 DEBUG: Deletion result:`, deletionResult);
-        
-        // 2. Finally delete the user
-        const deletedUser = await TripWellUser.findByIdAndDelete(userId, { session });
-        console.log(`✅ Admin deleted user: ${deletedUser.email} (${userId})`);
-      });
-      
-      res.json({ 
-        message: "User and all associated data deleted successfully",
-        userEmail: userToDelete.email
-      });
-      
-    } finally {
-      await session.endSession();
-    }
-    
-  } catch (error) {
-    console.error("❌ Admin user delete error:", error);
-    res.status(500).json({ error: "Failed to delete user" });
-  }
-});
-
-// PUT /tripwell/admin/users/:id - Update user (for future use)
-router.put("/users/:id", async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const updates = req.body;
-    
-    const updatedUser = await TripWellUser.findByIdAndUpdate(
-      userId, 
-      updates, 
-      { new: true }
-    );
-    
-    if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    
-    console.log(`✅ Admin updated user: ${updatedUser.email} (${userId})`);
-    res.json({ message: "User updated successfully", user: updatedUser });
-  } catch (error) {
-    console.error("❌ Admin user update error:", error);
-    res.status(500).json({ error: "Failed to update user" });
-  }
-});
-
-// GET /tripwell/admin/hydrate - Get all users for admin dashboard (admin version of hydrate)
-router.get("/hydrate", async (req, res) => {
-  try {
-    const users = await TripWellUser.find({}).sort({ createdAt: -1 });
-    console.log(`📊 Admin hydrate: Found ${users.length} users in database`);
-    
-    // Transform data for admin dashboard - only use fields that exist in the model
-    const adminUsers = users.map(user => ({
-      userId: user._id,
-      firebaseId: user.firebaseId, // ✅ Include Firebase ID
-      email: user.email,
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      createdAt: user.createdAt,
-      lastActiveAt: user.updatedAt, // Using updatedAt as proxy for last activity (will be renamed in MVP2)
-      tripId: user.tripId,
-      tripCreatedAt: user.tripId ? user.createdAt : null, // If they have a trip, use creation date
-      tripCompletedAt: null, // This field doesn't exist in the model yet
-      role: user.role || 'noroleset',
-      profileComplete: user.profileComplete || false,
-      funnelStage: user.funnelStage || 'none' // Add funnel stage tracking
-    }));
-    
-    console.log(`📊 Admin hydrate: Returning ${adminUsers.length} users to frontend`);
-    res.json(adminUsers);
-  } catch (error) {
-    console.error("❌ Admin hydrate error:", error);
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-});
-
-// POST /tripwell/admin/user/:userId/reset-journey - Reset user journey stage
-router.post("/user/:userId/reset-journey", async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    const { journeyStage, userState } = req.body;
-    
-    console.log(`🔄 Admin resetting journey for user ${userId} to stage: ${journeyStage}, state: ${userState}`);
-    
-    if (!journeyStage || !userState) {
-      return res.status(400).json({ error: "journeyStage and userState are required" });
-    }
-    
+    // Get user data for FullUser.jsx
     const user = await TripWellUser.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
     
-    // Update user journey stage and state
-    const updatedUser = await TripWellUser.findByIdAndUpdate(
-      userId,
-      { 
-        journeyStage: journeyStage,
-        userState: userState,
-        updatedAt: new Date()
-      },
-      { new: true }
-    );
+    console.log(`🚧 FUTURE: Would return user ${userId} data for FullUser.jsx`);
     
-    console.log(`✅ Admin reset journey for user: ${user.email} to ${journeyStage}/${userState}`);
+    // 🚧 FUTURE IMPLEMENTATION:
+    // 1. Return user data for FullUser.jsx
+    // 2. Include trip data for drill-down editing
+    // 3. Include profile data for editing
+    // 4. Include journey stage for context
     
-    res.json({ 
-      success: true, 
-      message: `User journey reset to ${journeyStage}/${userState}`,
-      user: {
-        email: updatedUser.email,
-        journeyStage: updatedUser.journeyStage,
-        userState: updatedUser.userState
-      }
+    res.json({
+      message: "🚧 FUTURE RABBIT HOLE: User details not yet implemented",
+      breadcrumb: "This will return user data for FullUser.jsx drill-down editing",
+      futureFeatures: [
+        "Return complete user profile data",
+        "Include trip data for editing",
+        "Include journey stage context",
+        "Include modification history",
+        "Include validation status"
+      ],
+      currentStatus: "Breadcrumb only - use GET /admin/users for user list"
     });
     
   } catch (error) {
-    console.error("❌ Error resetting user journey:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Add this new route to fix profileComplete
-router.put("/fixProfileComplete", async (req, res) => {
-  try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
-
-    const user = await TripWellUser.findOne({ email });
-    
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // Update profileComplete to true
-    const updatedUser = await TripWellUser.findByIdAndUpdate(
-      user._id,
-      { profileComplete: true },
-      { new: true }
-    );
-
-    console.log(`✅ Fixed profileComplete for user: ${email}`);
-    
-    res.json({ 
-      success: true, 
-      message: `Profile complete flag set to true for ${email}`,
-      user: updatedUser 
+    console.error("❌ Future user details error:", error);
+    res.status(500).json({ 
+      error: "Future user details not implemented",
+      breadcrumb: "Use GET /admin/users for user list"
     });
-    
-  } catch (error) {
-    console.error("❌ Error fixing profileComplete:", error);
-    res.status(500).json({ error: error.message });
   }
 });
 

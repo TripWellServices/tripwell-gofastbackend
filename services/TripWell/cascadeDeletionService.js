@@ -3,7 +3,7 @@
 const mongoose = require('mongoose');
 const TripBase = require('../../models/TripWell/TripBase');
 const JoinCode = require('../../models/TripWell/JoinCode');
-const TripIntent = require('../../models/TripWell/TripIntent');
+const TripPersona = require('../../models/TripWell/TripPersona');
 const TripItinerary = require('../../models/TripWell/TripItinerary');
 const TripDay = require('../../models/TripWell/TripDay');
 const AnchorLogic = require('../../models/TripWell/AnchorLogic');
@@ -28,9 +28,9 @@ async function deleteTripCascade(tripId, session = null) {
     const deletedJoinCodes = await JoinCode.deleteMany({ tripId }, deleteOptions);
     console.log(`🗑️ Deleted ${deletedJoinCodes.deletedCount} JoinCode entries for trip ${tripId}`);
     
-    // 2. Delete TripIntent
-    const deletedTripIntents = await TripIntent.deleteMany({ tripId }, deleteOptions);
-    console.log(`🗑️ Deleted ${deletedTripIntents.deletedCount} TripIntents for trip ${tripId}`);
+    // 2. Delete TripPersona
+    const deletedTripPersonas = await TripPersona.deleteMany({ tripId }, deleteOptions);
+    console.log(`🗑️ Deleted ${deletedTripPersonas.deletedCount} TripPersonas for trip ${tripId}`);
     
     // 3. Delete TripItinerary
     const deletedTripItineraries = await TripItinerary.deleteMany({ tripId }, deleteOptions);
@@ -53,7 +53,7 @@ async function deleteTripCascade(tripId, session = null) {
     console.log(`🗑️ Deleted TripBase: ${deletedTripBase?.tripName || 'Unknown'} (${tripId})`);
     
     const totalDeleted = deletedJoinCodes.deletedCount + 
-                        deletedTripIntents.deletedCount + 
+                        deletedTripPersonas.deletedCount + 
                         deletedTripItineraries.deletedCount + 
                         deletedTripDays.deletedCount + 
                         deletedAnchorLogic.deletedCount + 
@@ -67,7 +67,7 @@ async function deleteTripCascade(tripId, session = null) {
       tripId,
       deletedCounts: {
         joinCodes: deletedJoinCodes.deletedCount,
-        tripIntents: deletedTripIntents.deletedCount,
+        tripPersonas: deletedTripPersonas.deletedCount,
         tripItineraries: deletedTripItineraries.deletedCount,
         tripDays: deletedTripDays.deletedCount,
         anchorLogic: deletedAnchorLogic.deletedCount,
@@ -116,7 +116,7 @@ async function deleteUserTripsCascade(userId, session = null) {
     const deletedTrips = [];
     
     // Delete the trip with cascade
-    const result = await deleteTripCascade(userTrips[0].tripId, session);
+    const result = await deleteTripCascade(userTrips[0].tripId.toString(), session);
     totalRecordsDeleted += result.totalDeleted;
     deletedTrips.push({
       tripId: userTrips[0].tripId,
@@ -173,12 +173,12 @@ async function deleteOrphanedDataCascade(session = null) {
     totalDeleted += orphanedJoinCodes.deletedCount;
     console.log(`🗑️ Deleted ${orphanedJoinCodes.deletedCount} orphaned JoinCodes`);
     
-    // Delete orphaned TripIntents
-    const orphanedTripIntents = await TripIntent.deleteMany({
+    // Delete orphaned TripPersonas
+    const orphanedTripPersonas = await TripPersona.deleteMany({
       userId: { $nin: existingUserIds }
     }, deleteOptions);
-    totalDeleted += orphanedTripIntents.deletedCount;
-    console.log(`🗑️ Deleted ${orphanedTripIntents.deletedCount} orphaned TripIntents`);
+    totalDeleted += orphanedTripPersonas.deletedCount;
+    console.log(`🗑️ Deleted ${orphanedTripPersonas.deletedCount} orphaned TripPersonas`);
     
     // Delete orphaned TripItineraries
     const orphanedTripItineraries = await TripItinerary.deleteMany({
@@ -222,7 +222,7 @@ async function deleteOrphanedDataCascade(session = null) {
       totalDeleted,
       deletedCounts: {
         joinCodes: orphanedJoinCodes.deletedCount,
-        tripIntents: orphanedTripIntents.deletedCount,
+        tripPersonas: orphanedTripPersonas.deletedCount,
         tripItineraries: orphanedTripItineraries.deletedCount,
         tripDays: orphanedTripDays.deletedCount,
         anchorLogic: orphanedAnchorLogic.deletedCount,
