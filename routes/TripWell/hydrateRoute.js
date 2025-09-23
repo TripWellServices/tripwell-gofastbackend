@@ -4,19 +4,15 @@ const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const TripWellUser = require("../../models/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 const TripPersona = require("../../models/TripWell/TripPersona");
-const AnchorLogic = require("../../models/TripWell/AnchorLogic");
-const TripDay = require("../../models/TripWell/TripDay");
-const axios = require("axios");
-
-// Environment variables
-const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "https://tripwell-ai.onrender.com";
+const TripItinerary = require("../../models/TripWell/TripItinerary");
+const UserSelections = require("../../models/TripWell/UserSelections");
+const SampleSelects = require("../../models/TripWell/SampleSelects");
 
 // 🔐 GET /tripwell/hydrate
-// Description: Returns all localStorage data for the authenticated user
-// Simple, direct database queries
+// Description: Load all data for the authenticated user
 router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
   try {
-    console.log("🔄 GET /tripwell/hydrate - Simple data flush");
+    console.log("🔄 GET /tripwell/hydrate - Loading all data");
     const firebaseId = req.user.uid;
     
     // Get user data
@@ -29,8 +25,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
         userData: null,
         tripData: null,
         tripPersonaData: null,
-        itineraryData: null,
-        anchorLogicData: null
+        itineraryData: null
       });
     }
 
@@ -46,21 +41,6 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       role: user.role || "noroleset"
     };
 
-    // 🔍 DEBUG: Log the actual profileComplete value from database
-    console.log("🔍 DEBUG - ProfileComplete from DB:", {
-      rawValue: user.profileComplete,
-      type: typeof user.profileComplete,
-      finalValue: userData.profileComplete,
-      hasFirstName: !!user.firstName,
-      hasLastName: !!user.lastName
-    });
-
-    console.log("🔍 User data:", { 
-      firebaseId: user.firebaseId, 
-      role: user.role, 
-      tripId: user.tripId 
-    });
-
     // If no trip, return just user data
     if (!user.tripId) {
       console.log("✅ No trip found, returning user data only");
@@ -68,7 +48,6 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
         userData,
         tripData: null,
         tripPersonaData: null,
-        anchorLogicData: null,
         itineraryData: null
       });
     }
@@ -81,208 +60,62 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
         userData,
         tripData: null,
         tripPersonaData: null,
-        anchorLogicData: null,
         itineraryData: null
       });
     }
 
-    // Build tripData with computed values
-    console.log("🔍 DEBUG - Backend trip flags:", {
-      userRole: user.role,
-      tripStartedByOriginator: trip.tripStartedByOriginator,
-      tripStartedByParticipant: trip.tripStartedByParticipant
-    });
-    
-    const startedTrip = (user.role === "originator" && trip.tripStartedByOriginator) || (user.role === "participant" && trip.tripStartedByParticipant) || false;
-    console.log("🔍 DEBUG - Computed startedTrip:", startedTrip);
-    
+    // Build tripData
     const tripData = {
-      tripId: trip._id,
+      tripId: trip._id.toString(),
       tripName: trip.tripName,
-      purpose: trip.purpose,
+      city: trip.city,
       startDate: trip.startDate,
       endDate: trip.endDate,
-      city: trip.city,
-      joinCode: trip.joinCode,
-      whoWith: trip.whoWith || [],
-      partyCount: trip.partyCount,
-      season: trip.season,
       daysTotal: trip.daysTotal,
-      startedTrip: startedTrip,
-      tripComplete: trip.tripComplete || false
+      season: trip.season,
+      purpose: trip.purpose,
+      whoWith: trip.whoWith,
+      tripComplete: trip.tripComplete || false,
+      startedTrip: trip.startedTrip || false
     };
 
-    console.log("🔍 Trip data:", { 
-      tripId: trip._id, 
-      season: trip.season, 
-      daysTotal: trip.daysTotal 
-    });
+    // Get trip persona data
+    const tripPersona = await TripPersona.findOne({ tripId: user.tripId, userId: user._id.toString() });
+    const tripPersonaData = tripPersona || null;
 
-    // Get related data in parallel using OG pattern
-    console.log("🔍 Querying for tripId:", trip._id.toString());
-    const [tripPersona, anchorLogic, tripDays] = await Promise.all([
-      // ✅ FIX: Use OG pattern - just tripId
-      TripPersona.findOne({ tripId: trip._id }).catch((err) => {
-        console.log("❌ TripPersona query error:", err);
-        return null;
-      }),
-      AnchorLogic.findOne({ tripId: trip._id }).catch(() => null),
-      TripDay.find({ tripId: trip._id }).sort({ dayIndex: 1 }).catch(() => [])
-    ]);
-    
-    // Use the found TripPersona (ObjectId pattern is now correct)
-    let finalTripPersona = tripPersona;
-    
-    console.log("🔍 TripPersona found:", !!finalTripPersona);
-    if (finalTripPersona) {
-      console.log("🔍 TripPersona data:", {
-        tripId: finalTripPersona.tripId,
-        primaryPersona: finalTripPersona.primaryPersona,
-        personas: finalTripPersona.personas,
-        budget: finalTripPersona.budget
-      });
-    }
+    // Get itinerary data
+    const itinerary = await TripItinerary.findOne({ tripId: user.tripId });
+    const itineraryData = itinerary || null;
 
-    // Build tripPersonaData
-    let tripPersonaData = null;
-    if (finalTripPersona) {
-      console.log("🔍 Raw TripPersona from DB:", {
-        _id: finalTripPersona._id,
-        tripId: finalTripPersona.tripId,
-        userId: finalTripPersona.userId,
-        primaryPersona: finalTripPersona.primaryPersona,
-        personas: finalTripPersona.personas,
-        budget: finalTripPersona.budget,
-        whoWith: finalTripPersona.whoWith,
-        romanceLevel: finalTripPersona.romanceLevel,
-        caretakerRole: finalTripPersona.caretakerRole,
-        flexibility: finalTripPersona.flexibility
-      });
-      
-      tripPersonaData = {
-        tripPersonaId: finalTripPersona._id.toString(),
-        primaryPersona: finalTripPersona.primaryPersona,
-        personas: finalTripPersona.personas || {},
-        budget: finalTripPersona.budget || "",
-        whoWith: finalTripPersona.whoWith || "",
-        romanceLevel: finalTripPersona.romanceLevel || 0.0,
-        caretakerRole: finalTripPersona.caretakerRole || 0.0,
-        flexibility: finalTripPersona.flexibility || 0.7
-      };
-      
-      console.log("🔍 Built tripPersonaData:", tripPersonaData);
-    }
+    // Get meta selections (UserSelections)
+    const metaSelections = await UserSelections.findOne({ tripId: user.tripId, userId: user._id.toString() });
+    const selectedMetas = metaSelections?.selectedMetas || [];
 
-    // Build anchorLogicData from AnchorLogic (the REAL model)
-    let anchorLogicData = null;
-    if (anchorLogic && anchorLogic.enrichedAnchors && anchorLogic.enrichedAnchors.length > 0) {
-      // ✅ FIX: Extract titles from enrichedAnchors[].title (the REAL data)
-      const anchorTitles = anchorLogic.enrichedAnchors.map(anchor => anchor.title);
-      anchorLogicData = {
-        anchors: anchorTitles
-      };
-      console.log("🔍 Built anchorLogicData from AnchorLogic model:", anchorLogicData);
-      console.log("🔍 Found", anchorTitles.length, "anchor titles:", anchorTitles);
-    } else {
-      console.log("🔍 No AnchorLogic data found or enrichedAnchors is empty");
-    }
-
-    // Build itineraryData
-    let itineraryData = null;
-    if (tripDays && tripDays.length > 0) {
-      itineraryData = {
-        itineraryId: trip._id.toString(), // Use real tripId as itineraryId
-        tripId: trip._id.toString(),
-        tripName: trip.tripName,
-        city: trip.city,
-        daysTotal: trip.daysTotal,
-        days: tripDays.map(day => ({
-          dayIndex: day.dayIndex,
-          summary: day.summary,
-          blocks: day.blocks || {}
-        }))
-      };
-    } else {
-      // Even if no tripDays, still return basic itinerary data
-      itineraryData = {
-        itineraryId: trip._id.toString(),
-        tripId: trip._id.toString(),
-        tripName: trip.tripName,
-        city: trip.city,
-        daysTotal: trip.daysTotal,
-        days: []
-      };
-    }
-
-    // 🎯 Call Python Main Service for new user signup (after full hydration)
-    // Check if this is a new user (created recently)
-    const isNewUser = user.createdAt && (Date.now() - new Date(user.createdAt).getTime()) < 300000; // 5 minutes
-
-    const response = {
-      userData,
-      tripData,
-      tripPersonaData,
-      anchorLogicData,
-      itineraryData,
-      isNewUser: isNewUser
-    };
+    // Get sample selections (SampleSelects)
+    const sampleSelections = await SampleSelects.findOne({ tripId: user.tripId, userId: user._id.toString() });
+    const selectedSamples = sampleSelections?.selectedSamples || [];
 
     console.log("✅ Hydration complete:", {
       hasUserData: !!userData,
       hasTripData: !!tripData,
       hasTripPersonaData: !!tripPersonaData,
-      hasAnchorLogicData: !!anchorLogicData,
       hasItineraryData: !!itineraryData,
-      tripSeason: tripData.season,
-      tripDaysTotal: tripData.daysTotal,
-      userRole: userData.role
+      hasSelectedMetas: selectedMetas.length > 0,
+      hasSelectedSamples: selectedSamples.length > 0
     });
-    if (isNewUser) {
-      try {
-        console.log(`🎯 Calling Python Main Service for new user after hydration: ${user.email}`);
-        
-        const mainServiceResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/useactionendpoint`, {
-          user_id: user._id.toString(),
-          firebase_id: user.firebaseId,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          profileComplete: user.profileComplete,
-          tripId: user.tripId,
-          funnelStage: user.funnelStage,
-          createdAt: user.createdAt,
-          context: "new_user_signup"
-        }, {
-          timeout: 15000,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
 
-        if (mainServiceResponse.data.success) {
-          console.log(`✅ Main Service analysis complete for ${user.email}:`, {
-            actions_taken: mainServiceResponse.data.actions_taken.length,
-            user_state: mainServiceResponse.data.user_state
-          });
-          
-          // Log each action taken
-          mainServiceResponse.data.actions_taken.forEach(action => {
-            console.log(`  📧 ${action.campaign}: ${action.status} - ${action.reason}`);
-          });
-        } else {
-          console.error(`❌ Main Service analysis failed for ${user.email}`);
-        }
-      } catch (mainServiceError) {
-        console.error(`❌ Failed to call Main Service for ${user.email}:`, mainServiceError.message);
-      }
-    }
+    res.json({
+      userData,
+      tripData,
+      tripPersonaData,
+      itineraryData,
+      selectedMetas,
+      selectedSamples
+    });
 
-    res.set("Cache-Control", "no-store");
-    return res.json(response);
-
-  } catch (err) {
-    console.error("❌ Hydration failed:", err);
-    return res.status(500).json({ error: "Failed to hydrate data" });
+  } catch (error) {
+    console.error("❌ Hydration error:", error);
+    res.status(500).json({ error: "Failed to load data" });
   }
 });
 

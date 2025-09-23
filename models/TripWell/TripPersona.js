@@ -26,9 +26,6 @@ const TripPersonaSchema = new mongoose.Schema({
     max: 1
   },
   
-  // Budget level (numeric field)
-  budgetLevel: { type: Number, default: undefined },
-  
   // Status tracking
   status: { type: String, default: 'created' },
   createdAt: { type: Date, default: Date.now },

@@ -24,15 +24,7 @@ router.post("/trip-persona", async (req, res) => {
 
     console.log("📋 Creating/updating trip persona for:", { tripId, userId, primaryPersona });
 
-    // Calculate budget level based on numeric budget
-    const calculateBudgetLevel = (budget) => {
-      if (budget < 100) return 0.3;      // Low budget
-      if (budget < 200) return 0.5;      // Moderate budget  
-      if (budget < 300) return 0.7;      // High budget
-      return 1.0;                        // Luxury budget
-    };
-    
-    const budgetLevel = calculateBudgetLevel(budget);
+    // Budget level can be calculated from budget when needed
 
     // Check if TripPersona already exists
     let tripPersona = await TripPersona.findOne({ tripId, userId });
@@ -43,7 +35,6 @@ router.post("/trip-persona", async (req, res) => {
       tripPersona.primaryPersona = primaryPersona;
       tripPersona.budget = budget;
       tripPersona.dailySpacing = dailySpacing;
-      tripPersona.budgetLevel = budgetLevel;
       tripPersona.status = 'created';
       await tripPersona.save();
     } else {
@@ -54,8 +45,7 @@ router.post("/trip-persona", async (req, res) => {
         userId,
         primaryPersona,
         budget,
-        dailySpacing,
-        budgetLevel
+        dailySpacing
       });
     }
 
@@ -63,8 +53,7 @@ router.post("/trip-persona", async (req, res) => {
       id: tripPersona._id,
       primaryPersona: tripPersona.primaryPersona,
       budget: tripPersona.budget,
-      dailySpacing: tripPersona.dailySpacing,
-      budgetLevel: tripPersona.budgetLevel
+      dailySpacing: tripPersona.dailySpacing
     });
 
     res.json({
