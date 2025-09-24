@@ -31,25 +31,12 @@ const tripWellUserSchema = new mongoose.Schema(
     persona: { type: String, default: "" }, // Persona: "Art", "Food", "History", "Adventure"
     planningStyle: { type: String, default: "" }, // Planning style: "Spontaneity", "Flow", "Rigid"
     dreamDestination: { type: String, default: "" }, // Dream destination from ProfileSetup
-    userStatus: { type: String, default: "signup", enum: ["demo_only", "signup", "active", "abandoned", "inactive"] }, // user status for routing
     tripId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set post trip creation
     role: { 
       type: String, 
       default: "noroleset",
       enum: ["noroleset", "originator", "participant"]
     }, // set post trip creation
-    funnelStage: {
-      type: String,
-      default: "none",
-      enum: ["none", "spots_demo", "itinerary_demo", "vacation_planner_demo", "updates_only", "full_app"]
-    }, // tracks user's funnel progression
-    
-    // New fields for Python analysis
-    journeyStage: {
-      type: String,
-      default: "new_user",
-      enum: ["new_user", "profile_complete", "trip_set_done", "itinerary_complete", "trip_active", "trip_complete"]
-    }, // where user is in the journey flow
     
     
     lastAnalyzedAt: {
