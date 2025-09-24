@@ -4,7 +4,7 @@ const router = express.Router();
 
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
 const TripWellUser = require(path.resolve(__dirname, "../../models/TripWellUser"));
-const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
+const { startTrip } = require("../../services/startTripService");
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
 // POST /tripwell/starttrip/:tripId
@@ -19,41 +19,21 @@ router.post("/starttrip/:tripId", verifyFirebaseToken, async (req, res) => {
     const trip = await TripBase.findById(tripId);
     if (!trip) return res.status(404).json({ error: "Trip not found" });
 
-    console.log("🔍 DEBUG - Setting trip start flag:", {
+    console.log("🔍 DEBUG - Starting trip with service:", {
       userRole: user.role,
       tripId: tripId,
-      beforeOriginator: trip.tripStartedByOriginator,
-      beforeParticipant: trip.tripStartedByParticipant
+      userId: user._id
     });
 
-    if (user.role === "originator") {
-      trip.tripStartedByOriginator = true;
-    } else if (user.role === "participant") {
-      trip.tripStartedByParticipant = true;
-    }
-
-    await trip.save();
-
-    // 🚀 Set tripStartedAt timestamp in TripCurrentDays
-    await TripCurrentDays.findOneAndUpdate(
-      { tripId },
-      { 
-        $set: { 
-          tripStartedAt: new Date(),
-          isActive: true 
-        } 
-      }
-    );
+    // 🚀 Use service to start trip (duplicates ItineraryDays → TripCurrentDays)
+    const tripCurrentDays = await startTrip(tripId, user._id);
     
-    console.log("🔍 DEBUG - After setting trip start flag:", {
-      afterOriginator: trip.tripStartedByOriginator,
-      afterParticipant: trip.tripStartedByParticipant
-    });
+    console.log("✅ Trip started successfully with service");
 
     res.status(200).json({
-      message: "Trip start recorded",
-      tripStartedByOriginator: trip.tripStartedByOriginator,
-      tripStartedByParticipant: trip.tripStartedByParticipant
+      message: "Trip started successfully",
+      tripCurrentDays: tripCurrentDays,
+      tripStartedAt: tripCurrentDays.tripStartedAt
     });
   } catch (err) {
     console.error("🔥 Error in tripStartRoute:", err);

@@ -23,7 +23,6 @@ const TripBaseSchema = new mongoose.Schema({
   daysTotal: { type: Number },
   tripStartedByOriginator: { type: Boolean, default: false },
   tripStartedByParticipant: { type: Boolean, default: false },
-  tripComplete: { type: Boolean, default: false },
 }, { timestamps: true }); // replaces manual createdAt
 
 module.exports = mongoose.model("TripBase", TripBaseSchema);
