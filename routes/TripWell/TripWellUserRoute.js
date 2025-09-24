@@ -3,6 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const TripWellUser = require("../../models/TripWellUser");
+const { getOrCreateTripWellUser } = require("../../services/userTransferService");
 const axios = require("axios");
 
 // Environment variables
@@ -35,21 +36,18 @@ router.post("/createOrFind", async (req, res) => {
       user = new TripWellUser({
         firebaseId,
         email,
-        name: null,           // Legacy placeholder
         firstName: null,        // ✅ Profile field
         lastName: null,       // ✅ Profile field
         hometownCity: null,   // ✅ Profile field
         homeState: null,      // ✅ Profile field
         travelStyle: [],      // ✅ Profile field
         tripVibe: [],         // ✅ Profile field
-        profileComplete: false, // ✅ Explicitly set to false for new users
-        userStatus: "signup", // ✅ Backend sets userStatus for new users
+        userStatus: funnelStage && funnelStage !== "none" ? "demo_only" : "signup",
         tripId: null,
         role: "noroleset",    // Will be assigned later
         funnelStage: funnelStage || "none",  // Set funnel stage if provided
         // 🎯 NODE.JS MUTATES: Set initial state flags
-        journeyStage: "new_user",
-        userStatus: funnelStage && funnelStage !== "none" ? "demo_only" : "signup"
+        journeyStage: "new_user"
       });
 
       await user.save();

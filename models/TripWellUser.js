@@ -31,7 +31,6 @@ const tripWellUserSchema = new mongoose.Schema(
     persona: { type: String, default: "" }, // Persona: "Art", "Food", "History", "Adventure"
     planningStyle: { type: String, default: "" }, // Planning style: "Spontaneity", "Flow", "Rigid"
     dreamDestination: { type: String, default: "" }, // Dream destination from ProfileSetup
-    profileComplete: { type: Boolean, default: false }, // tracks if profile setup is complete
     userStatus: { type: String, default: "signup", enum: ["demo_only", "signup", "active", "abandoned", "inactive"] }, // user status for routing
     tripId: { type: mongoose.Schema.Types.ObjectId, default: null }, // set post trip creation
     role: { 

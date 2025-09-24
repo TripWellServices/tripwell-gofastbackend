@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const TripWellUser = require("../../models/TripWellUser");
+const { transferOnProfileComplete } = require("../../services/userTransferService");
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const axios = require("axios");
 
@@ -46,6 +47,7 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     };
     
     // Update profile and set state flags
+    // Update user with profile data
     const user = await TripWellUser.findOneAndUpdate(
       { firebaseId },
       {
@@ -60,7 +62,6 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           // Convert persona and planning style to numeric weights
           personaScore: getPersonaScore(persona),
           planningFlex: getPlanningFlex(planningStyle),
-          profileComplete: true,
           // If user was in funnel, upgrade them to full_app
           ...(currentUser?.funnelStage && currentUser.funnelStage !== 'full_app' && {
             funnelStage: 'full_app'
@@ -76,6 +77,9 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
+    // 🚀 NOW transfer Firebase user to TripWellUser since profile is complete
+    await transferOnProfileComplete(firebaseId);
 
     // 🎯 TRIGGER: Call Python for profile completion analysis
     try {

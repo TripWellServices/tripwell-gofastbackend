@@ -5,6 +5,7 @@ const TripWellUser = require("../../models/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 const TripPersona = require("../../models/TripWell/TripPersona");
 const TripItinerary = require("../../models/TripWell/TripItinerary");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 const UserSelections = require("../../models/TripWell/UserSelections");
 const SampleSelects = require("../../models/TripWell/SampleSelects");
 
@@ -36,8 +37,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       hometownCity: user.hometownCity,
-      state: user.state,
-      profileComplete: user.profileComplete || false,
+      homeState: user.homeState,
       role: user.role || "noroleset"
     };
 

@@ -4,6 +4,7 @@ const router = express.Router();
 
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
 const TripWellUser = require(path.resolve(__dirname, "../../models/TripWellUser"));
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
 // POST /tripwell/starttrip/:tripId
@@ -32,6 +33,17 @@ router.post("/starttrip/:tripId", verifyFirebaseToken, async (req, res) => {
     }
 
     await trip.save();
+
+    // 🚀 Set tripStartedAt timestamp in TripCurrentDays
+    await TripCurrentDays.findOneAndUpdate(
+      { tripId },
+      { 
+        $set: { 
+          tripStartedAt: new Date(),
+          isActive: true 
+        } 
+      }
+    );
     
     console.log("🔍 DEBUG - After setting trip start flag:", {
       afterOriginator: trip.tripStartedByOriginator,
