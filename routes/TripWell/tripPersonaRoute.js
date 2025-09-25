@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const TripPersona = require("../../models/TripWell/TripPersona");
 const TripBase = require("../../models/TripWell/TripBase");
-const { generateOpenAIPrompt, generateUserSegmentation } = require("../../services/TripWell/weightToPromptService");
+const { saveTripPersonaCalculations } = require("../../services/tripPersonaCalculationService");
 
 /**
  * POST /tripwell/trip-persona
@@ -26,28 +26,13 @@ router.post("/trip-persona", async (req, res) => {
 
     // Budget level can be calculated from budget when needed
 
-    // Check if TripPersona already exists
-    let tripPersona = await TripPersona.findOne({ tripId, userId });
+    // Use TripPersona calculation service for clean weight calculation
+    console.log("🧮 Calculating trip persona weights with service...");
     
-    if (tripPersona) {
-      console.log("🔍 Updating existing TripPersona");
-      // Update existing persona
-      tripPersona.primaryPersona = primaryPersona;
-      tripPersona.budget = budget;
-      tripPersona.dailySpacing = dailySpacing;
-      tripPersona.status = 'created';
-      await tripPersona.save();
-    } else {
-      console.log("🔍 Creating new TripPersona");
-      // Create new persona
-      tripPersona = await TripPersona.create({
-        tripId,
-        userId,
-        primaryPersona,
-        budget,
-        dailySpacing
-      });
-    }
+    const tripPersonaData = { primaryPersona, budget, dailySpacing };
+    const tripPersona = await saveTripPersonaCalculations(tripId, userId, tripPersonaData);
+    
+    console.log("✅ Trip persona weights calculated and saved");
 
     console.log("✅ TripPersona saved:", {
       id: tripPersona._id,

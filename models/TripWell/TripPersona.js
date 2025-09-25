@@ -26,6 +26,26 @@ const TripPersonaSchema = new mongoose.Schema({
     max: 1
   },
   
+  // Calculated weights (from service)
+  personaWeights: {
+    art: { type: Number, default: null },
+    foodie: { type: Number, default: null },
+    adventure: { type: Number, default: null },
+    history: { type: Number, default: null }
+  },
+  
+  budgetLevel: { type: Number, default: null },
+  
+  spacingWeights: {
+    relaxed: { type: Number, default: null },
+    balanced: { type: Number, default: null },
+    packed: { type: Number, default: null }
+  },
+  
+  // Metadata
+  calculatedAt: { type: Date, default: null },
+  calculationVersion: { type: String, default: "1.0" },
+  
   // Status tracking
   status: { type: String, default: 'created' },
   createdAt: { type: Date, default: Date.now },

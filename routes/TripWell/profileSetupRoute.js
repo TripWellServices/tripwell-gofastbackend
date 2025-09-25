@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
+const TripWellFirebaseOnly = require("../../models/TripWell/TripWellFirebaseOnly");
 const { transferOnProfileComplete } = require("../../services/userTransferService");
+const { savePersonaScores } = require("../../services/personaScoreService");
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const axios = require("axios");
 
@@ -26,25 +28,9 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     // First get the current user to check their funnel stage
     const currentUser = await TripWellUser.findOne({ firebaseId });
     
-    // Convert persona and planning style to numeric weights
-    const getPersonaScore = (persona) => {
-      switch (persona) {
-        case "Art": return 0.6;
-        case "Food": return 0.6;
-        case "History": return 0.6;
-        case "Adventure": return 0.6;
-        default: return 0.1;
-      }
-    };
-    
-    const getPlanningFlex = (style) => {
-      switch (style) {
-        case "Spontaneity": return 0.4;
-        case "Flow": return 0.1;
-        case "Rigid": return 0.0;
-        default: return 0.5;
-      }
-    };
+    // Use PersonaScore service for clean weight calculation
+    const userSelections = { persona, planningStyle };
+    const personaScore = await savePersonaScores(user._id, userSelections);
     
     // Update profile and set state flags
     // Update user with profile data
@@ -59,9 +45,6 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           persona,
           planningStyle,
           dreamDestination,
-          // Convert persona and planning style to numeric weights
-          personaScore: getPersonaScore(persona),
-          planningFlex: getPlanningFlex(planningStyle),
           // If user was in funnel, upgrade them to full_app
           ...(currentUser?.funnelStage && currentUser.funnelStage !== 'full_app' && {
             funnelStage: 'full_app'

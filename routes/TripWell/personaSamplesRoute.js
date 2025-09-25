@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { needSmartPromptService } = require("../../services/TripWell/needsmartpromptservice");
-const { OpenAI } = require("openai");
+const { generateSamplesWithOpenAI } = require("../../services/PersonaConvertedLLM");
 const CityStuffToDo = require("../../models/TripWell/CityStuffToDo");
 const SampleSelects = require("../../models/TripWell/SampleSelects");
 const TripBase = require("../../models/TripWell/TripBase");
@@ -59,43 +58,28 @@ router.post("/persona-samples", async (req, res) => {
     
     console.log("🆕 No existing samples found, generating new ones...");
     
-    // Step 2: Get prompt from Python via needSmartPromptService
-    const promptResult = await needSmartPromptService(tripId, userId);
+    // Step 2: Generate samples using clean PersonaConvertedLLM
+    console.log("🤖 Generating samples with PersonaConvertedLLM...");
     
-    if (!promptResult.success) {
+    const llmResponse = await generateSamplesWithOpenAI(
+      tripId,
+      userId,
+      tripBase.city,
+      season,
+      tripBase.purpose
+    );
+    
+    if (!llmResponse.success) {
       return res.status(500).json({
         status: "error",
-        message: promptResult.message
+        message: "Failed to generate samples",
+        details: llmResponse.message
       });
     }
     
-    console.log("✅ Python prompt received, calling OpenAI...");
+    console.log("✅ PersonaConvertedLLM generated samples successfully");
     
-    // Step 3: Call OpenAI with the generated prompt
-    const openai = new OpenAI();
-    
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { 
-          role: "system", 
-          content: "You are Angela, TripWell's travel assistant. Return structured JSON only. No prose. No markdown." 
-        },
-        { role: "user", content: promptResult.prompt }
-      ],
-      temperature: 0.7,
-    });
-
-    const content = completion.choices[0].message.content || "{}";
-    console.log("✅ OpenAI response received");
-    
-    let samplesData;
-    try {
-      samplesData = JSON.parse(content);
-    } catch (error) {
-      const jsonString = content.replace(/'/g, '"');
-      samplesData = JSON.parse(jsonString);
-    }
+    const samplesData = llmResponse.samples;
     
     console.log("✅ Persona samples generated:", {
       attractions: samplesData.attractions?.length || 0,

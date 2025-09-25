@@ -133,7 +133,7 @@ app.use("/tripwell", require("./routes/TripWell/livedayGPTModifyBlockRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripStartRoute"));
 app.use("/tripwell", require("./routes/TripWell/validateJoinCodeRoute"));
 app.use("/tripwell", require("./routes/TripWell/hydrateRoute"));
-app.use("/tripwell/user", require("./routes/TripWell/TripWellUserRoute"));
+app.use("/tripwell/user", require("./routes/TripWell/FirebaseAuthRoute"));
 console.log("🔧 Loading userTripUpdate route...");
 app.use("/tripwell/usertrip", require("./routes/TripWell/userTripUpdate"));
 console.log("✅ userTripUpdate route loaded at /tripwell/usertrip");

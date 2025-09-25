@@ -1,6 +1,6 @@
 // services/userTransferService.js - Transfer Firebase users to TripWellUser
-const TripWellFirebaseOnly = require("../models/TripWellFirebaseOnly");
-const TripWellUser = require("../models/TripWellUser");
+const TripWellFirebaseOnly = require("../models/TripWell/TripWellFirebaseOnly");
+const TripWellUser = require("../models/TripWell/TripWellUser");
 
 /**
  * Transfer Firebase-only user to full TripWellUser

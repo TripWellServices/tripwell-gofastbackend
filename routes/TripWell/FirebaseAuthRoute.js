@@ -2,7 +2,8 @@
 
 const express = require("express");
 const router = express.Router();
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
+const TripWellFirebaseOnly = require("../../models/TripWell/TripWellFirebaseOnly");
 const { getOrCreateTripWellUser } = require("../../services/userTransferService");
 const axios = require("axios");
 
@@ -18,9 +19,9 @@ router.post("/createOrFind", async (req, res) => {
       return res.status(400).json({ error: "Missing firebaseId or email" });
     }
 
-    console.log("🔍 DEBUG - Searching for user with firebaseId:", firebaseId);
+    console.log("🔍 DEBUG - Searching for existing TripWellUser with firebaseId:", firebaseId);
     let user = await TripWellUser.findOne({ firebaseId });
-    console.log("🔍 DEBUG - User found:", user ? "YES" : "NO");
+    console.log("🔍 DEBUG - TripWellUser found:", user ? "YES" : "NO");
     if (user) {
       console.log("🔍 DEBUG - Found user:", { 
         _id: user._id, 
@@ -32,27 +33,16 @@ router.post("/createOrFind", async (req, res) => {
     let isNewUser = false;
 
     if (!user) {
-      // Create new user
-      user = new TripWellUser({
+      // Create Firebase-only user first (new users)
+      const firebaseUser = new TripWellFirebaseOnly({
         firebaseId,
         email,
-        firstName: null,        // ✅ Profile field
-        lastName: null,       // ✅ Profile field
-        hometownCity: null,   // ✅ Profile field
-        homeState: null,      // ✅ Profile field
-        travelStyle: [],      // ✅ Profile field
-        tripVibe: [],         // ✅ Profile field
-        userStatus: funnelStage && funnelStage !== "none" ? "demo_only" : "signup",
-        tripId: null,
-        role: "noroleset",    // Will be assigned later
-        funnelStage: funnelStage || "none",  // Set funnel stage if provided
-        // 🎯 NODE.JS MUTATES: Set initial state flags
-        journeyStage: "new_user"
+        transferredToTripWellUser: false
       });
-
-      await user.save();
+      await firebaseUser.save();
+      
+      console.log("✅ Created TripWellFirebaseOnly user:", firebaseUser._id);
       isNewUser = true;
-      console.log(`✅ Created new user: ${email} (${firebaseId}) with funnelStage: ${user.funnelStage}`);
     } else if (funnelStage && user.funnelStage !== funnelStage) {
       // Update funnel stage if user is progressing
       user.funnelStage = funnelStage;
@@ -91,9 +81,28 @@ router.post("/createOrFind", async (req, res) => {
       }
     }
 
-    return res.status(200).json({
-      user: user.toObject()  // userStatus is the source of truth for routing
-    });
+    // Return Firebase user data for new users, full user data for existing users
+    const responseData = {
+      success: true,
+      isNewUser: isNewUser,
+      message: isNewUser ? "Firebase user created successfully" : "User found successfully"
+    };
+
+    if (isNewUser) {
+      // Return Firebase user data (no profile fields yet)
+      responseData.user = {
+        firebaseId: firebaseId,
+        email: email,
+        firstName: null,
+        lastName: null,
+        hometownCity: null
+      };
+    } else {
+      // Return full user data
+      responseData.user = user.toObject();
+    }
+
+    return res.status(200).json(responseData);
   } catch (err) {
     console.error("❌ Error in createOrFind:", err);
     return res.status(500).json({ error: "Server error" });
