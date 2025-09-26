@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const admin = require("firebase-admin");
 const TripBase = require("../../models/TripWell/TripBase");
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
 
 // POST /tripwell/participantuser/create
 router.post("/tripwell/participantuser/create", async (req, res) => {

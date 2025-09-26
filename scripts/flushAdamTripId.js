@@ -3,7 +3,7 @@
 
 const mongoose = require('mongoose');
 require('dotenv').config(); // Load .env
-const TripWellUser = require('../models/TripWellUser'); // Correct path
+const TripWellUser = require('../models/TripWell/TripWellUser'); // Correct path
 
 const MONGO_URI = process.env.MONGO_URI;
 const ADAM_FIREBASE_ID = "5m5XpT4J6Qf8B2tMUawHBKbvKbA2";

@@ -2,7 +2,7 @@
 
 const express = require("express");
 const router = express.Router();
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
 
 // 🔒 GET /tripwell/whoami
 // Protected — requires verifyFirebaseToken middleware at mount

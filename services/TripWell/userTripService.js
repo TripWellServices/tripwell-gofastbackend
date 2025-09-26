@@ -1,6 +1,6 @@
 // services/TripWell/userTripService.js
 
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
 
 async function setUserTrip(userId, tripId) {
   console.log("🔧 setUserTrip called with:");
