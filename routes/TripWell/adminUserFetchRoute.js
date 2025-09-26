@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
 
 // GET /tripwell/admin/users - Fetch all users for admin dashboard
 router.get("/users", async (req, res) => {

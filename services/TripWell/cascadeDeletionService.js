@@ -93,7 +93,7 @@ async function deleteUserTripsCascade(userId, session = null) {
     console.log(`🗑️ Starting cascade deletion for all trips by user: ${userId}`);
     
     // Find the user and their tripId
-    const TripWellUser = require('../../models/TripWellUser');
+    const TripWellUser = require('../../models/TripWell/TripWellUser');
     const user = await TripWellUser.findById(userId);
     if (!user) {
       throw new Error(`User ${userId} not found`);
@@ -151,7 +151,7 @@ async function deleteOrphanedDataCascade(session = null) {
     const deleteOptions = session ? { session } : {};
     
     // Get all existing user IDs
-    const TripWellUser = require('../../models/TripWellUser');
+    const TripWellUser = require('../../models/TripWell/TripWellUser');
     const existingUsers = await TripWellUser.find({}, '_id');
     const existingUserIds = existingUsers.map(user => user._id.toString());
     console.log(`📊 Found ${existingUserIds.length} existing users`);

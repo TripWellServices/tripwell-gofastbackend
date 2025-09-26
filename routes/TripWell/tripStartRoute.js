@@ -3,7 +3,7 @@ const path = require("path");
 const router = express.Router();
 
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
-const TripWellUser = require(path.resolve(__dirname, "../../models/TripWellUser"));
+const TripWellUser = require(path.resolve(__dirname, "../../models/TripWell/TripWellUser"));
 const { startTrip } = require("../../services/startTripService");
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 

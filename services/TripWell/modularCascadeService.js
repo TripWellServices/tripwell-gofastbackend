@@ -11,7 +11,7 @@ const JoinCode = require('../../models/TripWell/JoinCode');
 const UserSelections = require('../../models/TripWell/UserSelections');
 const CityStuffToDo = require('../../models/TripWell/CityStuffToDo');
 const SampleSelects = require('../../models/TripWell/SampleSelects');
-const TripWellUser = require('../../models/TripWellUser');
+const TripWellUser = require('../../models/TripWell/TripWellUser');
 
 /**
  * Modular cascade deletion service

@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const { generateDemoBestThings } = require("../../services/TripWell/gptDemoBestThingsService");
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 

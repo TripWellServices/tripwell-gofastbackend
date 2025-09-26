@@ -18,7 +18,7 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     firstName,
     lastName,
     hometownCity,
-    state,
+    homeState,
     persona,
     planningStyle,
     dreamDestination
@@ -30,7 +30,7 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
     
     // Use PersonaScore service for clean weight calculation
     const userSelections = { persona, planningStyle };
-    const personaScore = await savePersonaScores(user._id, userSelections);
+    const personaScore = await savePersonaScores(currentUser._id, userSelections);
     
     // Update profile and set state flags
     // Update user with profile data
@@ -41,17 +41,11 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
           firstName,
           lastName,
           hometownCity,
-          homeState: state, // Use homeState instead of state
+          homeState, // Use homeState from request body
           persona,
           planningStyle,
           dreamDestination,
-          // If user was in funnel, upgrade them to full_app
-          ...(currentUser?.funnelStage && currentUser.funnelStage !== 'full_app' && {
-            funnelStage: 'full_app'
-          }),
-          // 🎯 NODE.JS MUTATES: Set journey stage and user state
-          journeyStage: 'profile_complete',
-          userStatus: 'active'
+          // Profile is now complete - no flags needed, just data existence
         }
       },
       { new: true }
@@ -76,9 +70,7 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        profileComplete: user.profileComplete,
         tripId: user.tripId,
-        funnelStage: user.funnelStage,
         createdAt: user.createdAt,
         context: "profile_completed",
         hints: {

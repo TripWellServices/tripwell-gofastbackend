@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
 
 // Simple admin auth middleware
 const verifyAdminAuth = (req, res, next) => {

@@ -1,4 +1,4 @@
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 const TripPersona = require("../../models/TripWell/TripPersona");
 const City = require("../../models/TripWell/City");
@@ -85,22 +85,10 @@ class UserResetService {
             persona: "",
             planningStyle: "",
             dreamDestination: "",
-            profileComplete: false,
-            
-            // Reset persona scores
-            personaScore: 0.1,
-            planningFlex: 0.5,
-            
-            // Reset journey state
-            journeyStage: "new_user",
-            userStatus: "signup",
             
             // Reset trip data
             tripId: null,
             role: "noroleset",
-            
-            // Reset funnel stage
-            funnelStage: "none",
             
             // Reset analysis data
             lastAnalyzedAt: null,
@@ -143,8 +131,6 @@ class UserResetService {
         userId,
         {
           $set: {
-            journeyStage,
-            userStatus,
             lastAnalyzedAt: null
           }
         },

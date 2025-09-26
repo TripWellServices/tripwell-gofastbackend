@@ -4,7 +4,7 @@ const router = express.Router();
 const axios = require("axios");
 
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
-const TripWellUser = require("../../models/TripWellUser");
+const TripWellUser = require("../../models/TripWell/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 const { setUserTrip } = require("../../services/TripWell/userTripService");
 const { parseTrip } = require("../../services/TripWell/tripSetupService");
@@ -155,73 +155,14 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       // Continue anyway - trip base update is not critical
     }
 
-    // 3b) Update user (link user to trip and set journey stage)
-    try {
-      await setUserTrip(user._id, doc._id);
-      console.log("✅ Updated user with trip link");
-      
-      // 🎯 NODE.JS MUTATES: Set journey stage when trip is created
-      const userUpdateData = {
-        journeyStage: 'trip_set_done',
-        userStatus: 'active'
-      };
-      
-      // Add cityId to TripBase if city object was created
-      if (cityDoc) {
-        await TripBase.updateOne({ _id: doc._id }, { $set: { cityId: cityDoc._id } });
-        console.log("✅ Linking TripBase to city object:", cityDoc.cityName);
-      }
-      
-      await TripWellUser.findByIdAndUpdate(user._id, {
-        $set: userUpdateData
-      });
-      console.log("✅ Updated user journey stage to trip_set_done");
-    } catch (e) {
-      console.warn("trip-setup: setUserTrip failed:", e.message);
-      // Continue anyway - user update is not critical
+    // 3b) Add cityId to TripBase if city object was created
+    if (cityDoc) {
+      await TripBase.updateOne({ _id: doc._id }, { $set: { cityId: cityDoc._id } });
+      console.log("✅ Linking TripBase to city object:", cityDoc.cityName);
     }
 
-    // 3c) Push to JoinCode registry
-    try {
-      await pushTripToRegistry(doc._id, user._id);
-      console.log("✅ Pushed to JoinCode registry");
-    } catch (e) {
-      console.warn("trip-setup: join code registry push failed:", e.message);
-      // Continue anyway - join code registry is not critical
-    }
-
-    // 🎯 TRIGGER: Call Python for trip creation analysis
-    try {
-      console.log(`🎯 Trip created - calling Python for user: ${user.email}`);
-      const pythonResponse = await axios.post(`${process.env.TRIPWELL_AI_BRAIN}/useactionendpoint`, {
-        user_id: user._id.toString(),
-        firebase_id: user.firebaseId,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileComplete: user.profileComplete,
-        tripId: user.tripId,
-        funnelStage: user.funnelStage,
-        journeyStage: 'trip_set_done',  // ✅ Include journey stage
-        userStatus: 'active',            // ✅ Include user state
-        createdAt: user.createdAt,
-        context: "trip_created",
-        tripName: tripName,             // ✅ Include trip details
-        city: city,                     // ✅ Include city
-        startDate: computedTripData?.startDate || startDate,     // ✅ Include start date
-        endDate: computedTripData?.endDate || endDate,           // ✅ Include end date
-        partyCount: computedTripData?.partyCount || partyCount,  // ✅ Include party count
-        whoWith: computedTripData?.whoWith || whoWith,           // ✅ Include who with
-        season: computedTripData?.season,                        // ✅ Include season
-        daysTotal: computedTripData?.daysTotal                   // ✅ Include days total
-      }, {
-        timeout: 15000
-      });
-      console.log("✅ Python trip creation analysis complete:", pythonResponse.data);
-    } catch (err) {
-      console.warn("⚠️ Python trip creation analysis failed (non-critical):", err.message);
-      // Don't block trip creation if Python fails
-    }
+    // 3c) Skip JoinCode registry and Python calls (user system refactored)
+    console.log("✅ Trip setup complete - skipping user-dependent operations");
 
     // Return tripId and computed trip data for frontend
     return res.status(201).json({ 

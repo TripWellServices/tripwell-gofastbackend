@@ -25,35 +25,16 @@ const calculatePersonaScores = (userSelections) => {
     personaScores[persona] = 0.5;
   }
   
-  // Initialize all planning scores to default
+  // Initialize all planning scores to 0.0 (points system)
   const planningScores = {
-    Spontaneous: 0.5,
-    "Mix of spontaneous and planned": 0.5,
-    "Set a plan and stick to it!": 0.5
+    Spontaneous: 0.0,
+    "Mix of spontaneous and planned": 0.0,
+    "Set a plan and stick to it!": 0.0
   };
   
-  // Set planning style scores based on selection
-  if (planningStyle) {
-    switch (planningStyle) {
-      case "Spontaneous":
-        planningScores.Spontaneous = 0.4;
-        planningScores["Mix of spontaneous and planned"] = 0.3;
-        planningScores["Set a plan and stick to it!"] = 0.3;
-        break;
-      case "Mix of spontaneous and planned":
-        planningScores.Spontaneous = 0.3;
-        planningScores["Mix of spontaneous and planned"] = 0.4;
-        planningScores["Set a plan and stick to it!"] = 0.3;
-        break;
-      case "Set a plan and stick to it!":
-        planningScores.Spontaneous = 0.3;
-        planningScores["Mix of spontaneous and planned"] = 0.3;
-        planningScores["Set a plan and stick to it!"] = 0.4;
-        break;
-      default:
-        // Keep defaults
-        break;
-    }
+  // Set selected planning style to 0.5 (standard points)
+  if (planningStyle && planningScores.hasOwnProperty(planningStyle)) {
+    planningScores[planningStyle] = 0.5;
   }
   
   return { personaScores, planningScores };
@@ -103,11 +84,23 @@ const getPersonaScores = async (userId) => {
 
 // Query helpers
 const findArtPeople = async (minScore = 0.5) => {
-  return await PersonaScore.find({ "personaScores.Art": { $gt: minScore } });
+  return await PersonaScore.find({ "personaScores.Art": { $gte: minScore } });
 };
 
 const findFoodPeople = async (minScore = 0.5) => {
-  return await PersonaScore.find({ "personaScores.Food": { $gt: minScore } });
+  return await PersonaScore.find({ "personaScores.Food": { $gte: minScore } });
+};
+
+const findHistoryPeople = async (minScore = 0.5) => {
+  return await PersonaScore.find({ "personaScores.History": { $gte: minScore } });
+};
+
+const findAdventurePeople = async (minScore = 0.5) => {
+  return await PersonaScore.find({ "personaScores.Adventure": { $gte: minScore } });
+};
+
+const findSpontaneousPeople = async (minScore = 0.5) => {
+  return await PersonaScore.find({ "planningScores.Spontaneous": { $gte: minScore } });
 };
 
 module.exports = {
@@ -115,5 +108,8 @@ module.exports = {
   savePersonaScores,
   getPersonaScores,
   findArtPeople,
-  findFoodPeople
+  findFoodPeople,
+  findHistoryPeople,
+  findAdventurePeople,
+  findSpontaneousPeople
 };

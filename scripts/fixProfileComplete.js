@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Import the TripWellUser model
-const TripWellUser = require('../models/TripWellUser');
+const TripWellUser = require('../models/TripWell/TripWellUser');
 
 async function fixProfileComplete() {
   try {

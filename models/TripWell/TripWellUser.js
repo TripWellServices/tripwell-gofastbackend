@@ -54,9 +54,8 @@ const tripWellUserSchema = new mongoose.Schema(
       }
     }, // track last marketing email sent to prevent duplicates
     
-    // === ENDURING PERSONA WEIGHTS (from ProfileSetup radio answers) ===
-    personaScore: { type: Number, default: 0.1 }, // "Art", "Food", "History", "Adventure" = 0.6, others = 0.1
-    planningFlex: { type: Number, default: 0.5 } // "Spontaneity" = 0.4, "Flow" = 0.1, "Rigid" = 0.0
+    // === PERSONA WEIGHTS MOVED TO DEDICATED PersonaScore MODEL ===
+    // personaScore and planningFlex fields removed - now handled by PersonaScore model
   },
   { timestamps: true }
 );

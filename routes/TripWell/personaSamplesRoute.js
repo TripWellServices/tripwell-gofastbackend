@@ -3,6 +3,7 @@ const router = express.Router();
 const PersonaCityIdeas = require("../../models/TripWell/PersonaCityIdeas");
 const SampleSelects = require("../../models/TripWell/SampleSelects");
 const { generatePersonaSamples } = require("../../services/TripWell/sampleSelectService");
+const { getLLMReadyData } = require("../../services/llmHydrateService");
 
 // ✅ PROMPT BUILDING MOVED TO SERVICE - NO DUPLICATE CODE!
 
@@ -77,7 +78,7 @@ router.post("/persona-samples", async (req, res) => {
         dominantBudget: llmData.dominantBudget,
         generatedAt: new Date()
       },
-      prompt: prompt
+      prompt: result.prompt
     });
     
     console.log("💾 Samples saved to PersonaCityIdeas:", personaCityIdeas._id);
@@ -119,7 +120,7 @@ router.get("/persona-samples/:cityId/:season", async (req, res) => {
   console.log("🔍 Hydrating samples for:", { cityId, season });
 
   try {
-    const existingSamples = await CityStuffToDo.findOne({ cityId, season });
+    const existingSamples = await PersonaCityIdeas.findOne({ cityId, season });
     
     if (existingSamples) {
       console.log("✅ Found existing samples for city:", cityId);

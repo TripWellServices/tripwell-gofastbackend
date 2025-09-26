@@ -3,7 +3,7 @@ require('dotenv').config({ path: 'mongo-config.txt' });
 require('dotenv').config();
 
 // Import models
-const TripWellUser = require('../models/TripWellUser');
+const TripWellUser = require('../models/TripWell/TripWellUser');
 const JoinCode = require('../models/TripWell/JoinCode');
 const TripIntent = require('../models/TripWell/TripIntent');
 const TripItinerary = require('../models/TripWell/TripItinerary');
