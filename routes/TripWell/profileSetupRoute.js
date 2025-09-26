@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const TripWellUser = require("../../models/TripWell/TripWellUser");
-const TripWellFirebaseOnly = require("../../models/TripWell/TripWellFirebaseOnly");
-const { transferOnProfileComplete } = require("../../services/userTransferService");
+// TripWellFirebaseOnly model removed - using TripWellUser only
+// userTransferService removed - no longer needed
 const { savePersonaScores } = require("../../services/personaScoreService");
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const axios = require("axios");
@@ -55,8 +55,7 @@ router.put("/profile", verifyFirebaseToken, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // 🚀 NOW transfer Firebase user to TripWellUser since profile is complete
-    await transferOnProfileComplete(firebaseId);
+    // Profile setup complete - user already exists in TripWellUser
 
     // 🎯 TRIGGER: Call Python for profile completion analysis
     try {

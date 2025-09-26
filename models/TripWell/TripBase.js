@@ -12,11 +12,11 @@ const TripBaseSchema = new mongoose.Schema({
   country:   { type: String, required: true },
   cityId:    { type: mongoose.Schema.Types.ObjectId, ref: 'City', default: null }, // Link to City object
   partyCount:  { type: Number, default: 1, min: 1 },  // hardened
-  whoWith: {
-    type: String,
+  whoWith: { 
+    type: String, 
     default: "friends",
-    enum: ["spouse", "spouse-kids", "son-daughter", "friends", "solo", "other"]
-  }
+    enum: ["spouse", "friends", "solo", "family", "other"]
+  },
   season:    { type: String },
   daysTotal: { type: Number },
   tripStartedByOriginator: { type: Boolean, default: false },

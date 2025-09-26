@@ -3,8 +3,6 @@
 const express = require("express");
 const router = express.Router();
 const TripWellUser = require("../../models/TripWell/TripWellUser");
-const TripWellFirebaseOnly = require("../../models/TripWell/TripWellFirebaseOnly");
-const { getOrCreateTripWellUser } = require("../../services/userTransferService");
 const axios = require("axios");
 
 // Environment variables
@@ -13,96 +11,34 @@ const TRIPWELL_AI_BRAIN = process.env.TRIPWELL_AI_BRAIN || "https://tripwell-ai.
 
 router.post("/createOrFind", async (req, res) => {
   try {
-    const { firebaseId, email, funnelStage } = req.body;
+    const { firebaseId } = req.body;
 
-    if (!firebaseId || !email) {
-      return res.status(400).json({ error: "Missing firebaseId or email" });
+    if (!firebaseId) {
+      return res.status(400).json({ error: "Missing firebaseId" });
     }
 
-    console.log("🔍 DEBUG - Searching for existing TripWellUser with firebaseId:", firebaseId);
+    console.log("🔍 Checking for user with firebaseId:", firebaseId);
+    
+    // Find or create user by firebaseId only
     let user = await TripWellUser.findOne({ firebaseId });
-    console.log("🔍 DEBUG - TripWellUser found:", user ? "YES" : "NO");
-    if (user) {
-      console.log("🔍 DEBUG - Found user:", { 
-        _id: user._id, 
-        firebaseId: user.firebaseId, 
-        email: user.email,
-        profileComplete: user.profileComplete 
-      });
-    }
-    let isNewUser = false;
-
+    
     if (!user) {
-      // Create Firebase-only user first (new users)
-      const firebaseUser = new TripWellFirebaseOnly({
-        firebaseId,
-        email,
-        transferredToTripWellUser: false
+      // Create new user with just firebaseId
+      user = new TripWellUser({
+        firebaseId
       });
-      await firebaseUser.save();
-      
-      console.log("✅ Created TripWellFirebaseOnly user:", firebaseUser._id);
-      isNewUser = true;
-    } else if (funnelStage && user.funnelStage !== funnelStage) {
-      // Update funnel stage if user is progressing
-      user.funnelStage = funnelStage;
       await user.save();
-    }
-
-    // 🎯 Call Python for new user tracking and state management
-    if (isNewUser) {
-      try {
-        console.log(`🎯 Calling Python for new user tracking: ${email}`);
-        
-        const pythonResponse = await axios.post(`${TRIPWELL_AI_BRAIN}/useactionendpoint`, {
-          user_id: user._id,
-          firebase_id: user.firebaseId,
-          email: user.email,
-          context: "new_user_signup",
-          // Send user status data for tracking
-          _id: user._id,
-          firebaseId: user.firebaseId,
-          journeyStage: user.journeyStage,
-          userStatus: user.userStatus,
-          userStage: user.userStage || "new_user",
-          profileComplete: user.profileComplete || false
-        });
-
-        if (pythonResponse.status === 200) {
-          const pythonData = pythonResponse.data;
-          console.log(`✅ Python tracking complete for ${email}:`, {
-            actions_taken: pythonData.actions_taken?.length || 0,
-            user_state: pythonData.user_state
-          });
-        }
-      } catch (pythonError) {
-        console.error(`❌ Python tracking failed for ${email}:`, pythonError.message);
-        // Don't fail the request if Python service fails
-      }
-    }
-
-    // Return Firebase user data for new users, full user data for existing users
-    const responseData = {
-      success: true,
-      isNewUser: isNewUser,
-      message: isNewUser ? "Firebase user created successfully" : "User found successfully"
-    };
-
-    if (isNewUser) {
-      // Return Firebase user data (no profile fields yet)
-      responseData.user = {
-        firebaseId: firebaseId,
-        email: email,
-        firstName: null,
-        lastName: null,
-        hometownCity: null
-      };
+      console.log("✅ Created new user:", firebaseId);
     } else {
-      // Return full user data
-      responseData.user = user.toObject();
+      console.log("✅ Found existing user:", firebaseId);
     }
 
-    return res.status(200).json(responseData);
+    // Return simple response
+    return res.status(200).json({
+      success: true,
+      firebaseId: user.firebaseId,
+      userId: user._id
+    });
   } catch (err) {
     console.error("❌ Error in createOrFind:", err);
     return res.status(500).json({ error: "Server error" });

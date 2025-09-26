@@ -42,20 +42,7 @@ const tripWellUserSchema = new mongoose.Schema(
     lastAnalyzedAt: {
       type: Date,
       default: null
-    }, // when Python last analyzed this user
-    
-    lastMarketingEmail: {
-      sentAt: { type: Date, default: null },
-      campaign: { type: String, default: null },
-      status: { 
-        type: String, 
-        default: null,
-        enum: ["sent", "failed", "bounced", null]
-      }
-    }, // track last marketing email sent to prevent duplicates
-    
-    // === PERSONA WEIGHTS MOVED TO DEDICATED PersonaScore MODEL ===
-    // personaScore and planningFlex fields removed - now handled by PersonaScore model
+    } // when Python last analyzed this user
   },
   { timestamps: true }
 );
