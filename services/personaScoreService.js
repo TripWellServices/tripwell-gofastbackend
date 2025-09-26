@@ -12,17 +12,17 @@ const PersonaScore = require("../models/TripWell/PersonaScore");
 const calculatePersonaScores = (userSelections) => {
   const { persona, planningStyle } = userSelections;
   
-  // Initialize all persona scores to 0.1 (not selected)
+  // Initialize all persona scores to 0.0 (points system)
   const personaScores = {
-    Art: 0.1,
-    Food: 0.1,
-    History: 0.1,
-    Adventure: 0.1
+    Art: 0.0,
+    Food: 0.0,
+    History: 0.0,
+    Adventure: 0.0
   };
   
-  // Set selected persona to 0.6
+  // Set selected persona to 0.5 (standard points)
   if (persona && personaScores.hasOwnProperty(persona)) {
-    personaScores[persona] = 0.6;
+    personaScores[persona] = 0.5;
   }
   
   // Initialize all planning scores to default

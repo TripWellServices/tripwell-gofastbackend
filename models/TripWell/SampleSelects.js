@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const SampleSelectsSchema = new mongoose.Schema({
   sampleObjectId: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'CityStuffToDo', 
+    ref: 'PersonaCityIdeas', 
     required: true 
   },
   tripId: { 

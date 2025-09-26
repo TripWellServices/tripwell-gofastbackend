@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const TripPersona = require("../../models/TripWell/TripPersona");
 const TripBase = require("../../models/TripWell/TripBase");
-const { saveTripPersonaCalculations } = require("../../services/tripPersonaCalculationService");
+const { savePickToWeights } = require("../../services/pickToWeightService");
+const { analyzeAndConvertPersona } = require("../../services/picksTotalPercentageService");
 
 /**
  * POST /tripwell/trip-persona
@@ -26,13 +27,16 @@ router.post("/trip-persona", async (req, res) => {
 
     // Budget level can be calculated from budget when needed
 
-    // Use TripPersona calculation service for clean weight calculation
-    console.log("🧮 Calculating trip persona weights with service...");
-    
+    // Step 1: Save pick-to-weights (basic 0.5 assignment)
+    console.log("🎯 Saving pick-to-weights...");
     const tripPersonaData = { primaryPersona, budget, dailySpacing };
-    const tripPersona = await saveTripPersonaCalculations(tripId, userId, tripPersonaData);
+    const tripPersona = await savePickToWeights(tripId, userId, tripPersonaData);
     
-    console.log("✅ Trip persona weights calculated and saved");
+    // Step 2: Analyze percentages and convert to words
+    console.log("📊 Analyzing percentages and converting to words...");
+    const analysisResult = await analyzeAndConvertPersona(tripId, userId);
+    
+    console.log("✅ Trip persona analysis complete");
 
     console.log("✅ TripPersona saved:", {
       id: tripPersona._id,

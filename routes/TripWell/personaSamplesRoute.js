@@ -1,13 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const { generateSamplesWithOpenAI } = require("../../services/PersonaConvertedLLM");
-const CityStuffToDo = require("../../models/TripWell/CityStuffToDo");
+const PersonaCityIdeas = require("../../models/TripWell/PersonaCityIdeas");
 const SampleSelects = require("../../models/TripWell/SampleSelects");
-const TripBase = require("../../models/TripWell/TripBase");
+const { generatePersonaSamples } = require("../../services/TripWell/sampleSelectService");
+
+// ✅ PROMPT BUILDING MOVED TO SERVICE - NO DUPLICATE CODE!
 
 /**
  * POST /tripwell/persona-samples
- * Generate persona-based samples using Python AI service
+ * Generate persona-based samples using LLM-ready data
  */
 router.post("/persona-samples", async (req, res) => {
   console.log("🎯 PERSONA SAMPLES ROUTE HIT!");
@@ -25,22 +26,16 @@ router.post("/persona-samples", async (req, res) => {
   try {
     console.log("📋 Getting persona samples for trip:", tripId);
     
-    // Get trip info to determine cityId and season
-    const tripBase = await TripBase.findById(tripId);
-    if (!tripBase) {
-      return res.status(404).json({
-        status: "error",
-        message: "TripBase not found"
-      });
-    }
+    // Get LLM-ready data (ONE source of truth)
+    const llmData = await getLLMReadyData(tripId);
     
-    const cityId = tripBase.cityId || tripBase.city; // Use cityId if available, fallback to city
-    const season = tripBase.season || "any";
+    const cityId = llmData.cityId || llmData.city;
+    const season = llmData.season || "any";
     
     console.log("🔍 Checking for existing samples:", { cityId, season });
     
     // Step 1: Check if samples already exist for this city/season
-    let existingSamples = await CityStuffToDo.findOne({ cityId, season });
+    let existingSamples = await PersonaCityIdeas.findOne({ cityId, season });
     
     if (existingSamples) {
       console.log("✅ Found existing samples for city:", cityId);
@@ -58,45 +53,34 @@ router.post("/persona-samples", async (req, res) => {
     
     console.log("🆕 No existing samples found, generating new ones...");
     
-    // Step 2: Generate samples using clean PersonaConvertedLLM
-    console.log("🤖 Generating samples with PersonaConvertedLLM...");
+    // Step 2: Generate samples using the service (NO MORE INLINE GPT!)
+    console.log("🤖 Calling sampleSelectService...");
     
-    const llmResponse = await generateSamplesWithOpenAI(
-      tripId,
-      userId,
-      tripBase.city,
-      season,
-      tripBase.purpose
-    );
+    const result = await generatePersonaSamples({ tripId, userId });
+    const samplesData = result.samples;
     
-    if (!llmResponse.success) {
-      return res.status(500).json({
-        status: "error",
-        message: "Failed to generate samples",
-        details: llmResponse.message
-      });
-    }
-    
-    console.log("✅ PersonaConvertedLLM generated samples successfully");
-    
-    const samplesData = llmResponse.samples;
-    
-    console.log("✅ Persona samples generated:", {
+    console.log("✅ Samples generated via service:", {
       attractions: samplesData.attractions?.length || 0,
       restaurants: samplesData.restaurants?.length || 0,
       neatThings: samplesData.neatThings?.length || 0
     });
     
-    // Step 4: Save samples to CityStuffToDo collection
-    const cityStuffToDo = await CityStuffToDo.create({
+    // Step 4: Save samples to PersonaCityIdeas collection
+    const personaCityIdeas = await PersonaCityIdeas.create({
       cityId,
       season,
       samples: samplesData,
-      metadata: promptResult.metadata,
-      prompt: promptResult.prompt
+      metadata: {
+        tripId,
+        userId,
+        dominantPersona: llmData.dominantPersona,
+        dominantBudget: llmData.dominantBudget,
+        generatedAt: new Date()
+      },
+      prompt: prompt
     });
     
-    console.log("💾 Samples saved to CityStuffToDo:", cityStuffToDo._id);
+    console.log("💾 Samples saved to PersonaCityIdeas:", personaCityIdeas._id);
     
     res.json({
       status: "success",
@@ -104,8 +88,14 @@ router.post("/persona-samples", async (req, res) => {
       tripId,
       userId,
       samples: samplesData,
-      metadata: promptResult.metadata,
-      sampleObjectId: cityStuffToDo._id,
+      metadata: {
+        tripId,
+        userId,
+        dominantPersona: llmData.dominantPersona,
+        dominantBudget: llmData.dominantBudget,
+        generatedAt: new Date()
+      },
+      sampleObjectId: personaCityIdeas._id,
       source: "generated",
       nextStep: "User selects samples, then call persona-sample-service"
     });

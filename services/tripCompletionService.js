@@ -40,8 +40,6 @@ const completeTrip = async (tripId, userId, completionReason = "completed") => {
       cityId: trip.cityId,
       partyCount: trip.partyCount,
       whoWith: trip.whoWith,
-      romanceLevel: trip.romanceLevel,
-      caretakerRole: trip.caretakerRole,
       season: trip.season,
       daysTotal: trip.daysTotal,
       tripStartedByOriginator: trip.tripStartedByOriginator,

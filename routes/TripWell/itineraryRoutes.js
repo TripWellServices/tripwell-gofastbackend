@@ -6,6 +6,7 @@ const { parseAngelaItinerary } = require("../../services/TripWell/gptItinerarypa
 const ItineraryDays = require("../../models/TripWell/ItineraryDays");
 const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 
+
 // Canonical route: POST /tripwell/itinerary/build
 router.post("/tripwell/itinerary/build", async (req, res) => {
   const { tripId, userId, selectedMetas = [], selectedSamples = [] } = req.body;
@@ -15,27 +16,55 @@ router.post("/tripwell/itinerary/build", async (req, res) => {
   }
 
   try {
-    // 🧠 Step 1: Generate raw itinerary from Angela with persona weights and meta integration
-    const itineraryText = await generateItineraryFromMetaLogic(tripId, userId, selectedMetas, selectedSamples);
-
-    // 🪄 Step 2: Parse into structured TripDays via Marlo (for validation)
-    const parsedDays = parseAngelaItinerary(itineraryText);
+    // 🧠 Step 1: Generate itinerary from Angela service
+    const itineraryResult = await generateItineraryFromMetaLogic(tripId, userId, selectedMetas, selectedSamples);
+    
+    let parsedDays;
+    
+    // Try JSON first (new structured format)
+    if (itineraryResult.structuredData) {
+      parsedDays = itineraryResult.structuredData.days;
+      console.log("✅ Using structured JSON from Angela");
+    } else {
+      // Fall back to text parser (legacy format)
+      parsedDays = parseAngelaItinerary(itineraryResult);
+      console.log("✅ Using text parser fallback");
+    }
 
     if (!parsedDays || parsedDays.length === 0) {
-      return res.status(500).json({ error: "Parsed itinerary is empty" });
+      return res.status(500).json({ error: "Angela returned empty itinerary" });
     }
 
     // 💾 Step 3: Save to ItineraryDays (source of truth)
     const itineraryDays = new ItineraryDays({
       tripId,
       userId,
-      rawItineraryText: itineraryText,
+      rawItineraryText: rawText,
       parsedDays: parsedDays.map(day => ({
         dayIndex: day.dayIndex,
         summary: day.summary,
-        blocks: day.blocks
+        blocks: {
+          morning: {
+            activity: day.blocks.morning.activity,
+            type: day.blocks.morning.type,
+            persona: day.blocks.morning.persona,
+            budget: day.blocks.morning.budget
+          },
+          afternoon: {
+            activity: day.blocks.afternoon.activity,
+            type: day.blocks.afternoon.type,
+            persona: day.blocks.afternoon.persona,
+            budget: day.blocks.afternoon.budget
+          },
+          evening: {
+            activity: day.blocks.evening.activity,
+            type: day.blocks.evening.type,
+            persona: day.blocks.evening.persona,
+            budget: day.blocks.evening.budget
+          }
+        }
       })),
-      aiPrompt: "Generated from meta logic",
+      aiPrompt: "Generated from meta logic with structured JSON",
       aiModel: "gpt-4"
     });
 

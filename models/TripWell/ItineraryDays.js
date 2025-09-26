@@ -25,9 +25,60 @@ const ItineraryDaysSchema = new mongoose.Schema({
     dayIndex: { type: Number, required: true },
     summary: { type: String, required: true },
     blocks: {
-      morning: { type: String, required: true },
-      afternoon: { type: String, required: true },
-      evening: { type: String, required: true }
+      morning: {
+        activity: { type: String, required: true },
+        type: { 
+          type: String, 
+          enum: ["attraction", "restaurant", "activity", "transport", "free_time"],
+          default: "attraction"
+        },
+        persona: { 
+          type: String, 
+          enum: ["art", "foodie", "history", "adventure"],
+          default: "history"
+        },
+        budget: { 
+          type: String, 
+          enum: ["budget", "moderate", "luxury"],
+          default: "moderate"
+        }
+      },
+      afternoon: {
+        activity: { type: String, required: true },
+        type: { 
+          type: String, 
+          enum: ["attraction", "restaurant", "activity", "transport", "free_time"],
+          default: "attraction"
+        },
+        persona: { 
+          type: String, 
+          enum: ["art", "foodie", "history", "adventure"],
+          default: "history"
+        },
+        budget: { 
+          type: String, 
+          enum: ["budget", "moderate", "luxury"],
+          default: "moderate"
+        }
+      },
+      evening: {
+        activity: { type: String, required: true },
+        type: { 
+          type: String, 
+          enum: ["attraction", "restaurant", "activity", "transport", "free_time"],
+          default: "attraction"
+        },
+        persona: { 
+          type: String, 
+          enum: ["art", "foodie", "history", "adventure"],
+          default: "history"
+        },
+        budget: { 
+          type: String, 
+          enum: ["budget", "moderate", "luxury"],
+          default: "moderate"
+        }
+      }
     }
   }],
   

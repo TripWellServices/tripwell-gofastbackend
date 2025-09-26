@@ -1,151 +1,130 @@
-const TripPersona = require("../../models/TripWell/TripPersona");
-const TripBase = require("../../models/TripWell/TripBase");
-const TripWellUser = require("../../models/TripWellUser");
+const { getLLMReadyData } = require("../llmHydrateService");
 const { OpenAI } = require("openai");
+
 const openai = new OpenAI();
+
+/*
+  Angela Itinerary Service
+  
+  ✅ Clean, simple flow
+  ✅ Uses LLM-ready data (ONE source of truth)
+  ✅ No deprecated helper functions
+  ✅ Clean prompt structure
+*/
 
 async function generateItineraryFromMetaLogic(tripId, userId, selectedMetas = [], selectedSamples = []) {
   try {
-    const tripBase = await TripBase.findById(tripId);
-    const tripPersona = await TripPersona.findOne({ tripId, userId });
-    const tripWellUser = await TripWellUser.findOne({ firebaseId: userId });
+    console.log("🎯 Hey Angela, build me an itinerary!");
+    
+    // 🎯 Step 1: Get LLM-ready data (ONE source of truth)
+    const llmData = await getLLMReadyData(tripId);
+    
+    const { 
+      season, whoWith, purpose, city, country, 
+      tripPersonaLLM, tripBudgetLLM, tripSpacingLLM,
+      daysTotal, startDate
+    } = llmData;
+    
+    console.log("📋 Trip context:", { city, country, season, daysTotal, purpose });
+    console.log("👤 User persona:", tripPersonaLLM);
+    console.log("💰 Budget style:", tripBudgetLLM);
+    console.log("🚶 Spacing style:", tripSpacingLLM);
 
-    if (!tripPersona || !tripBase) {
-      throw new Error("Missing trip data or persona.");
-    }
-
-    const { city, season, startDate, daysTotal, purpose, whoWith, arrivalTime } = tripBase;
-
+    // 🎯 Step 2: Build calendar
     const start = new Date(startDate);
     const dayMap = Array.from({ length: daysTotal }).map((_, i) => {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
       return {
         dayIndex: i + 1,
-        dayNumber: i + 1,
         isoDate: date.toISOString().split("T")[0],
         weekday: date.toLocaleDateString("en-US", { weekday: "long" }),
         formatted: date.toLocaleDateString("en-US", { month: "long", day: "numeric" }),
-        label: `Day ${i + 1} – ${date.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric"
-        })}`
+        label: `Day ${i + 1} – ${date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}`
       };
     });
 
-    const systemPrompt = `
-You are Angela, a highly intuitive AI travel planner.
+    // 🎯 Step 3: Build clean prompt
+    const systemPrompt = `You are Angela, a highly intuitive AI travel planner.
 
-You are building a ${daysTotal}-day itinerary for a trip to ${city} during the ${season}.
-The purpose of this trip is "${purpose || "to enjoy and explore"}", and it is being taken with ${whoWith || "unspecified"}.
+**TRIP OVERVIEW:**
+${daysTotal}-day trip to ${city}, ${country} during ${season}
+Purpose: ${purpose}
+Traveling with: ${whoWith}
 
-**Selected Meta Attractions (MUST INCLUDE):**
-${selectedMetas.length > 0 ? selectedMetas.map(meta => `- ${meta.name}: ${meta.description}`).join('\n') : 'No specific meta attractions selected'}
+**USER PROFILE:**
+${tripPersonaLLM}
 
-**Selected Sample Preferences (LEARNED FROM USER CHOICES):**
-${selectedSamples.length > 0 ? selectedSamples.map(sample => `- ${sample.name} (${sample.type}): ${sample.why_recommended}`).join('\n') : 'No sample preferences selected'}
+**BUDGET & STYLE:**
+${tripBudgetLLM}
+${tripSpacingLLM}
 
-**Persona Integration:**
-The traveler's persona weights are: ${JSON.stringify(tripPersona.personas)}
-- Art & Culture: ${tripPersona.personas.art}
-- Food & Dining: ${tripPersona.personas.foodie}  
-- Adventure & Outdoor: ${tripPersona.personas.adventure}
-- History & Heritage: ${tripPersona.personas.history}
+**MUST INCLUDE:**
+${selectedMetas.length > 0 ? selectedMetas.map(meta => `• ${meta.name}: ${meta.description}`).join('\n') : '• No specific meta attractions selected'}
 
-**Trip Intent Data:**
-- Primary Persona: ${tripPersona.primaryPersona}
-- Daily Budget: $${tripPersona.budget}
-- Travel Pace: ${tripPersona.travelPace}
+**USER PREFERENCES (from sample selections):**
+${selectedSamples.length > 0 ? selectedSamples.map(sample => `• ${sample.name} (${sample.type}): ${sample.why_recommended}`).join('\n') : '• No sample preferences selected'}
 
-**ProfileSetup Enduring Weights:**
-- Planning Flexibility: ${tripWellUser?.planningFlex || 0.5} (0.2=rigid, 0.5=mixed, 0.8=spontaneous)
-- Trip Preference Flexibility: ${tripWellUser?.tripPreferenceFlex || 0.5} (0.2=stick to schedule, 0.6=enjoy moment, 0.8=go with flow)
+**INSTRUCTIONS:**
+Create a ${daysTotal}-day itinerary following this structure:
+• **Meta Attractions**: Include 1 meta attraction per day (spread across days)
+• **Day Structure**: Once meta attraction is placed, fill with restaurants and neat things to do
+• **Spacing**: Respect their spacing preferences (relaxed/balanced/packed)
+• **Persona Matching**: Use their persona profile (described above) to select similar activities
+• **Budget Matching**: Use their budget level (described above) for activity selection
 
-**Derived Personality Factors:**
-- Romance Level: ${tripPersona.romanceLevel}
-- Caretaker Role: ${tripPersona.caretakerRole}
-- Flexibility: ${tripPersona.flexibility}
-- Adult Level: ${tripPersona.adultLevel}
+**Day Structure Rules:**
+- **1 meta attraction per day** (can be morning, afternoon, or evening)
+- **Fill remaining blocks** with restaurants and neat things to do
+- **Mix up the order** - be creative with timing
+- **Balance**: Mix of attractions, restaurants, and neat things to do
 
-Each day of the trip should include:
-- A brief day summary
-- Morning activities
-- Afternoon activities
-- Evening activities
+**FORMAT:**
+Return a JSON object with this exact structure:
 
-**Meta Integration (CRITICAL):**
-- MUST include all selected meta attractions in the itinerary
-- Spread selected meta attractions across the trip days to ensure variety and pacing
-- Use one meta attraction per day (typically), unless two fit naturally together
-- For meta attractions that are full-day experiences, structure the day around that location
-- Group nearby meta attractions to avoid inefficient travel
+{
+  "days": [
+    {
+      "dayIndex": 1,
+      "summary": "Brief day overview",
+      "blocks": {
+        "morning": {
+          "activity": "Activity name",
+          "type": "attraction|restaurant|activity|transport|free_time",
+          "persona": "art|foodie|history|adventure",
+          "budget": "budget|moderate|luxury"
+        },
+        "afternoon": {
+          "activity": "Activity name",
+          "type": "attraction|restaurant|activity|transport|free_time",
+          "persona": "art|foodie|history|adventure",
+          "budget": "budget|moderate|luxury"
+        },
+        "evening": {
+          "activity": "Activity name",
+          "type": "attraction|restaurant|activity|transport|free_time",
+          "persona": "art|foodie|history|adventure",
+          "budget": "budget|moderate|luxury"
+        }
+      }
+    }
+  ]
+}
 
-**Sample Preference Integration:**
-- Use selected sample preferences to guide similar recommendations
-- If they selected specific restaurants, include similar dining experiences
-- If they selected specific attractions, include similar cultural activities
-- If they selected specific "neat things", include similar unique experiences
+Include only Day 1 through Day ${daysTotal}. Return ONLY the JSON object.`;
 
-**Persona-Based Recommendations:**
-- Prioritize activities that match the highest persona weights (${tripPersona.primaryPersona} is primary)
-- Consider romance level (${tripPersona.romanceLevel}) for evening activities
-- Factor in caretaker role (${tripPersona.caretakerRole}) for family-friendly options
-- Use flexibility level (${tripPersona.flexibility}) to determine how structured vs spontaneous the day should be
-- Consider adult level (${tripPersona.adultLevel}) for appropriate activity selection
-- Budget: $${tripPersona.budget} per day - structure activities accordingly
-- Travel Pace: ${tripPersona.travelPace} - adjust daily activity density
-
-**ProfileSetup Integration:**
-- Planning Flexibility (${tripWellUser?.planningFlex || 0.5}): ${tripWellUser?.planningFlex > 0.6 ? 'Include spontaneous options and flexible timing' : tripWellUser?.planningFlex < 0.4 ? 'Keep schedule structured and predictable' : 'Balance structure with flexibility'}
-- Trip Preference Flexibility (${tripWellUser?.tripPreferenceFlex || 0.5}): ${tripWellUser?.tripPreferenceFlex > 0.6 ? 'Focus on experiences over strict scheduling' : tripWellUser?.tripPreferenceFlex < 0.4 ? 'Provide detailed timing and structure' : 'Mix planned activities with free time'}
-
-**Day Indexing:**
-- Day 1 (dayIndex: 1) = First day of trip
-- Day 2+ (dayIndex: 2+) = Full trip days with activities
-
-All days (1 through ${daysTotal}) must include:
-- Real calendar dates
-- Accurate weekdays
-- A well-paced mix of activity, rest, and delight
-- "Why" explanations for each recommendation based on persona weights
-
-You will be provided:
-- A calendar map of the trip
-- The selected meta attractions to integrate
-- The trip persona with weights and factors
-
-Output should follow this exact format:
-
-Day X – {Weekday}, {Month Day}  
-Summary of the day: ...
-
-Morning:
-• [Activity] - [Why this fits their persona: art/foodie/adventure/history + romance/caretaker/flexibility factors]
-
-Afternoon:
-• [Activity] - [Why this fits their persona: art/foodie/adventure/history + romance/caretaker/flexibility factors]
-
-Evening:
-• [Activity] - [Why this fits their persona: art/foodie/adventure/history + romance/caretaker/flexibility factors]
-
-Only include Day 0 through Day ${daysTotal} — no extras.
-`.trim();
-
-    const userPrompt = `
-Here is the trip calendar:
+    const userPrompt = `Here is the trip calendar:
 ${JSON.stringify(dayMap, null, 2)}
 
 Here are the selected meta attractions to integrate:
 ${JSON.stringify(selectedMetas, null, 2)}
 
-Here is the trip persona with weights:
-${JSON.stringify(tripPersona, null, 2)}
-
 Here are the selected samples that influenced the persona weights:
-${JSON.stringify(selectedSamples, null, 2)}
-`.trim();
+${JSON.stringify(selectedSamples, null, 2)}`;
 
+    // 🎯 Step 4: Call Angela
+    console.log("🤖 Calling Angela with clean data...");
+    
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       temperature: 0.8,
@@ -158,9 +137,23 @@ ${JSON.stringify(selectedSamples, null, 2)}
     const content = completion.choices?.[0]?.message?.content;
     if (!content) throw new Error("No GPT output received.");
 
-    return content.trim();
+    // Parse JSON response
+    let itineraryData;
+    try {
+      itineraryData = JSON.parse(content);
+    } catch (error) {
+      console.error("❌ Failed to parse Angela's JSON response:", error);
+      throw new Error("Invalid JSON response from Angela");
+    }
+
+    console.log("✅ Angela built the itinerary with tags!");
+    return {
+      rawText: content,
+      structuredData: itineraryData
+    };
+    
   } catch (error) {
-    console.error("Angela itinerary generation error:", error);
+    console.error("❌ Angela itinerary generation error:", error);
     throw error;
   }
 }

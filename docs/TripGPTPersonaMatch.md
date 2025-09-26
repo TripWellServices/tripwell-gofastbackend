@@ -22,15 +22,14 @@ Build a hybrid AI + data-driven persona system that learns from user behavior an
 - **Add:** Caretaker Role slider (0.0 to 1.0)
 - **Add:** Flexibility slider (0.7 free/spontaneous, 0.2 locked/rigid)
 
-### **2. Backend Model Refactor**
-**File:** `TripIntent.js` → `TripPersona.js`
-- **Rename** TripIntent model to TripPersona
-- **Add persona weights:** `{art: 0.6, foodie: 0.1, adventure: 0.1, history: 0.1}`
-- **Add budget weight:** `0.3` (low), `0.5` (moderate), `1.0` (high)
-- **Add romance level:** `0.0` to `1.0`
-- **Add caretaker role:** `0.0` to `1.0`
-- **Add flexibility:** `0.7` (free/spontaneous), `0.2` (locked/rigid)
-- **Add who with:** `solo`, `couple`, `family`, `friends`
+### **2. Backend Model Refactor (Real Choice Adjustment)**
+**File:** `TripPersona.js`
+- **Persona weights:** `{art: 0.5, foodie: 0.0, adventure: 0.0, history: 0.0}` (0.5 for chosen, 0.0 for others)
+- **Budget weights:** `{Budget: 0.5, Moderate: 0.0, Luxury: 0.0}` (0.5 for chosen category, 0.0 for others)
+- **Real choice adjustments:** Any sample/selection adds 0.05 to relevant categories
+- **Percentage calculations:** weights/total = percentage → dominant category
+- **MVP1 simplification:** Remove romance/caretaker/flexibility complexity
+- **Hardcode whoWith:** "friends" for MVP1
 
 **File:** `TripWellUser.js` (Enduring Weights)
 - **Add planningFlex:** From ProfileSetup `planningVibe` radio answers
@@ -43,11 +42,28 @@ Build a hybrid AI + data-driven persona system that learns from user behavior an
   - "Stick to schedule" = 0.2
   - "Want to just enjoy the moment" = 0.6
 
-**File:** `TripWellUser.js` (Model Updates)
+**File:** `TripPersona.js` (Real Choice Adjustment Model)
 ```javascript
-// === ENDURING PERSONA WEIGHTS (from ProfileSetup radio answers) ===
-planningFlex: { type: Number, default: 0.5 }, // "Spontaneity" = 0.8, "Rigid" = 0.2, "Like mix" = 0.5
-tripPreferenceFlex: { type: Number, default: 0.5 } // "Go with flow" = 0.8, "Spontaneity" = 0.7, "Stick to schedule" = 0.2, "Want to just enjoy the moment" = 0.6
+// === PERSONA WEIGHTS (Real Choice Adjustment System) ===
+personaWeights: {
+  art: { type: Number, default: 0.0 },      // 0.5 for chosen, 0.05 for real choices
+  foodie: { type: Number, default: 0.0 },   // 0.5 for chosen, 0.05 for real choices  
+  adventure: { type: Number, default: 0.0 }, // 0.5 for chosen, 0.05 for real choices
+  history: { type: Number, default: 0.0 }   // 0.5 for chosen, 0.05 for real choices
+},
+
+// === BUDGET WEIGHTS (Real Choice Adjustment System) ===
+budgetWeights: {
+  Budget: { type: Number, default: 0.0 },    // $0-$200: 0.5 for chosen, 0.05 for real choices
+  Moderate: { type: Number, default: 0.0 },  // $200-$400: 0.5 for chosen, 0.05 for real choices
+  Luxury: { type: Number, default: 0.0 }     // $400+: 0.5 for chosen, 0.05 for real choices
+},
+
+// === ANALYSIS RESULTS ===
+personaPercentages: { type: Map, of: Number }, // Calculated percentages
+dominantPersona: { type: String },             // Highest percentage persona
+budgetPercentages: { type: Map, of: Number },  // Calculated budget percentages  
+dominantBudget: { type: String }               // Highest percentage budget
 ```
 
 ### **3. Meta Layer (New)**
@@ -101,6 +117,20 @@ tripPreferenceFlex: { type: Number, default: 0.5 } // "Go with flow" = 0.8, "Spo
 
 ## 🧮 **The Weight System**
 
+### **Real Choice Adjustment Logic**
+**It's not "bonus points" - it's ADJUSTED MENTAL CHOICE!**
+
+**The Logic:**
+- **User says "I'm Luxury"** → gets 0.5 for Luxury (stated preference)
+- **But then user picks "fine dining restaurant"** → that's their ACTUAL real life choice!
+- **That choice ADJUSTS their mental profile** → adds 0.05 to Luxury
+
+**Stated vs Real Behavior:**
+- **Stated Preference:** "I'm a luxury traveler" (0.5 Luxury)
+- **Real Choice:** User picks fine dining → that's their ACTUAL behavior (0.05 Luxury)
+
+**The system learns from ACTUAL CHOICES, not just what they say!**
+
 ### **Default Weights (User Picks Primary)**
 ```javascript
 const defaultWeights = {
@@ -112,20 +142,41 @@ const defaultWeights = {
 
 // User picks "Art" → Update to:
 const updatedWeights = {
-  art: 0.6,      // What they picked
+  art: 0.5,      // What they picked (0.5 for chosen)
   foodie: 0.1,   // Others stay 0.1
   adventure: 0.1, // Others stay 0.1
   history: 0.1   // Others stay 0.1
 };
+
+// User then picks art samples → Real choice adjustment:
+const adjustedWeights = {
+  art: 0.5 + 0.05, // Chosen + real choice adjustment
+  foodie: 0.1,
+  adventure: 0.1,
+  history: 0.1
+};
 ```
 
-### **Budget Weights**
+### **Budget Weights (Real Choice Adjustment)**
 ```javascript
 const budgetWeights = {
-  low: 0.3,      // < $100/day
-  moderate: 0.5, // $100-200/day
-  high: 0.7,     // $200-300/day
-  luxury: 1.0    // $300+/day
+  Budget: 0.0,      // $0-$200
+  Moderate: 0.0,    // $200-$400  
+  Luxury: 0.0       // $400+
+};
+
+// User picks "$300" → Update to:
+const updatedBudgetWeights = {
+  Budget: 0.0,
+  Moderate: 0.5,    // What they picked (0.5 for chosen)
+  Luxury: 0.0
+};
+
+// User then picks budget-friendly samples → Real choice adjustment:
+const adjustedBudgetWeights = {
+  Budget: 0.0 + 0.05, // Real choice adjustment
+  Moderate: 0.5,      // Chosen amount
+  Luxury: 0.0
 };
 ```
 
@@ -195,10 +246,12 @@ const updatePersonaWeights = async (userPicks, currentWeights) => {
 5. **Sample Select** → **Pick samples based on persona**
 6. **Itinerary Build** → **Based on all weights + meta avoidance**
 
-### **Weight Calculation Logic**
-- **ProfileSetup**: persona → 0.6 for selected, 0.1 for others
-- **TripSetup**: whoWith → romanceLevel, caretakerRole, flexibility
-- **TripPersona**: budget → budgetLevel (0.3-1.0), dailySpacing (0.2-0.8)
+### **Real Choice Adjustment Logic**
+- **ProfileSetup**: persona → 0.5 for selected, 0.0 for others
+- **TripPersona**: budget → 0.5 for chosen category, 0.0 for others
+- **Sample selections**: Any choice → +0.05 to relevant categories (real choice adjustment)
+- **Analysis**: weights/total = percentage → dominant category
+- **MVP1**: Hardcode whoWith = "friends", remove romance/caretaker complexity
 
 ## 🚀 **The End Goal**
 

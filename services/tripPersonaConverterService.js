@@ -1,76 +1,73 @@
 // services/tripPersonaConverterService.js
 const TripPersona = require("../models/TripWell/TripPersona");
+const TripLLMReady = require("../models/TripWell/TripLLMReady");
+const TripBase = require("../models/TripWell/TripBase");
 
 /*
   TripPersonaConverter Service
   
-  ✅ Converts weights back to descriptive words based on ranges
-  ✅ Bridges the gap between raw weights (numbers) and human descriptions (words)
-  ✅ Future self: art 0.7 = "artsy dude, loves to shop"
-  ✅ Clean data for Python or direct OpenAI calls
+  ✅ Gets TOLD what persona to convert (doesn't figure it out itself!)
+  ✅ Converts specific persona to descriptive words
+  ✅ Converts budget level to words
+  ✅ Clean data for OpenAI calls
+  ✅ Simple and focused - just converts what it's told
 */
 
-const convertPersonaWeightsToWords = (personaWeights) => {
-  const descriptions = {};
+// Hardcoded persona definitions (mad libs style)
+const personaMadLibs = {
+  art: "Someone who appreciates visual beauty, creativity, and cultural expression. They prefer selections that showcase local art, galleries, museums, and creative spaces.",
+  foodie: "Someone who loves culinary experiences, local flavors, and food culture. They prefer selections that highlight local cuisine, food markets, cooking experiences, and dining culture.",
+  history: "Someone who is fascinated by the past, heritage, and historical significance. They prefer selections that explore historical sites, museums, heritage locations, and cultural history.",
+  adventure: "Someone who seeks excitement, outdoor activities, and adrenaline experiences. They prefer selections that offer outdoor adventures, physical activities, and thrilling experiences."
+};
+
+// Convert specific persona to words (gets TOLD what to convert)
+const convertPersonaToWords = (persona, budgetLevel, dailySpacing) => {
+  console.log(`🔄 Converting persona "${persona}" to words`);
   
-  // Art weight ranges
-  if (personaWeights.art >= 0.7) {
-    descriptions.art = "artsy dude, loves to shop";
-  } else if (personaWeights.art >= 0.5) {
-    descriptions.art = "appreciates art and culture";
-  } else if (personaWeights.art >= 0.3) {
-    descriptions.art = "enjoys some cultural activities";
-  } else {
-    descriptions.art = "not particularly artsy";
-  }
+  const personaDescription = personaMadLibs[persona] || "Someone with diverse interests and preferences.";
+  const budgetDescription = convertBudgetLevelToWords(budgetLevel);
+  const spacingDescription = convertSpacingToWords(dailySpacing);
   
-  // Food weight ranges
-  if (personaWeights.foodie >= 0.7) {
-    descriptions.foodie = "food obsessed, will travel for meals";
-  } else if (personaWeights.foodie >= 0.5) {
-    descriptions.foodie = "loves trying new restaurants";
-  } else if (personaWeights.foodie >= 0.3) {
-    descriptions.foodie = "enjoys good food";
-  } else {
-    descriptions.foodie = "not particularly foodie";
-  }
-  
-  // Adventure weight ranges
-  if (personaWeights.adventure >= 0.7) {
-    descriptions.adventure = "thrill seeker, loves extreme activities";
-  } else if (personaWeights.adventure >= 0.5) {
-    descriptions.adventure = "enjoys outdoor adventures";
-  } else if (personaWeights.adventure >= 0.3) {
-    descriptions.adventure = "likes some adventure";
-  } else {
-    descriptions.adventure = "not particularly adventurous";
-  }
-  
-  // History weight ranges
-  if (personaWeights.history >= 0.7) {
-    descriptions.history = "history buff, loves museums and historical sites";
-  } else if (personaWeights.history >= 0.5) {
-    descriptions.history = "appreciates history and culture";
-  } else if (personaWeights.history >= 0.3) {
-    descriptions.history = "enjoys some historical activities";
-  } else {
-    descriptions.history = "not particularly interested in history";
-  }
-  
-  return descriptions;
+  return {
+    persona: personaDescription,
+    budget: budgetDescription,
+    spacing: spacingDescription,
+    dominantPersona: persona
+  };
 };
 
 const convertBudgetLevelToWords = (budgetLevel) => {
-  if (budgetLevel >= 0.8) return "luxury";
-  if (budgetLevel >= 0.6) return "upscale";
-  if (budgetLevel >= 0.4) return "moderate";
-  return "budget";
+  if (budgetLevel >= 0.8) return "luxury traveler, seeking premium experiences and fine dining";
+  if (budgetLevel >= 0.6) return "mid-range traveler, looking for quality experiences without excessive spending";
+  if (budgetLevel >= 0.4) return "budget-conscious traveler, seeking value and affordable options";
+  return "very budget-focused traveler, prioritizing cost-effective choices";
 };
 
-const convertSpacingWeightsToWords = (spacingWeights) => {
-  if (spacingWeights.relaxed >= 0.5) return "relaxed, takes it slow";
-  if (spacingWeights.packed >= 0.5) return "packed schedule, wants to see everything";
-  return "balanced, mix of activities and downtime";
+// Convert budget category to words (gets TOLD what to convert)
+const convertBudgetCategoryToWords = (budgetCategory) => {
+  console.log(`🔄 Converting budget category "${budgetCategory}" to words`);
+  
+  const budgetDescriptions = {
+    Budget: "budget-conscious traveler, seeking value and affordable options",
+    Moderate: "mid-range traveler, looking for quality experiences without excessive spending", 
+    Luxury: "luxury traveler, seeking premium experiences and fine dining"
+  };
+  
+  return budgetDescriptions[budgetCategory] || "traveler with flexible budget preferences";
+};
+
+const convertSpacingToWords = (dailySpacing) => {
+  if (dailySpacing >= 0.7) return "prefers a packed itinerary with lots of activities";
+  if (dailySpacing >= 0.5) return "likes a balanced itinerary with a good mix of activities and relaxation";
+  if (dailySpacing >= 0.3) return "prefers a relaxed pace with plenty of downtime";
+  return "enjoys a very slow pace with minimal planned activities";
+};
+
+// Convert budget to words (gets TOLD what to convert)
+const convertBudgetToWords = (budgetLevel) => {
+  console.log(`🔄 Converting budget level ${budgetLevel} to words`);
+  return convertBudgetLevelToWords(budgetLevel);
 };
 
 const convertTripPersonaToWords = async (tripId, userId) => {
@@ -194,9 +191,10 @@ Return only the JSON object. No explanations, markdown, or extra commentary.`;
 };
 
 module.exports = {
-  convertPersonaWeightsToWords,
+  convertPersonaToWords,
+  convertBudgetToWords,
   convertBudgetLevelToWords,
-  convertSpacingWeightsToWords,
+  convertSpacingToWords,
   convertTripPersonaToWords,
   buildOpenAIPrompt
 };

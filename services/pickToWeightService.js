@@ -1,27 +1,27 @@
-// services/tripPersonaCalculationService.js
+// services/pickToWeightService.js
 const TripPersona = require("../models/TripWell/TripPersona");
 
 /*
-  TripPersonaCalculation Service
+  PickToWeight Service
   
-  ✅ Calculates trip-specific persona weights based on selections
-  ✅ Linked by tripId (trip-level weights vs user-level weights)
-  ✅ Individual fields for easy querying and mutation
-  ✅ Never hardcoded - all logic in service
+  ✅ Basic pick → 0.5 weights calculation
+  ✅ Just does the initial weight assignment
+  ✅ For MVP 1: chosen item = 0.5, samples = 0.05 each
+  ✅ Simple and clean - no complex analysis
 */
 
 const calculatePersonaWeights = (primaryPersona) => {
-  // Initialize all persona weights to 0.1 (not primary)
+  // Initialize all persona weights to 0.0 (points system)
   const personaWeights = {
-    art: 0.1,
-    foodie: 0.1,
-    adventure: 0.1,
-    history: 0.1
+    art: 0.0,
+    foodie: 0.0,
+    adventure: 0.0,
+    history: 0.0
   };
   
-  // Set primary persona to 0.6
+  // Set primary persona to 0.5 (standard points)
   if (primaryPersona && personaWeights.hasOwnProperty(primaryPersona)) {
-    personaWeights[primaryPersona] = 0.6;
+    personaWeights[primaryPersona] = 0.5;
   }
   
   return personaWeights;
@@ -54,9 +54,9 @@ const calculateSpacingWeights = (dailySpacing) => {
   return spacingWeights;
 };
 
-const saveTripPersonaCalculations = async (tripId, userId, tripPersonaData) => {
+const savePickToWeights = async (tripId, userId, tripPersonaData) => {
   try {
-    console.log(`🧮 Calculating trip persona weights for trip ${tripId}`);
+    console.log(`🎯 Saving pick-to-weights for trip ${tripId}`);
     
     const { primaryPersona, budget, dailySpacing } = tripPersonaData;
     
@@ -64,7 +64,7 @@ const saveTripPersonaCalculations = async (tripId, userId, tripPersonaData) => {
     const budgetLevel = calculateBudgetLevel(budget);
     const spacingWeights = calculateSpacingWeights(dailySpacing);
     
-    // Create or update TripPersona with calculated weights
+    // Create or update TripPersona with basic weights
     const tripPersona = await TripPersona.findOneAndUpdate(
       { tripId, userId },
       {
@@ -73,18 +73,18 @@ const saveTripPersonaCalculations = async (tripId, userId, tripPersonaData) => {
         primaryPersona,
         budget,
         dailySpacing,
-        // Calculated weights
+        // Basic weights (no analysis yet)
         personaWeights,
         budgetLevel,
         spacingWeights,
-        status: 'calculated',
+        status: 'weights_assigned',
         calculatedAt: new Date(),
         calculationVersion: "1.0"
       },
       { upsert: true, new: true }
     );
     
-    console.log(`✅ Trip persona calculations saved:`, {
+    console.log(`✅ Pick-to-weights saved:`, {
       tripId,
       userId,
       personaWeights,
@@ -95,7 +95,7 @@ const saveTripPersonaCalculations = async (tripId, userId, tripPersonaData) => {
     return tripPersona;
     
   } catch (error) {
-    console.error(`❌ Error saving trip persona calculations for trip ${tripId}:`, error);
+    console.error(`❌ Error saving pick-to-weights for trip ${tripId}:`, error);
     throw error;
   }
 };
@@ -130,7 +130,7 @@ module.exports = {
   calculatePersonaWeights,
   calculateBudgetLevel,
   calculateSpacingWeights,
-  saveTripPersonaCalculations,
+  savePickToWeights,
   getTripPersonaCalculations,
   findArtTrips,
   findFoodieTrips,
