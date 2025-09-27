@@ -104,8 +104,7 @@ app.use("/tripwell", require("./routes/TripWell/TripBaseLoadRoute"));
 app.use("/tripwell", require("./routes/TripWell/JoinCodeCheckRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripPersonaRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripCreatedRoute"));
-app.use("/tripwell", require("./routes/TripWell/anchorgptRoute"));
-app.use("/tripwell", require("./routes/TripWell/anchorgpttestRoute"));
+// anchorgptRoute and anchorgpttestRoute removed - AnchorLogic model deprecated
 app.use("/tripwell", require("./routes/TripWell/placetodoGPTRoute"));
 app.use("/tripwell", require("./routes/TripWell/metaAttractionsRoute"));
 app.use("/tripwell", require("./routes/TripWell/metaCreatorRoute"));

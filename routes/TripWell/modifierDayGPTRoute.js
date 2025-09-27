@@ -2,7 +2,7 @@
   const router = express.Router();
 
   const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
-  const tripDayGPTModifier = require("../../services/TripWell/tripDayGPTModifier");
+  const tripDayGPTModifier = require("../../services/TripWell/tripDayGPTModifierService");
   const parseSingleDayModify = require("../../services/TripWell/parseSingleDayModify");
   const saveParsedDayModification = require("../../services/TripWell/singleDayModifyfromParseSaver");
 
