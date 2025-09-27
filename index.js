@@ -119,9 +119,7 @@ app.use("/tripwell", require("./routes/TripWell/profileDetailRoute"));
 app.use("/tripwell", require("./routes/TripWell/itineraryRoutes")); // ✅ ADDED - Missing itinerary build route!
 app.use("/tripwell", require("./routes/TripWell/ItineraryUpdateRoute"));
 app.use("/tripwell", require("./routes/TripWell/tripDayBuildPreviewRoute"));
-console.log("🔧 Loading tripLiveStatusRoute...");
-app.use("/tripwell", require("./routes/TripWell/tripLiveStatusRoute"));
-console.log("🔧 tripLiveStatusRoute loaded");
+// tripLiveStatusRoute removed - deprecated
 app.use("/tripwell", require("./routes/TripWell/tripDayBlockSaveRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripDoAllCompleterRoute"));
 app.use("/tripwell", require("./routes/TripWell/TripReflectionSaveRoutes"));
@@ -155,7 +153,7 @@ console.log("✅ Admin routes loaded");
 app.use("/tripwell/participant", require("./routes/TripWell/participantUserCreateRoute"));
 
 // ✅ Secure Auth-Protected Flow
-app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/whoami"));
+// whoami route removed - deprecated
 app.use("/tripwell", verifyFirebaseToken, require("./routes/TripWell/profileSetupRoute"));
 
 // Profile Generation Routes
