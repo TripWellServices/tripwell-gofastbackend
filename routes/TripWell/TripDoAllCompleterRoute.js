@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const router = express.Router();
 
-const TripCurrentDays = require("../../models/TripWell/TripCurrentDays"););
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
