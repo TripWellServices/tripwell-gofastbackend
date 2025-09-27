@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const TripDay = require("../../models/TripWell/TripDay");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 
-// Canonical route to hydrate entire itinerary from TripDay model
+// Canonical route to hydrate entire itinerary from TripCurrentDays model
 router.get("/tripwell/itinerary/days/:tripId", async (req, res) => {
   const { tripId } = req.params;
 
   try {
-    const days = await TripDay.find({ tripId }).sort({ dayIndex: 1 });
+    const days = await TripCurrentDays.find({ tripId }).sort({ dayIndex: 1 });
 
     if (!days || days.length === 0) {
       return res.status(404).json({ error: "No itinerary days found." });

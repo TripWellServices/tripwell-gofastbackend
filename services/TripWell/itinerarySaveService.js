@@ -1,8 +1,9 @@
-const TripDay = require("../../models/TripWell/TripDay");
+// TripDay deprecated - using ItineraryDays for planning phase
+const ItineraryDays = require("../../models/TripWell/ItineraryDays");
 const { parseAngelaItinerary } = require("./gptItineraryparserService");
 
 /**
- * Save parsed GPT itinerary into the TripDay collection.
+ * Save parsed GPT itinerary into the ItineraryDays collection.
  * Skips "Day 0" (typically a travel day).
  *
  * @param {string} tripId - The MongoDB trip ID
@@ -28,9 +29,9 @@ async function saveTripDaysGpt(tripId, itineraryString) {
     tripId,
   }));
 
-  await TripDay.deleteMany({ tripId });
-  const created = await TripDay.insertMany(tripDays);
-  console.log("🔍 Created TripDay documents:", created.length);
+  await ItineraryDays.deleteMany({ tripId });
+  const created = await ItineraryDays.insertMany(tripDays);
+  console.log("🔍 Created ItineraryDays documents:", created.length);
 
   return created.length;
 }

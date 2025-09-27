@@ -1,7 +1,7 @@
-const TripDay = require("../../models/TripWell/TripDay");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 
 /**
- * Saves a modified block into the TripDay.blocks[block] field.
+ * Saves a modified block into the TripCurrentDays.blocks[block] field.
  * Overwrites only the specified block.
  */
 async function saveModifiedTripBlock({ tripId, dayIndex, block, newBlock }) {
@@ -9,7 +9,7 @@ async function saveModifiedTripBlock({ tripId, dayIndex, block, newBlock }) {
     throw new Error("Missing required fields for saveModifiedTripBlock");
   }
 
-  const updated = await TripDay.findOneAndUpdate(
+  const updated = await TripCurrentDays.findOneAndUpdate(
     { tripId, dayIndex },
     {
       $set: {
@@ -21,7 +21,7 @@ async function saveModifiedTripBlock({ tripId, dayIndex, block, newBlock }) {
   );
 
   if (!updated) {
-    throw new Error(`Failed to update TripDay ${tripId} Day ${dayIndex}`);
+    throw new Error(`Failed to update TripCurrentDays ${tripId} Day ${dayIndex}`);
   }
 
   return updated;

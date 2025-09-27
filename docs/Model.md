@@ -17,8 +17,15 @@ This document provides comprehensive documentation of all TripWell database mode
 - `SampleSelects` - User's sample selections
 
 ### **Itinerary Models**
-- `TripDay` - Day-by-day itinerary structure
+- `ItineraryDays` - **Source of Truth** - Raw AI-generated itinerary (Bible)
+- `TripCurrentDays` - **Live Trip State** - User-modifiable daily itinerary during trip
+- `TripDay` - **Planning Phase** - Day-by-day itinerary structure for planning
 - `TripReflection` - Daily reflections and journaling
+
+**🏗️ ARCHITECTURE RATIONALE:**
+- **NO FLAG PLANTS** - Trip status determined by data existence, not boolean flags
+- **Hydration Strategy** - Frontend checks for data existence to determine trip state
+- **Separation of Concerns** - Planning vs Live trip data kept separate
 
 ### **Supporting Models**
 - `City` - City metadata and references

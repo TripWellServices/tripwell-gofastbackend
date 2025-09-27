@@ -3,7 +3,7 @@ const router = express.Router();
 
 const verifyFirebaseToken = require("../../middleware/verifyFirebaseToken");
 const TripBase = require("../../models/TripWell/TripBase");
-const TripDay = require("../../models/TripWell/TripDay");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 
 // 🔥 GET /tripwell/lookback/:tripId — hydrate last completed day for reflections
 router.get("/tripwell/lookback/:tripId", verifyFirebaseToken, async (req, res) => {
@@ -17,7 +17,7 @@ router.get("/tripwell/lookback/:tripId", verifyFirebaseToken, async (req, res) =
     // Optional: Add user ownership check here
     // if (!trip.userIds.includes(userId)) return res.status(403).json({ error: "Unauthorized" });
 
-    const tripDays = await TripDay.find({ tripId }).sort({ dayIndex: 1 });
+    const tripDays = await TripCurrentDays.find({ tripId }).sort({ dayIndex: 1 });
 
     const lastCompletedDay = [...tripDays].reverse().find(day => day.complete === true);
     const lastCompletedDayIndex = lastCompletedDay?.dayIndex ?? null;

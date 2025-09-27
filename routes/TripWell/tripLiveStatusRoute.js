@@ -3,7 +3,7 @@ const path = require("path");
 const router = express.Router();
 
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
-const TripDay = require(path.resolve(__dirname, "../../models/TripWell/TripDay"));
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays"););
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
 console.log("🔧 Registering /livestatus/:tripId route");
@@ -16,7 +16,7 @@ router.get("/livestatus/:tripId", verifyFirebaseToken, async (req, res) => {
     const trip = await TripBase.findById(tripId);
     if (!trip) return res.status(404).json({ error: "Trip not found" });
 
-    const tripDays = await TripDay.find({ tripId }).sort({ dayIndex: 1 });
+    const tripDays = await TripCurrentDays.find({ tripId }).sort({ dayIndex: 1 });
     const totalDays = tripDays.length;
 
     // 🔴 Progressive navigation: Find first incomplete block

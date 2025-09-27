@@ -3,9 +3,9 @@
 const mongoose = require('mongoose');
 const TripBase = require('../../models/TripWell/TripBase');
 const TripPersona = require('../../models/TripWell/TripPersona');
-const TripItinerary = require('../../models/TripWell/TripItinerary');
-const TripDay = require('../../models/TripWell/TripDay');
-const AnchorLogic = require('../../models/TripWell/AnchorLogic');
+// TripItinerary and AnchorLogic models removed - using ItineraryDays and TripCurrentDays
+const ItineraryDays = require('../../models/TripWell/ItineraryDays');
+const TripCurrentDays = require('../../models/TripWell/TripCurrentDays');
 const TripReflection = require('../../models/TripWell/TripReflection');
 const JoinCode = require('../../models/TripWell/JoinCode');
 const UserSelections = require('../../models/TripWell/UserSelections');
@@ -113,23 +113,23 @@ async function deleteTripDataCascade(tripId, session = null) {
     results.deletedCollections.tripPersonas = deletedTripPersonas.deletedCount;
     console.log(`🗑️ Deleted ${deletedTripPersonas.deletedCount} TripPersonas`);
     
-    // Delete TripItinerary
-    const deletedTripItineraries = await TripItinerary.deleteMany({ tripId }, deleteOptions);
-    results.totalDeleted += deletedTripItineraries.deletedCount;
-    results.deletedCollections.tripItineraries = deletedTripItineraries.deletedCount;
-    console.log(`🗑️ Deleted ${deletedTripItineraries.deletedCount} TripItineraries`);
+    // TripItinerary model removed - no longer needed
+    console.log(`🗑️ TripItinerary model removed - skipping deletion`);
     
-    // Delete TripDay
-    const deletedTripDays = await TripDay.deleteMany({ tripId }, deleteOptions);
-    results.totalDeleted += deletedTripDays.deletedCount;
-    results.deletedCollections.tripDays = deletedTripDays.deletedCount;
-    console.log(`🗑️ Deleted ${deletedTripDays.deletedCount} TripDays`);
+    // Delete ItineraryDays (planning phase)
+    const deletedItineraryDays = await ItineraryDays.deleteMany({ tripId }, deleteOptions);
+    results.totalDeleted += deletedItineraryDays.deletedCount;
+    results.deletedCollections.itineraryDays = deletedItineraryDays.deletedCount;
+    console.log(`🗑️ Deleted ${deletedItineraryDays.deletedCount} ItineraryDays`);
     
-    // Delete AnchorLogic
-    const deletedAnchorLogic = await AnchorLogic.deleteMany({ tripId }, deleteOptions);
-    results.totalDeleted += deletedAnchorLogic.deletedCount;
-    results.deletedCollections.anchorLogic = deletedAnchorLogic.deletedCount;
-    console.log(`🗑️ Deleted ${deletedAnchorLogic.deletedCount} AnchorLogic entries`);
+    // Delete TripCurrentDays (live execution phase)
+    const deletedTripCurrentDays = await TripCurrentDays.deleteMany({ tripId }, deleteOptions);
+    results.totalDeleted += deletedTripCurrentDays.deletedCount;
+    results.deletedCollections.tripCurrentDays = deletedTripCurrentDays.deletedCount;
+    console.log(`🗑️ Deleted ${deletedTripCurrentDays.deletedCount} TripCurrentDays`);
+    
+    // AnchorLogic model removed - no longer needed
+    console.log(`🗑️ AnchorLogic model removed - skipping deletion`);
     
     // Delete TripReflection
     const deletedTripReflections = await TripReflection.deleteMany({ tripId }, deleteOptions);

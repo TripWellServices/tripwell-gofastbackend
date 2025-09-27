@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const router = express.Router();
 
-const TripDay = require(path.resolve(__dirname, "../../models/TripWell/TripDay"));
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays"););
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
 const verifyFirebaseToken = require(path.resolve(__dirname, "../../middleware/verifyFirebaseToken"));
 
@@ -17,13 +17,13 @@ router.post("/block/complete", verifyFirebaseToken, async (req, res) => {
   try {
     // 1. Mark the block as complete
     const updatePath = `blocks.${blockName}.complete`;
-    const tripDay = await TripDay.findOneAndUpdate(
+    const tripDay = await TripCurrentDays.findOneAndUpdate(
       { tripId, dayIndex },
       { $set: { [updatePath]: true } },
       { new: true }
     );
 
-    if (!tripDay) return res.status(404).json({ error: "TripDay not found" });
+    if (!tripDay) return res.status(404).json({ error: "TripCurrentDays not found" });
 
     // 2. If all blocks are complete, mark the day complete
     const blocks = tripDay.blocks || {};
@@ -33,14 +33,14 @@ router.post("/block/complete", verifyFirebaseToken, async (req, res) => {
       blocks.evening?.complete;
 
     if (allBlocksComplete && !tripDay.isComplete) {
-      await TripDay.updateOne(
+      await TripCurrentDays.updateOne(
         { tripId, dayIndex },
         { $set: { isComplete: true } }
       );
     }
 
     // 3. If final day & final evening, mark trip complete
-    const allDays = await TripDay.find({ tripId }).sort({ dayIndex: 1 });
+    const allDays = await TripCurrentDays.find({ tripId }).sort({ dayIndex: 1 });
     const totalDays = allDays.length;
     const isLastDay = Number(dayIndex) === totalDays - 1;
     const isEvening = blockName === "evening";
@@ -68,13 +68,13 @@ router.post("/doallcomplete", verifyFirebaseToken, async (req, res) => {
   try {
     // 1. Mark the block as complete
     const updatePath = `blocks.${blockName}.complete`;
-    const tripDay = await TripDay.findOneAndUpdate(
+    const tripDay = await TripCurrentDays.findOneAndUpdate(
       { tripId, dayIndex },
       { $set: { [updatePath]: true } },
       { new: true }
     );
 
-    if (!tripDay) return res.status(404).json({ error: "TripDay not found" });
+    if (!tripDay) return res.status(404).json({ error: "TripCurrentDays not found" });
 
     // 2. If all blocks are complete, mark the day complete
     const blocks = tripDay.blocks || {};
@@ -84,14 +84,14 @@ router.post("/doallcomplete", verifyFirebaseToken, async (req, res) => {
       blocks.evening?.complete;
 
     if (allBlocksComplete && !tripDay.isComplete) {
-      await TripDay.updateOne(
+      await TripCurrentDays.updateOne(
         { tripId, dayIndex },
         { $set: { isComplete: true } }
       );
     }
 
     // 3. Check if this is the final evening block of the final day
-    const allDays = await TripDay.find({ tripId }).sort({ dayIndex: 1 });
+    const allDays = await TripCurrentDays.find({ tripId }).sort({ dayIndex: 1 });
     const totalDays = allDays.length;
     const isLastDay = Number(dayIndex) === totalDays;
     const isEvening = blockName === "evening";

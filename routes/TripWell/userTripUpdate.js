@@ -9,7 +9,8 @@ const TripWellUser = require("../../models/TripWell/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
 const TripPersona = require("../../models/TripWell/TripPersona");
 const UserSelections = require("../../models/TripWell/UserSelections");
-const TripItinerary = require("../../models/TripWell/TripItinerary");
+// TripItinerary model removed - using ItineraryDays instead
+const ItineraryDays = require("../../models/TripWell/ItineraryDays");
 
 // POST /api/usertrip/set
 router.post("/set", verifyFirebaseToken, async (req, res) => {

@@ -1,5 +1,6 @@
 const { OpenAI } = require("openai");
-const { generatePersonaSamplesWithFallback } = require('./pythonSampleService');
+// pythonSampleService removed - using pythonPromptService instead
+const { generatePromptPython } = require('./pythonPromptService');
 
 const openai = new OpenAI();
 
@@ -25,7 +26,7 @@ async function generatePersonaSamplesNew(city, personaWeights, budget, budgetLev
       purpose
     };
     
-    const result = await generatePersonaSamplesWithFallback(requestData);
+    const result = await generatePromptPython(requestData);
     
     if (result.success) {
       console.log("✅ Persona samples generated successfully");

@@ -84,7 +84,7 @@ router.get("/hydrate", verifyFirebaseToken, async (req, res) => {
     const tripPersonaData = tripPersona || null;
 
     // Get itinerary data
-    const itinerary = await TripItinerary.findOne({ tripId: user.tripId });
+    const itinerary = await ItineraryDays.findOne({ tripId: user.tripId });
     const itineraryData = itinerary || null;
 
     // Get meta selections (UserSelections)

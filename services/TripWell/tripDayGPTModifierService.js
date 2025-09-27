@@ -1,10 +1,10 @@
        const { OpenAI } = require("openai");
-       const TripDay = require("../../models/TripWell/TripDay");
+       const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
        const TripBase = require("../../models/TripWell/TripBase");
        const openai = new OpenAI();
 
        /**
-        * Modifies a single TripDay block using GPT (Angela) based on user feedback.
+        * Modifies a single TripCurrentDays block using GPT (Angela) based on user feedback.
         * Returns raw GPT output string (block JSON only). Parsing handled separately.
         */
        async function tripDayGPTModifierService({ tripId, dayIndex, feedback, block }) {
@@ -18,8 +18,8 @@
            throw new Error("Trip city or startDate missing");
          }
 
-         const tripDay = await TripDay.findOne({ tripId, dayIndex });
-         if (!tripDay) throw new Error(`TripDay not found for tripId ${tripId}, dayIndex ${dayIndex}`);
+         const tripDay = await TripCurrentDays.findOne({ tripId, dayIndex });
+         if (!tripDay) throw new Error(`TripCurrentDays not found for tripId ${tripId}, dayIndex ${dayIndex}`);
 
          const currentBlock = tripDay.blocks[block];
          if (!currentBlock) throw new Error(`Invalid block: ${block}`);

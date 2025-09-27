@@ -43,7 +43,7 @@ router.delete("/trips/:id", async (req, res) => {
     }
     
     // Import cascade deletion service
-    const { deleteTripCascade } = require("../../services/TripWell/cascadeDeletionService");
+    const { deleteTripCascade } = require("../../services/TripWell/modularCascadeService");
     
     // Start a session for transaction
     const mongoose = require("mongoose");

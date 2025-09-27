@@ -155,14 +155,29 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
       // Continue anyway - trip base update is not critical
     }
 
-    // 3b) Add cityId to TripBase if city object was created
-    if (cityDoc) {
-      await TripBase.updateOne({ _id: doc._id }, { $set: { cityId: cityDoc._id } });
-      console.log("✅ Linking TripBase to city object:", cityDoc.cityName);
+    // 3b) Update user (link user to trip)
+    try {
+      await setUserTrip(user._id, doc._id);
+      console.log("✅ Updated user with trip link");
+      
+      // Add cityId to TripBase if city object was created
+      if (cityDoc) {
+        await TripBase.updateOne({ _id: doc._id }, { $set: { cityId: cityDoc._id } });
+        console.log("✅ Linking TripBase to city object:", cityDoc.cityName);
+      }
+    } catch (e) {
+      console.warn("trip-setup: setUserTrip failed:", e.message);
+      // Continue anyway - user update is not critical
     }
 
-    // 3c) Skip JoinCode registry and Python calls (user system refactored)
-    console.log("✅ Trip setup complete - skipping user-dependent operations");
+    // 3d) Push to JoinCode registry
+    try {
+      await pushTripToRegistry(doc._id, user._id);
+      console.log("✅ Pushed to JoinCode registry");
+    } catch (e) {
+      console.warn("trip-setup: join code registry push failed:", e.message);
+      // Continue anyway - join code registry is not critical
+    }
 
     // Return tripId and computed trip data for frontend
     return res.status(201).json({ 

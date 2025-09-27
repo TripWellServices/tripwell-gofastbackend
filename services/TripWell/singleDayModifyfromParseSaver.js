@@ -1,7 +1,7 @@
-const TripDay = require("../../models/TripWell/TripDay");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 
 /**
- * Saves a single block modification into the TripDay document.
+ * Saves a single block modification into the TripCurrentDays document.
  * This is canon: used in block-level GPT flows (TripModifyDay, TripLive).
  *
  * @param {Object} params
@@ -9,7 +9,7 @@ const TripDay = require("../../models/TripWell/TripDay");
  * @param {number} params.dayIndex
  * @param {string} params.block - "morning" | "afternoon" | "evening"
  * @param {Object} params.updatedBlock - { title: string, desc: string }
- * @returns {Promise<Object>} - Updated TripDay document
+ * @returns {Promise<Object>} - Updated TripCurrentDays document
  */
 async function saveParsedDayModification({ tripId, dayIndex, block, updatedBlock }) {
   if (!tripId || typeof dayIndex !== "number" || !block || !updatedBlock) {
@@ -21,9 +21,9 @@ async function saveParsedDayModification({ tripId, dayIndex, block, updatedBlock
     throw new Error(`Invalid block: ${block}`);
   }
 
-  const tripDay = await TripDay.findOne({ tripId, dayIndex });
+  const tripDay = await TripCurrentDays.findOne({ tripId, dayIndex });
   if (!tripDay) {
-    throw new Error(`TripDay not found for tripId ${tripId}, dayIndex ${dayIndex}`);
+    throw new Error(`TripCurrentDays not found for tripId ${tripId}, dayIndex ${dayIndex}`);
   }
 
   tripDay.blocks[block] = {

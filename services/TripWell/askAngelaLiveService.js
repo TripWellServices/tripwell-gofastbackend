@@ -1,6 +1,6 @@
 const { OpenAI } = require("openai");
 const TripBase = require("../../models/TripWell/TripBase");
-const TripDay = require("../../models/TripWell/TripDay");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 const openai = new OpenAI();
 
 /**
@@ -17,9 +17,9 @@ async function askAngelaLiveService({ tripId, dayIndex, blockName, question }) {
     throw new Error("Trip not found or missing city/startDate");
   }
 
-  const tripDay = await TripDay.findOne({ tripId, dayIndex });
+  const tripDay = await TripCurrentDays.findOne({ tripId, dayIndex });
   if (!tripDay) {
-    throw new Error("TripDay not found");
+    throw new Error("TripCurrentDays not found");
   }
 
   // Compute day of week

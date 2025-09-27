@@ -4,7 +4,7 @@ const admin = require("firebase-admin");
 
 const TripWellUser = require("../../models/TripWell/TripWellUser");
 const TripBase = require("../../models/TripWell/TripBase");
-const TripIntent = require("../../models/TripWell/TripIntent");
+const TripPersona = require("../../models/TripWell/TripPersona");
 
 const participantHighlightsGPT = require("../../services/TripWell/participantHighlightsGPTService");
 
@@ -24,9 +24,9 @@ router.get("/tripwell/participant/highlights", async (req, res) => {
     }
 
     const trip = await TripBase.findById(user.tripId);
-    const intent = await TripIntent.findOne({ tripId: user.tripId });
+    const persona = await TripPersona.findOne({ tripId: user.tripId });
 
-    const highlights = await participantHighlightsGPT(trip, intent);
+    const highlights = await participantHighlightsGPT(trip, persona);
     return res.json(highlights);
   } catch (err) {
     console.error("❌ Error in highlights route:", err);

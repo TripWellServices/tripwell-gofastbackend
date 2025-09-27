@@ -1,10 +1,10 @@
 // services/TripWell/tripLiveHydratorService.js
 
-const TripDay = require("../../models/TripWell/TripDay");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 
-async function getNextIncompleteTripDay(tripId) {
+async function getNextIncompleteTripCurrentDays(tripId) {
   try {
-    const nextDay = await TripDay.findOne({
+    const nextDay = await TripCurrentDays.findOne({
       tripId,
       complete: { $ne: true }
     }).sort({ dayIndex: 1 });
@@ -16,4 +16,4 @@ async function getNextIncompleteTripDay(tripId) {
   }
 }
 
-module.exports = { getNextIncompleteTripDay };
+module.exports = { getNextIncompleteTripCurrentDays };

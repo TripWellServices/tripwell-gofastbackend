@@ -2,7 +2,7 @@
 
 const express = require("express");
 const router = express.Router();
-const TripDay = require("../../models/TripWell/TripDay");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 
 router.post("/tripwell/savefinalblock", async (req, res) => {
   const { tripId, dayIndex, blockName, blockData } = req.body;
@@ -12,7 +12,7 @@ router.post("/tripwell/savefinalblock", async (req, res) => {
   }
 
   try {
-    const day = await TripDay.findOne({ tripId, dayIndex });
+    const day = await TripCurrentDays.findOne({ tripId, dayIndex });
     if (!day) return res.status(404).json({ error: "Day not found" });
 
     day.blocks[blockName] = blockData;

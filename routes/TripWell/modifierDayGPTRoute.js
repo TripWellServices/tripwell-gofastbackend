@@ -1,7 +1,7 @@
   const express = require("express");
   const router = express.Router();
 
-  const TripDay = require("../../models/TripWell/TripDay");
+  const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
   const tripDayGPTModifier = require("../../services/TripWell/tripDayGPTModifier");
   const parseSingleDayModify = require("../../services/TripWell/parseSingleDayModify");
   const saveParsedDayModification = require("../../services/TripWell/singleDayModifyfromParseSaver");
@@ -41,9 +41,9 @@
       let contextBlocks = blocks;
 
       if (!contextSummary || !contextBlocks) {
-        const tripDay = await TripDay.findOne({ tripId, dayIndex });
+        const tripDay = await TripCurrentDays.findOne({ tripId, dayIndex });
         if (!tripDay) {
-          return res.status(404).json({ error: "TripDay not found" });
+          return res.status(404).json({ error: "TripCurrentDays not found" });
         }
 
         contextSummary = tripDay.summary;
