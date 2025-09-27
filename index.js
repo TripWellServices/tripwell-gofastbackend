@@ -113,7 +113,7 @@ app.use("/tripwell", require("./routes/TripWell/userSelectionsRoute"));
 app.use("/tripwell", require("./routes/TripWell/personaSamplesRoute"));
 app.use("/tripwell", require("./routes/TripWell/contentLibraryRoute"));
 app.use("/tripwell", require("./routes/TripWell/metaPlaceRoute"));
-app.use("/tripwell", require("./routes/TripWell/placeProfileSaveRoute"));
+// placeProfileSaveRoute removed - PlaceProfile model deprecated
 app.use("/tripwell", require("./routes/TripWell/placeLibraryRoute"));
 app.use("/tripwell", require("./routes/TripWell/profileDetailRoute"));
 app.use("/tripwell", require("./routes/TripWell/itineraryRoutes")); // ✅ ADDED - Missing itinerary build route!
