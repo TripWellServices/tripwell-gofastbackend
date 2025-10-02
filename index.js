@@ -161,6 +161,11 @@ app.use("/tripwell", require("./routes/TripWell/profileGPTRoute"));
 app.use("/tripwell", require("./routes/TripWell/profileParserRoute"));
 app.use("/tripwell", require("./routes/TripWell/profileSaveRoute"));
 
+// === GOFAST V2 ROUTES (Normalized Models) ===
+app.use("/api/race", require("./routes/raceRoutes-v2"));
+app.use("/api/training-plan", require("./routes/trainingPlanRoutes-v2"));
+app.use("/api/training-day", require("./routes/trainingDayRoutes"));
+
 // === ROOT CHECK ===
 app.get("/", (req, res) => {
   res.status(200).json({
