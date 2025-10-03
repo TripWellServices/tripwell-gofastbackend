@@ -1,7 +1,7 @@
 // services/syncUserStatus.js
 
-const User = require('../models/User');
-const TrainingPlan = require('../models/TrainingPlan');
+const User = require('../../models/GoFast/User');
+const TrainingPlan = require('../../models/GoFast/TrainingPlan');
 const { determineTrainingStatus } = require('../utils/statusUtils');
 
 export async function syncAllUserStatuses() {

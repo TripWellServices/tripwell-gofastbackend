@@ -1,6 +1,6 @@
 
 const OpenAI = require('openai');
-const CourseProfile = require('../models/CourseProfile');
+const CourseProfile = require('../../models/CourseProfile');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

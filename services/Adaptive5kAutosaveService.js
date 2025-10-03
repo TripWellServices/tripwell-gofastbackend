@@ -1,8 +1,8 @@
 const { updateWeekPlanMetrics } = require('./WeekPlanService');
 const { logAdaptive5kEntry } = require('./Adaptive5kLoggerService');
 const { isFinalTrainingDay } = require('../utils/WeekCompletionUtils');
-const WeekPlan = require('../models/WeekPlan');
-const User = require('../models/User');
+const WeekPlan = require('../../models/Archive/WeekPlan-OLD');
+const User = require('../../models/GoFast/User');
 
 const handleGarminWebhook = async (userId, activityDateStr) => {
   // Find current week plan

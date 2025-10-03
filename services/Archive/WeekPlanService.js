@@ -1,4 +1,4 @@
-const WeekPlan = require('../models/WeekPlan');
+const WeekPlan = require('../../models/Archive/WeekPlan-OLD');
 const { getWeekRangeFromIndex } = require('../../utils/DateUtils');
 const { computeAerobicEfficiencyForWeek } = require('./AerobicEfficiencyService');
 const { predictAdaptive5K } = require('./PredictionEngine');

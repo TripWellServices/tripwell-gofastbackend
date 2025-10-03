@@ -1,5 +1,5 @@
 const RunCrew = require('../../models/runcrew/RunCrew');
-const User = require('../../models/User');
+const User = require('../../models/GoFast/User');
 
 const createCrew = async (name, inviteCode, leaderUserId) => {
   const existing = await RunCrew.findOne({ inviteCode });

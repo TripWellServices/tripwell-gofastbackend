@@ -1,4 +1,4 @@
-const Activity = require('../../models/Archive/Activity');
+const Activity = require('../../models/Archive/Activity-OLD');
 
 const logActivity = async (userId, activityData) => {
   return await Activity.create({ userId, ...activityData });

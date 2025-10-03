@@ -1,4 +1,4 @@
-const GoalProfile = require('../models/GoalProfile');
+const GoalProfile = require('../../models/Archive/GoalProfile-OLD');
 
 const createGoalProfile = async (userId, goalData) => {
   return await GoalProfile.create({ userId, ...goalData });

@@ -1,5 +1,5 @@
-const GarminActivity = require("../models/GarminActivity");
-const TrainingPlan = require("../models/TrainingPlan"); // assuming this exists
+const GarminActivity = require("../../models/Archive/GarminActivity-OLD");
+const TrainingPlan = require("../../models/GoFast/TrainingPlan");
 
 const getDisplayDailyActivity = async (userId, dateOverride = null) => {
   const today = dateOverride || new Date().toISOString().split("T")[0];

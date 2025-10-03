@@ -1,4 +1,4 @@
-const Adaptive5kPace = require('../models/Adaptive5kPace');
+const Adaptive5kPace = require('../../models/Archive/Adaptive5kPace-OLD');
 
 /**
  * Get the most recent adaptive 5K time for a user

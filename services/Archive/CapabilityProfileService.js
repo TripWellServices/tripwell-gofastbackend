@@ -1,4 +1,4 @@
-const CapabilityProfile = require('../models/CapabilityProfile');
+const CapabilityProfile = require('../../models/Archive/CapabilityProfile-OLD');
 
 const createCapabilityProfile = async (userId, capabilityData) => {
   return await CapabilityProfile.create({ userId, ...capabilityData });

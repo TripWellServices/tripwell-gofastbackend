@@ -1,4 +1,4 @@
-const MentalEntry = require("../models/MentalEntry");
+const MentalEntry = require("../../models/GoFastMVP2/MentalEntry");
 
 const saveMentalEntry = async ({ userId, mood, text }) => {
   const date = new Date().toISOString().split("T")[0];

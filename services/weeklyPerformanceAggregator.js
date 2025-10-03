@@ -1,7 +1,7 @@
-const GarminActivity = require('../../models/GarminActivity');
+const GarminActivity = require('../../models/Archive/GarminActivity-OLD');
 const { getWeekRangeFromIndex } = require('../utils/DateUtils');
 const { scoreRun } = require('./runScoringService');
-const WeekPlan = require('../../models/WeekPlan');
+const WeekPlan = require('../../models/Archive/WeekPlan-OLD');
 
 const aggregateWeeklyEffort = async (userId, weekIndex) => {
   const { startDate, endDate } = getWeekRangeFromIndex(weekIndex);

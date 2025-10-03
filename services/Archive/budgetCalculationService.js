@@ -1,5 +1,5 @@
 // services/budgetCalculationService.js
-const TripPersona = require("../models/TripWell/TripPersona");
+const TripPersona = require("../../models/TripWell/TripPersona");
 const { convertBudgetToWords } = require("../TripWell/tripPersonaConverterService");
 
 /*

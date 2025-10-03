@@ -1,6 +1,6 @@
 // services/preTrainingRacePredictorService.js
 
-const TrainingBase = require("../models/TrainingBase");
+const TrainingBase = require("../../models/Archive/TrainingBase-OLD");
 
 const raceDistances = {
   "5k": 3.1,
