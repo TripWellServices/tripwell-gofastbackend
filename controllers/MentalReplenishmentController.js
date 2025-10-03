@@ -1,4 +1,4 @@
-const MentalReplenishment = require('../models/MentalReplenishment');
+const MentalReplenishment = require('../models/GoFastMVP2/MentalReplenishment');
 
 const saveMentalReplenishment = async (req, res) => {
   try {

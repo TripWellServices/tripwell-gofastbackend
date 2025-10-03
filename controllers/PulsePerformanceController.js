@@ -1,6 +1,6 @@
-import PulsePerformance from "../models/PulsePerformance.js";
+const PulsePerformance = require("../models/GoFastMVP2/PulsePerformance");
 
-export const savePulsePerformance = async (req, res) => {
+const savePulsePerformance = async (req, res) => {
   try {
     const entry = new PulsePerformance(req.body);
     await entry.save();
@@ -10,3 +10,5 @@ export const savePulsePerformance = async (req, res) => {
     res.status(500).json({ error: "Failed to save entry" });
   }
 };
+
+module.exports = { savePulsePerformance };

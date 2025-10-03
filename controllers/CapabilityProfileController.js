@@ -1,4 +1,4 @@
-const CapabilityProfileService = require('../services/CapabilityProfileService');
+const CapabilityProfileService = require('../services/Archive/CapabilityProfileService');
 
 const createCapabilityProfile = async (req, res) => {
   try {

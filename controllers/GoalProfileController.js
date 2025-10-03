@@ -1,4 +1,4 @@
-const GoalProfileService = require('../services/GoalProfileService');
+const GoalProfileService = require('../services/Archive/GoalProfileService');
 
 const createGoalProfile = async (req, res) => {
   try {

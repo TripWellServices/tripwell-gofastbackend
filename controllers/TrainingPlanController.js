@@ -1,4 +1,4 @@
-const TrainingPlanService = require('../services/TrainingPlanService');
+const TrainingPlanService = require('../services/GoFast/TrainingPlanGeneratorService');
 
 const createTrainingPlan = async (req, res) => {
   try {

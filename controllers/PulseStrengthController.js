@@ -1,4 +1,4 @@
-const PulseStrength = require('../models/PulseStrength');
+const PulseStrength = require('../models/GoFastMVP2/PulseStrength');
 
 const savePulseStrength = async (req, res) => {
   try {
@@ -10,3 +10,5 @@ const savePulseStrength = async (req, res) => {
     res.status(500).json({ error: "Failed to save entry" });
   }
 };
+
+module.exports = { savePulseStrength };

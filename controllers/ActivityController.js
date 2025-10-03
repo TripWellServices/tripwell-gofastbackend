@@ -1,4 +1,4 @@
-      const ActivityService = require('../services/ActivityService');
+      const ActivityService = require('../services/GoFast/ActivityService');
 
       const logActivity = async (req, res) => {
         try {

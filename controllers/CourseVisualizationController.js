@@ -1,7 +1,7 @@
 
-const { generateCourseVisualization } = require('../services/CourseVisualizationService');
+const { generateCourseVisualization } = require('../services/Archive/CourseVisualizationService');
 
-export async function visualizeCourse(req, res) {
+const visualizeCourse = async (req, res) => {
   try {
     const { raceName } = req.body;
     if (!raceName) return res.status(400).json({ error: 'raceName is required' });
@@ -12,4 +12,6 @@ export async function visualizeCourse(req, res) {
     console.error('Error generating course visualization:', err);
     res.status(500).json({ error: 'Failed to generate course profile' });
   }
-}
+};
+
+module.exports = { visualizeCourse };
