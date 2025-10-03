@@ -1,6 +1,7 @@
 const OpenAI = require('openai');
 const RaceIntent = require('../models/GoFast/RaceIntent');
 const RunnerProfile = require('../models/GoFast/RunnerProfile');
+const EmailService = require('./EmailService');
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -167,6 +168,23 @@ Make sure the plan is realistic for the runner's current fitness level and build
       raceIntent.gptResponse = gptResponse;
       raceIntent.gptProcessingStatus = 'completed';
       await raceIntent.save();
+
+      // Send email notification
+      try {
+        const User = require('../models/GoFast/User');
+        const user = await User.findById(raceIntent.userId);
+        if (user && user.email) {
+          await EmailService.sendTrainingPlanReady(
+            user.email,
+            raceIntent.runnerProfileId.goesBy,
+            raceIntent.raceName,
+            raceIntent.raceType
+          );
+        }
+      } catch (emailError) {
+        console.error('❌ Email notification failed:', emailError);
+        // Don't fail the whole process for email issues
+      }
 
       console.log(`✅ GPT training plan generated successfully`);
       return {

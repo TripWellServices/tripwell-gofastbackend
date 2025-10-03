@@ -4,6 +4,7 @@ const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const RaceIntent = require('../models/GoFast/RaceIntent');
 const TrainingPlanGPTService = require('../services/TrainingPlanGPTService');
 const TrainingPlanParserService = require('../services/TrainingPlanParserService');
+const EmailService = require('../services/EmailService');
 
 /**
  * POST /api/race-intent
@@ -83,6 +84,23 @@ router.post('/:id/generate-plan', verifyFirebaseToken, async (req, res) => {
     
     if (!raceIntent) {
       return res.status(404).json({ error: 'Race intent not found' });
+    }
+
+    // Send "generation started" email
+    try {
+      const User = require('../models/GoFast/User');
+      const user = await User.findById(raceIntent.userId);
+      if (user && user.email) {
+        await EmailService.sendRaceIntentSubmitted(
+          user.email,
+          raceIntent.runnerProfileId.goesBy,
+          raceIntent.raceName,
+          raceIntent.raceType
+        );
+      }
+    } catch (emailError) {
+      console.error('❌ Email notification failed:', emailError);
+      // Don't fail the whole process for email issues
     }
 
     // Generate training plan with GPT
