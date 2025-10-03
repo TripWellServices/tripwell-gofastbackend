@@ -1,51 +1,49 @@
 const mongoose = require("mongoose");
 
+/**
+ * User Model - GoFast Only (TripWell fields removed)
+ * Minimal user model for Firebase auth + runner profile
+ */
 const userSchema = new mongoose.Schema({
-  // 🔐 Firebase Auth
-  firebaseId: { type: String, required: true, unique: true },
-
-  // 🔁 Internal Identity Mirror (from _id)
-  userId: { type: mongoose.Schema.Types.ObjectId, unique: true },
-
-  // 🧑 Personal Info
-  email: { type: String, default: "" },
-  name: { type: String, default: "" },
-  preferredName: { type: String, default: "" },
-
-  // 📍 Location
-  location: { type: String, default: "" },
-
-  // 🌴 Profile Preferences
-  profile: {
-    travelStyle: { type: [String], default: [] },
-    tripVibe: { type: [String], default: [] }
+  // 🔐 Firebase Auth (REQUIRED)
+  firebaseId: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    index: true
   },
 
-  // 🧭 Active Trip State
-  tripId: { type: String, default: null },
-  tripIntentId: { type: String, default: null },
-  itineraryId: { type: String, default: null },
-  anchorSelectComplete: { type: Boolean, default: false },
-  tripStarted: { type: Boolean, default: false },
+  // 🧑 Basic Info
+  email: { type: String, default: "" },
+  name: { type: String, default: "" },
+  age: { type: Number, default: null },
 
-  // 🗂 Archived Trips
-  pastTripId: { type: String, default: null },
-
-  // 🎭 Role
-  role: { type: String, default: "noroleset" },
-
-  // 🏃 GoFast Mode
+  // 🏃 Training Status
   userStatus: {
     type: String,
     enum: [
-      "registered", "onboarding", "ready_to_train", "training", "inactive",
-      "race_mode", "race_day", "reviewing", "completed"
+      "registered",      // Just created account
+      "profile_complete", // Filled out runner profile
+      "race_set",        // Created race
+      "training",        // Active training plan
+      "race_week",       // Race week
+      "race_complete",   // Finished race
+      "inactive"         // Stopped training
     ],
     default: "registered"
   },
-  lastGarminLog: { type: Date, default: null },
+
+  // ⌚ Garmin Integration
+  garminConnected: { type: Boolean, default: false },
+  garminAccessToken: { type: String, default: null },
+  garminAccessSecret: { type: String, default: null },
+  lastGarminSync: { type: Date, default: null },
 
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
+
+// Indexes
+userSchema.index({ email: 1 });
+userSchema.index({ userStatus: 1 });
 
 module.exports = mongoose.model("User", userSchema);
