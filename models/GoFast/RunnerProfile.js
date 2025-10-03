@@ -16,6 +16,7 @@ const RunnerProfileSchema = new mongoose.Schema({
 
   // 👤 Runner Info
   name: { type: String, required: true },
+  goesBy: { type: String, required: true }, // "Jeff", "Jeffrey", "F3 names", etc.
   age: { type: Number, required: true },
 
   // 🏃 Current Fitness Baseline
