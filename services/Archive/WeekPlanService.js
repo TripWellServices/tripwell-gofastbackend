@@ -1,10 +1,10 @@
 const WeekPlan = require('../models/WeekPlan');
-const { getWeekRangeFromIndex } = require('../utils/DateUtils');
+const { getWeekRangeFromIndex } = require('../../utils/DateUtils');
 const { computeAerobicEfficiencyForWeek } = require('./AerobicEfficiencyService');
 const { predictAdaptive5K } = require('./PredictionEngine');
-const { getPaceZonesFromAdaptive5k } = require('../utils/PaceUtils');
+const { getPaceZonesFromAdaptive5k } = require('../../utils/PaceUtils');
 const { adjustAdaptive5kTime } = require('./adaptive5kAdjustmentService');
-const { getHRZones } = require('../utils/HRZoneUtils');
+const { getHRZones } = require('../../utils/HRZoneUtils');
 
 const ensureWeekPlan = async (userId, weekIndex, sourceTrainingPlanId) => {
   const existing = await WeekPlan.findOne({ userId, weekIndex });

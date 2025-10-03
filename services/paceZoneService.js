@@ -1,4 +1,4 @@
-const TrainingDefaults = require('../../utils/TrainingDefaults');
+const TrainingDefaults = require('../utils/TrainingDefaults');
 
 const format = (s) => {
   const m = Math.floor(s / 60);

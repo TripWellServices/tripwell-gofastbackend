@@ -1,6 +1,6 @@
 const { buildDailyWorkout } = require("./DailyWorkoutBuilderService");
-const { getLongRunMileage } = require("../utils/LongRunUtils");
-const { splitMileageAcrossDays } = require("../utils/DailyMileageUtils");
+const { getLongRunMileage } = require("../../utils/LongRunUtils");
+const { splitMileageAcrossDays } = require("../../utils/DailyMileageUtils");
 
 function generateWeeklyPlan({ weekIndex, phase, weeklyMileage, current5kPace, age }) {
   const longRun = getLongRunMileage(weeklyMileage);

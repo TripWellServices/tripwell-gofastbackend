@@ -1,6 +1,6 @@
-const { getHRZones } = require('../../utils/HRZoneUtils');
-const { getTrainingPaces } = require('../../utils/PaceUtils');
-const { getTargetHRZone } = require('../../utils/WorkoutIntentMapper');
+const { getHRZones } = require('../utils/HRZoneUtils');
+const { getTrainingPaces } = require('../utils/PaceUtils');
+const { getTargetHRZone } = require('../utils/WorkoutIntentMapper');
 
 const scoreRun = (activity, planned) => {
   if (!planned || !activity.avgHr || !activity.pace) return null;

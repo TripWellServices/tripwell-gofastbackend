@@ -1,5 +1,5 @@
 const GarminActivity = require('../../models/GarminActivity');
-const { getWeekRangeFromIndex } = require('../../utils/DateUtils');
+const { getWeekRangeFromIndex } = require('../utils/DateUtils');
 const { scoreRun } = require('./runScoringService');
 const WeekPlan = require('../../models/WeekPlan');
 

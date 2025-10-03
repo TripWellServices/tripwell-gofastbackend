@@ -1,8 +1,8 @@
-const { getWorkoutType } = require("../utils/WorkoutTypeUtils");
-const { getZonePaces } = require("../utils/paceUtils");
-const { getHRZones } = require("../utils/HRZoneUtils");
-const { getWorkoutLabel } = require("../utils/WorkoutLabelUtils");
-const { getWorkoutSegments } = require("../utils/SegmentUtils");
+const { getWorkoutType } = require("../../utils/WorkoutTypeUtils");
+const { getZonePaces } = require("../../utils/paceUtils");
+const { getHRZones } = require("../../utils/HRZoneUtils");
+const { getWorkoutLabel } = require("../../utils/WorkoutLabelUtils");
+const { getWorkoutSegments } = require("../../utils/SegmentUtils");
 
 function buildDailyWorkout({ day, phase, weekIndex, mileage, current5kPace, age }) {
   const type = getWorkoutType(phase, day, weekIndex);
