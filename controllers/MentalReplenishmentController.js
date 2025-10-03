@@ -10,3 +10,5 @@ const saveMentalReplenishment = async (req, res) => {
     res.status(500).json({ error: "Failed to save entry" });
   }
 };
+
+module.exports = { saveMentalReplenishment };
