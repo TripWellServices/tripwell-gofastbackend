@@ -1,6 +1,6 @@
-const { TrainingPlan } = require('../models/GoFast/TrainingPlan');
-const Race = require('../models/GoFast/Race');
-const TrainingDay = require('../models/GoFast/TrainingDay');
+const { TrainingPlan } = require('../../models/GoFast/TrainingPlan');
+const Race = require('../../models/GoFast/Race');
+const TrainingDay = require('../../models/GoFast/TrainingDay');
 const { getPhaseMap } = require('../utils/phaseUtils');
 const { buildDailyWorkout } = require('./DailyWorkoutBuilderService');
 const { getLongRunMileage } = require('../utils/LongRunUtils');

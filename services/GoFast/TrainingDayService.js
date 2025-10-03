@@ -1,6 +1,6 @@
-const TrainingDay = require('../models/GoFast/TrainingDay');
-const Session = require('../models/GoFast/Session');
-const GarminActivity = require('../models/Archive/GarminActivity-OLD');
+const TrainingDay = require('../../models/GoFast/TrainingDay');
+const Session = require('../../models/GoFast/Session');
+const GarminActivity = require('../../models/Archive/GarminActivity-OLD');
 
 /**
  * TrainingDayService - Handles daily workout logic and Garmin hydration

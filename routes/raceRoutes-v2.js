@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
-const RaceService = require('../services/RaceService');
+const RaceService = require('../services/GoFast/RaceService');
 const User = require('../models/GoFast/User');
 
 /**

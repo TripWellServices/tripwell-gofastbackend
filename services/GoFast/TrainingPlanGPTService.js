@@ -1,6 +1,6 @@
 const OpenAI = require('openai');
-const RaceIntent = require('../models/GoFast/RaceIntent');
-const RunnerProfile = require('../models/GoFast/RunnerProfile');
+const RaceIntent = require('../../models/GoFast/RaceIntent');
+const RunnerProfile = require('../../models/GoFast/RunnerProfile');
 const EmailService = require('./EmailService');
 
 // Initialize OpenAI
@@ -171,7 +171,7 @@ Make sure the plan is realistic for the runner's current fitness level and build
 
       // Send email notification
       try {
-        const User = require('../models/GoFast/User');
+        const User = require('../../models/GoFast/User');
         const user = await User.findById(raceIntent.userId);
         if (user && user.email) {
           await EmailService.sendTrainingPlanReady(

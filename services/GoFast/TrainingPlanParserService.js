@@ -1,6 +1,6 @@
-const RaceIntent = require('../models/GoFast/RaceIntent');
-const TrainingPlan = require('../models/GoFast/TrainingPlan');
-const TrainingDay = require('../models/GoFast/TrainingDay');
+const RaceIntent = require('../../models/GoFast/RaceIntent');
+const TrainingPlan = require('../../models/GoFast/TrainingPlan');
+const TrainingDay = require('../../models/GoFast/TrainingDay');
 
 /**
  * TrainingPlanParserService - Like TripWell's TripParser

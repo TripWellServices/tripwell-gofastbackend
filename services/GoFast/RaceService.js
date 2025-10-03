@@ -1,4 +1,4 @@
-const Race = require('../models/GoFast/Race');
+const Race = require('../../models/GoFast/Race');
 
 /**
  * RaceService - Handles race creation, updates, and predictions
