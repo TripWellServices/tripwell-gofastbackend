@@ -1,7 +1,7 @@
 // services/tripCompletionService.js
-const TripBase = require("../models/TripWell/TripBase");
-const TripComplete = require("../models/TripWell/TripComplete");
-const TripCurrentDays = require("../models/TripWell/TripCurrentDays");
+const TripBase = require("../../models/TripWell/TripBase");
+const TripComplete = require("../../models/TripWell/TripComplete");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 
 /*
   Trip Completion Service

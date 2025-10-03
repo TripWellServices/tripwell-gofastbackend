@@ -1,7 +1,7 @@
 // services/tripPersonaConverterService.js
-const TripPersona = require("../models/TripWell/TripPersona");
-const TripLLMReady = require("../models/TripWell/TripLLMReady");
-const TripBase = require("../models/TripWell/TripBase");
+const TripPersona = require("../../models/TripWell/TripPersona");
+const TripLLMReady = require("../../models/TripWell/TripLLMReady");
+const TripBase = require("../../models/TripWell/TripBase");
 
 /*
   TripPersonaConverter Service

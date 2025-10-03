@@ -1,6 +1,6 @@
 // services/startTripService.js
-const ItineraryDays = require("../models/TripWell/ItineraryDays");
-const TripCurrentDays = require("../models/TripWell/TripCurrentDays");
+const ItineraryDays = require("../../models/TripWell/ItineraryDays");
+const TripCurrentDays = require("../../models/TripWell/TripCurrentDays");
 
 /*
   Start Trip Service
