@@ -3,7 +3,7 @@ const TripLLMReady = require("../models/TripWell/TripLLMReady");
 const TripBase = require("../models/TripWell/TripBase");
 const TripPersona = require("../models/TripWell/TripPersona");
 const ItineraryDays = require("../models/TripWell/ItineraryDays");
-const { convertPersonaToWords, convertBudgetCategoryToWords } = require("./tripPersonaConverterService");
+const { convertPersonaToWords, convertBudgetCategoryToWords } = require("./TripWell/tripPersonaConverterService");
 
 /*
   LLM Hydrate Service

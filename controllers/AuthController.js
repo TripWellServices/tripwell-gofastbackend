@@ -1,6 +1,6 @@
 // /controllers/AuthController.js
 
-const AuthService = require('../services/AuthService');
+const AuthService = require('../services/GoFast/AuthService');
 
 const AuthController = {
   async register(req, res) {
