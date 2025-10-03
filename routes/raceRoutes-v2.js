@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const RaceService = require('../services/RaceService');
-const User = require('../models/User');
+const User = require('../models/GoFast/User');
 
 /**
  * POST /api/race/create

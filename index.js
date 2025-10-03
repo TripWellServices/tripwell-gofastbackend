@@ -14,6 +14,9 @@ const allowedOrigins = [
   "https://tripwell-admin.vercel.app",
   "https://tripwell-tripbuild.vercel.app",
   "https://tripwell.app",
+  // GoFast domains
+  "https://gofastcrushgoals.vercel.app",
+  /^https:\/\/gofast-frontend-.*\.vercel\.app$/,
   // Allow Vercel preview URLs
   /^https:\/\/tripwell-admin-.*\.vercel\.app$/,
   /^https:\/\/tripwell-frontend-.*\.vercel\.app$/,
@@ -165,6 +168,7 @@ app.use("/tripwell", require("./routes/TripWell/profileSaveRoute"));
 app.use("/api/race", require("./routes/raceRoutes-v2"));
 app.use("/api/training-plan", require("./routes/trainingPlanRoutes-v2"));
 app.use("/api/training-day", require("./routes/trainingDayRoutes"));
+app.use("/api", require("./routes/hydrateRoute"));
 
 // === ROOT CHECK ===
 app.get("/", (req, res) => {

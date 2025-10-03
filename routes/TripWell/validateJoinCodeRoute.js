@@ -3,7 +3,7 @@ const path = require("path");
 const router = express.Router();
 
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
-const User = require(path.resolve(__dirname, "../../models/User"));
+const User = require(path.resolve(__dirname, "../../models/GoFast/User"));
 
 // POST /tripwell/validatejoincode
 router.post("/tripwell/validatejoincode", async (req, res) => {

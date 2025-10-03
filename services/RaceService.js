@@ -1,5 +1,4 @@
-const Race = require('../models/Race');
-const CompletionFlags = require('../models/CompletionFlags');
+const Race = require('../models/GoFast/Race');
 
 /**
  * RaceService - Handles race creation, updates, and predictions
@@ -50,9 +49,6 @@ const createRace = async ({
     location,
     status: 'planning'
   });
-  
-  // Update completion flags
-  await updateCompletionFlags(userId, 'goalSet');
   
   return race;
 };
@@ -132,9 +128,6 @@ const submitRaceResult = async (raceId, resultData) => {
   
   race.status = 'completed';
   await race.save();
-  
-  // Update completion flags
-  await updateCompletionFlags(race.userId, 'raceComplete');
   
   return race;
 };
@@ -259,29 +252,6 @@ const formatDelta = (deltaSeconds) => {
   const mins = Math.floor(absDelta / 60);
   const secs = Math.round(absDelta % 60);
   return `${sign}${mins}:${secs < 10 ? '0' : ''}${secs}`;
-};
-
-/**
- * Update completion flags helper
- */
-const updateCompletionFlags = async (userId, flagName) => {
-  let flags = await CompletionFlags.findOne({ userId });
-  
-  if (!flags) {
-    flags = await CompletionFlags.create({ userId });
-  }
-  
-  // Map flag names to their categories
-  const flagMap = {
-    'goalSet': { category: 'onboarding', flag: 'goalSet' },
-    'raceComplete': { category: 'raceDay', flag: 'raceComplete' }
-  };
-  
-  const mapping = flagMap[flagName];
-  if (mapping) {
-    flags.plantFlag(mapping.category, mapping.flag);
-    await flags.save();
-  }
 };
 
 module.exports = {

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 const TrainingPlanGeneratorService = require('../services/TrainingPlanGeneratorService');
-const User = require('../models/User');
+const User = require('../models/GoFast/User');
 
 /**
  * POST /api/training-plan/generate/:raceId
