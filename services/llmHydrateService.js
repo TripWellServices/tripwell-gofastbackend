@@ -1,8 +1,8 @@
 // services/llmHydrateService.js
-const TripLLMReady = require("../../models/TripWell/TripLLMReady");
-const TripBase = require("../../models/TripWell/TripBase");
-const TripPersona = require("../../models/TripWell/TripPersona");
-const ItineraryDays = require("../../models/TripWell/ItineraryDays");
+const TripLLMReady = require("../models/TripWell/TripLLMReady");
+const TripBase = require("../models/TripWell/TripBase");
+const TripPersona = require("../models/TripWell/TripPersona");
+const ItineraryDays = require("../models/TripWell/ItineraryDays");
 const { convertPersonaToWords, convertBudgetCategoryToWords } = require("./TripWell/tripPersonaConverterService");
 
 /*

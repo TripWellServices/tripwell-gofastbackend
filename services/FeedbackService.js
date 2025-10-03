@@ -1,4 +1,4 @@
-const Feedback = require('../../models/Feedback');
+const Feedback = require('../models/Feedback');
 
 const logFeedback = async (userId, feedbackData) => {
   return await Feedback.create({ userId, ...feedbackData });

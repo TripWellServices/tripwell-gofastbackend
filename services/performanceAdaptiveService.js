@@ -1,6 +1,6 @@
 // services/performanceAdaptiveService.js
-const PulsePerformance = require('../../models/GoFastMVP2/PulsePerformance');
-const TrainingPlan = require('../../models/GoFast/TrainingPlan');
+const PulsePerformance = require('../models/GoFastMVP2/PulsePerformance');
+const TrainingPlan = require('../models/GoFast/TrainingPlan');
 
 const performanceAdaptiveService = async (userId) => {
   const entries = await PulsePerformance.find({ userId }).sort({ createdAt: -1 }).limit(10);

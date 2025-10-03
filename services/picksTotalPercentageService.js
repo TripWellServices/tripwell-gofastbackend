@@ -1,5 +1,5 @@
 // services/picksTotalPercentageService.js
-const TripPersona = require("../../models/TripWell/TripPersona");
+const TripPersona = require("../models/TripWell/TripPersona");
 const { convertPersonaToWords } = require("./TripWell/tripPersonaConverterService");
 
 /*
