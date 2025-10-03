@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
-const { hydrateUserData } = require('../utils/userStatusChecker');
+const verifyFirebaseToken = require('../../middleware/verifyFirebaseToken');
+const { hydrateUserData } = require('../../utils/userStatusChecker');
 
 /**
  * GET /api/hydrate

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
-const RaceIntent = require('../models/GoFast/RaceIntent');
-const TrainingPlanGPTService = require('../services/GoFast/TrainingPlanGPTService');
-const TrainingPlanParserService = require('../services/GoFast/TrainingPlanParserService');
-const EmailService = require('../services/GoFast/EmailService');
+const verifyFirebaseToken = require('../../middleware/verifyFirebaseToken');
+const RaceIntent = require('../../models/GoFast/RaceIntent');
+const TrainingPlanGPTService = require('../../services/GoFast/TrainingPlanGPTService');
+const TrainingPlanParserService = require('../../services/GoFast/TrainingPlanParserService');
+const EmailService = require('../../services/GoFast/EmailService');
 
 /**
  * POST /api/race-intent
