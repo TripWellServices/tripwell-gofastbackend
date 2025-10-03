@@ -168,6 +168,7 @@ app.use("/tripwell", require("./routes/TripWell/profileSaveRoute"));
 app.use("/api/race", require("./routes/raceRoutes-v2"));
 app.use("/api/training-plan", require("./routes/trainingPlanRoutes-v2"));
 app.use("/api/training-day", require("./routes/trainingDayRoutes"));
+app.use("/api/race-intent", require("./routes/raceIntentRoutes"));
 app.use("/api", require("./routes/hydrateRoute"));
 
 // === ROOT CHECK ===
