@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const User = require('../models/GoFast/User');
 
 // EXISTING: find matches route
 // router.post('/:userId', async (req, res) => { ... })

@@ -1,5 +1,5 @@
 const MatchEvent = require('../models/MatchEvent');
-const User = require('../models/User');
+const User = require('../models/GoFast/User');
 
 async function saveMatch(user1, user2, score) {
   await MatchEvent.create({

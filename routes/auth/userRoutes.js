@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const admin = require("firebase-admin");
-const UserModel = require("../../models/User"); // adjust path if needed
+const UserModel = require("../../models/GoFast/User");
 
 // Middleware to verify Firebase token
 async function verifyFirebaseToken(req, res, next) {

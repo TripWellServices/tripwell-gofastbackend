@@ -1,7 +1,6 @@
-const { TrainingPlan } = require('../models/TrainingPlan');
-const Race = require('../models/Race');
-const TrainingDay = require('../models/TrainingDay');
-const CompletionFlags = require('../models/CompletionFlags');
+const { TrainingPlan } = require('../models/GoFast/TrainingPlan');
+const Race = require('../models/GoFast/Race');
+const TrainingDay = require('../models/GoFast/TrainingDay');
 const { getPhaseMap } = require('../utils/phaseUtils');
 const { buildDailyWorkout } = require('./DailyWorkoutBuilderService');
 const { getLongRunMileage } = require('../utils/LongRunUtils');
@@ -95,9 +94,6 @@ const generateTrainingPlan = async (raceId, userAge = 30) => {
   race.trainingPlanId = plan._id;
   race.status = 'training';
   await race.save();
-  
-  // Update completion flags
-  await updatePlanGenerationFlags(userId);
   
   console.log(`✅ Generated training plan: ${totalWeeks} weeks, ${allDays.length} days`);
   
@@ -219,14 +215,6 @@ const activateTrainingPlan = async (planId) => {
   // Update race status
   await Race.findByIdAndUpdate(plan.raceId, { status: 'training' });
   
-  // Update completion flags
-  const flags = await CompletionFlags.findOne({ userId: plan.userId });
-  if (flags) {
-    flags.plantFlag('onboarding', 'planAccepted');
-    flags.plantFlag('training', 'trainingStarted');
-    await flags.save();
-  }
-  
   return plan;
 };
 
@@ -309,20 +297,6 @@ const calculateMileageProgression = (totalWeeks, baseMileage, phaseMap) => {
   }
   
   return progression;
-};
-
-/**
- * Update completion flags for plan generation
- */
-const updatePlanGenerationFlags = async (userId) => {
-  let flags = await CompletionFlags.findOne({ userId });
-  
-  if (!flags) {
-    flags = await CompletionFlags.create({ userId });
-  }
-  
-  flags.plantFlag('onboarding', 'planGenerated');
-  await flags.save();
 };
 
 module.exports = {

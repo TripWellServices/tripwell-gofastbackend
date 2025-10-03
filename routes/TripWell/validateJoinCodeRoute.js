@@ -3,7 +3,7 @@ const path = require("path");
 const router = express.Router();
 
 const TripBase = require(path.resolve(__dirname, "../../models/TripWell/TripBase"));
-const User = require(path.resolve(__dirname, "../../models/GoFast/User"));
+const TripWellUser = require(path.resolve(__dirname, "../../models/TripWell/TripWellUser"));
 
 // POST /tripwell/validatejoincode
 router.post("/tripwell/validatejoincode", async (req, res) => {
@@ -21,7 +21,7 @@ router.post("/tripwell/validatejoincode", async (req, res) => {
       return res.status(404).json({ error: "Trip not found" });
     }
 
-    const originator = await User.findOne({
+    const originator = await TripWellUser.findOne({
       tripId: trip._id,
       role: "originator",
     });

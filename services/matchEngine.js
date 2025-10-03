@@ -1,5 +1,5 @@
 const { calculateMatchScore } = require('./matchScorer');
-const User = require('../models/User');
+const User = require('../models/GoFast/User');
 
 async function getTopMatchesForUser(queryUserId) {
   const queryUser = await User.findById(queryUserId);

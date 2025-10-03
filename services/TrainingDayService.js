@@ -1,7 +1,6 @@
-const TrainingDay = require('../models/TrainingDay');
-const Session = require('../models/Session');
-const GarminActivity = require('../models/GarminActivity');
-const CompletionFlags = require('../models/CompletionFlags');
+const TrainingDay = require('../models/GoFast/TrainingDay');
+const Session = require('../models/GoFast/Session');
+const GarminActivity = require('../models/Archive/GarminActivity-OLD');
 
 /**
  * TrainingDayService - Handles daily workout logic and Garmin hydration
@@ -130,9 +129,6 @@ const hydrateGarminData = async (userId, activityDate) => {
   trainingDay.actual.sessionId = session._id;
   await trainingDay.save();
   
-  // Update completion flags
-  await updateFirstWorkoutFlag(userId, trainingDay);
-  
   console.log(`✅ Hydrated Garmin data for ${activityDate}`);
   return trainingDay;
 };
@@ -228,38 +224,6 @@ const batchCreateTrainingDays = async (planData) => {
   }
   
   return trainingDays;
-};
-
-// ==================== HELPER FUNCTIONS ====================
-
-/**
- * Update first workout completion flag
- */
-const updateFirstWorkoutFlag = async (userId, trainingDay) => {
-  const flags = await CompletionFlags.findOne({ userId });
-  if (!flags) return;
-  
-  // Check if this is first workout
-  if (!flags.training.firstWorkoutComplete && trainingDay.actual.completed) {
-    flags.plantFlag('training', 'firstWorkoutComplete');
-    await flags.save();
-  }
-  
-  // Check for milestone workouts
-  if (trainingDay.planned.type === 'long_run' && !flags.training.firstLongRunComplete) {
-    flags.training.firstLongRunComplete = true;
-    await flags.save();
-  }
-  
-  if (trainingDay.planned.type === 'tempo' && !flags.training.firstTempoComplete) {
-    flags.training.firstTempoComplete = true;
-    await flags.save();
-  }
-  
-  if (trainingDay.planned.type === 'intervals' && !flags.training.firstIntervalsComplete) {
-    flags.training.firstIntervalsComplete = true;
-    await flags.save();
-  }
 };
 
 module.exports = {
