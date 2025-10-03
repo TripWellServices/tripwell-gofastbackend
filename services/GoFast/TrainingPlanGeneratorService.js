@@ -1,10 +1,10 @@
 const { TrainingPlan } = require('../../models/GoFast/TrainingPlan');
 const Race = require('../../models/GoFast/Race');
 const TrainingDay = require('../../models/GoFast/TrainingDay');
-const { getPhaseMap } = require('../utils/phaseUtils');
-const { buildDailyWorkout } = require('./DailyWorkoutBuilderService');
-const { getLongRunMileage } = require('../utils/LongRunUtils');
-const { splitMileageAcrossDays } = require('../utils/DailyMileageUtils');
+const { getPhaseMap } = require('../../utils/phaseUtils');
+const { buildDailyWorkout } = require('../Archive/DailyWorkoutBuilderService');
+const { getLongRunMileage } = require('../../utils/LongRunUtils');
+const { splitMileageAcrossDays } = require('../../utils/DailyMileageUtils');
 
 /**
  * TrainingPlanGeneratorService - Generates complete training plans with Race & TrainingDay integration

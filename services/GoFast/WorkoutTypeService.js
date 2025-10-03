@@ -1,4 +1,4 @@
-const TrainingDefaults = require('../utils/TrainingDefaults');
+const TrainingDefaults = require('../../utils/TrainingDefaults');
 
 function getDaySchedule(totalMileage, phase, weekGlobalIndex) {
   const template = TrainingDefaults.dayTypeTemplate;
