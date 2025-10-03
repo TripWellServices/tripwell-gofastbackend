@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const preTrainingRacePredictor = require("../../services/Archive/preTrainingRacePredictorService");
+const preTrainingRacePredictor = require("../../services/preTrainingRacePredictorService");
 
 router.post("/pre-race-predictor", async (req, res) => {
   try {

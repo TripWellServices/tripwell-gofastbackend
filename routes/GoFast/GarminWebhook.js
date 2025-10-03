@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { saveGarminActivity } = require("../services/GarminSaveActivityService");
+const { saveGarminActivity } = require("../../services/GoFast/GarminSaveActivityService");
 
 router.post("/garmin-webhook", async (req, res) => {
   try {
