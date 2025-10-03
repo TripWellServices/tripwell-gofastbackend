@@ -4,7 +4,7 @@ const {
   saveMentalEntry,
   getMentalEntriesForUser,
   hasMoodDropoff
-} = require("../services/MentalEntryService");
+} = require("../../services/Archive/MentalEntryService");
 
 // Save a new mental entry
 router.post("/entry", async (req, res) => {

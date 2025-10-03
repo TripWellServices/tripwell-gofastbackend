@@ -171,6 +171,22 @@ app.use("/api/training-day", require("./routes/GoFast/trainingDayRoutes"));
 app.use("/api/race-intent", require("./routes/GoFast/raceIntentRoutes"));
 app.use("/api", require("./routes/GoFast/hydrateRoute"));
 
+// === GOFAST CORE ROUTES ===
+app.use("/api/activity", require("./routes/GoFast/activityRoutes"));
+app.use("/api/workout", require("./routes/GoFast/workoutRoutes"));
+app.use("/api/splits", require("./routes/GoFast/splitsRoute"));
+app.use("/api/predictor", require("./routes/GoFast/predictor"));
+app.use("/api/garmin", require("./routes/GoFast/garmin"));
+
+// === GOFAST MATCHING ROUTES ===
+app.use("/api/match", require("./routes/GoFastMatching/match"));
+
+// === GOFAST MVP2 ROUTES ===
+app.use("/api/mental", require("./routes/GoFastMVP2/mentalEntryRoutes"));
+app.use("/api/mental-replenishment", require("./routes/GoFastMVP2/MentalReplenishmentRoutes"));
+app.use("/api/pulse-performance", require("./routes/GoFastMVP2/PulsePerformanceRoutes"));
+app.use("/api/pulse-strength", require("./routes/GoFastMVP2/PulseStrengthRoutes"));
+
 // === ROOT CHECK ===
 app.get("/", (req, res) => {
   res.status(200).json({

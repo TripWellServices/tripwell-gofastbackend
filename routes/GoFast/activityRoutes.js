@@ -1,5 +1,5 @@
 const express = require('express');
-const ActivityController = require('../controllers/ActivityController');
+const ActivityController = require('../../controllers/ActivityController');
 const router = express.Router();
 
 // Log a new activity (from Garmin or manual)

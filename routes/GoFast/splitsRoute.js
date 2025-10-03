@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const GarminActivity = require("../models/GarminActivity");
-const { getGarminActivityDetails } = require("../services/GarminFetchSplitsService");
+const GarminActivity = require("../../models/Archive/GarminActivity-OLD");
+const { getGarminActivityDetails } = require("../../services/GoFast/GarminFetchSplitsService");
 
 router.get("/activity/splits", async (req, res) => {
   const { userId } = req.query;

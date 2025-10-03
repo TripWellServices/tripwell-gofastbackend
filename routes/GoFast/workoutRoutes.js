@@ -1,8 +1,8 @@
 // routes/workoutRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getTodayWorkout } = require('../services/WorkoutService');
-const verifyToken = require('../middleware/verifyToken');
+const { getTodayWorkout } = require('../../services/GoFast/WorkoutService');
+const verifyToken = require('../../middleware/verifyToken');
 
 router.get('/today', verifyToken, async (req, res) => {
   try {

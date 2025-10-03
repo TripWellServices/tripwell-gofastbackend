@@ -1,5 +1,5 @@
 const express = require('express');
-const { savePulseStrength } = require('../controllers/PulseStrengthController');
+const { savePulseStrength } = require('../../controllers/PulseStrengthController');
 
 const router = express.Router();
 router.post("/save", savePulseStrength);
