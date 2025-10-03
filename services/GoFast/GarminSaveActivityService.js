@@ -1,4 +1,4 @@
-const GarminActivity = require("../models/GarminActivity");
+const GarminActivity = require("../../models/Archive/GarminActivity-OLD");
 
 const calculatePace = (distanceMeters, durationSeconds) => {
   const distanceMiles = distanceMeters / 1609.34;

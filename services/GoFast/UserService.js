@@ -1,4 +1,4 @@
-const User = require('../models/GoFast/User');
+const User = require('../../models/GoFast/User');
 
 const createUser = async (data) => {
   return await User.create(data);
