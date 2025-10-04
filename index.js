@@ -169,8 +169,8 @@ app.use("/api/race", require("./routes/GoFast/raceRoutes-v2"));
 app.use("/api/training-plan", require("./routes/GoFast/trainingPlanRoutes-v2"));
 app.use("/api/training-day", require("./routes/GoFast/trainingDayRoutes"));
 app.use("/api/race-intent", require("./routes/GoFast/raceIntentRoutes"));
-app.use("/api", require("./routes/GoFast/hydrateRoute"));
 app.use("/api/users", require("./routes/GoFast/runnerProfileRoutes"));
+app.use("/api", require("./routes/GoFast/hydrateRoute"));
 
 // === GOFAST CORE ROUTES ===
 app.use("/api/activity", require("./routes/GoFast/activityRoutes"));
