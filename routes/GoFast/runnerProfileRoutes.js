@@ -10,7 +10,7 @@ const verifyFirebaseToken = require('../../middleware/verifyFirebaseToken');
  */
 router.put('/profile', verifyFirebaseToken, async (req, res) => {
   try {
-    const firebaseId = req.firebaseUser.uid;
+    const firebaseId = req.user.uid;
     const { name, goesBy, age, city, averagePace, weeklyMileage } = req.body;
 
     console.log('🏃 Updating runner profile for:', firebaseId);
@@ -65,7 +65,7 @@ router.put('/profile', verifyFirebaseToken, async (req, res) => {
  */
 router.get('/profile', verifyFirebaseToken, async (req, res) => {
   try {
-    const firebaseId = req.firebaseUser.uid;
+    const firebaseId = req.user.uid;
 
     // Find the user
     const user = await User.findOne({ firebaseId });
