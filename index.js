@@ -170,6 +170,7 @@ app.use("/api/training-plan", require("./routes/GoFast/trainingPlanRoutes-v2"));
 app.use("/api/training-day", require("./routes/GoFast/trainingDayRoutes"));
 app.use("/api/race-intent", require("./routes/GoFast/raceIntentRoutes"));
 app.use("/api", require("./routes/GoFast/hydrateRoute"));
+app.use("/api/users", require("./routes/GoFast/runnerProfileRoutes"));
 
 // === GOFAST CORE ROUTES ===
 app.use("/api/activity", require("./routes/GoFast/activityRoutes"));
@@ -177,6 +178,7 @@ app.use("/api/workout", require("./routes/GoFast/workoutRoutes"));
 app.use("/api/splits", require("./routes/GoFast/splitsRoute"));
 app.use("/api/predictor", require("./routes/GoFast/predictor"));
 app.use("/api/garmin", require("./routes/GoFast/garmin"));
+app.use("/api/pace", require("./routes/GoFast/paceRoutes"));
 
 // === GOFAST MATCHING ROUTES ===
 app.use("/api/match", require("./routes/GoFastMatching/match"));

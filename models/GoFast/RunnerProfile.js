@@ -18,10 +18,11 @@ const RunnerProfileSchema = new mongoose.Schema({
   name: { type: String, required: true },
   goesBy: { type: String, required: true }, // "Jeff", "Jeffrey", "F3 names", etc.
   age: { type: Number, required: true },
+  city: { type: String, required: true }, // "Charlotte, NC", "Austin, TX", etc.
 
-  // 🏃 Current Fitness Baseline
-  baseline5k: { type: String, required: true },  // "24:30"
-  weeklyMileage: { type: Number, required: true }, // 25
+      // 🏃 Current Fitness Baseline
+      averagePace: { type: String, required: true },  // "8:30" per mile
+      weeklyMileage: { type: Number, required: true }, // 25
 
   // ⌚ Garmin Integration
   garminConnected: { type: Boolean, default: false },
